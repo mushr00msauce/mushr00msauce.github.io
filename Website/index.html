@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build Your Own Site — A Mushbox Guide</title>
+<meta name="description" content="Step-by-step guide for streamers: host your own website free on GitHub Pages. No hosting fees, no code degree required.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#060810;
+    --navy:#0A1535;
+    --royal:#1E6FFF;
+    --sky:#4DB8FF;
+    --white:#FFFFFF;
+    --body:#C9D4E8;
+    --card:#0A1128;
+    --card-edge:#16264d;
+    --trace:#12224d;
+    --mono:ui-monospace,'Cascadia Code',Consolas,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{animation:none!important;transition:none!important}
+  }
+  body{
+    background:var(--ink);
+    color:var(--body);
+    font-family:'Inter',system-ui,sans-serif;
+    font-size:17px;
+    line-height:1.65;
+    background-image:
+      radial-gradient(circle at 15% 8%, rgba(30,111,255,.07), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(77,184,255,.05), transparent 45%);
+  }
+  a{color:var(--sky)}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--sky);outline-offset:3px;border-radius:4px}
+
+  .wrap{max-width:880px;margin:0 auto;padding:0 22px}
+
+  /* ---------- hero ---------- */
+  header{padding:64px 0 40px;position:relative;overflow:hidden}
+  .eyebrow{
+    font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.28em;
+    text-transform:uppercase;font-size:13px;color:var(--sky);
+    display:flex;align-items:center;gap:12px;
+  }
+  .eyebrow::before{content:'';width:34px;height:2px;background:var(--royal);display:inline-block}
+  h1{
+    font-family:'Orbitron',sans-serif;font-weight:800;color:var(--white);
+    font-size:clamp(30px,6vw,52px);line-height:1.12;margin:18px 0 20px;
+    text-shadow:0 0 34px rgba(30,111,255,.35);
+  }
+  .lede{max-width:640px;font-size:18px}
+  .lede strong{color:var(--white)}
+  .hero-fact{
+    margin-top:26px;display:inline-flex;gap:10px;align-items:baseline;
+    background:var(--card);border:1px solid var(--card-edge);border-radius:12px;
+    padding:12px 18px;font-size:15px;
+  }
+  .hero-fact b{color:var(--sky);font-family:'Rajdhani',sans-serif;letter-spacing:.06em}
+
+  /* ---------- section labels ---------- */
+  .section-label{
+    font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.24em;
+    text-transform:uppercase;font-size:14px;color:var(--sky);
+    margin:56px 0 8px;display:flex;align-items:center;gap:12px;
+  }
+  .section-label::after{content:'';flex:1;height:1px;background:var(--trace)}
+
+  /* ---------- need list ---------- */
+  .need{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:18px}
+  .need div{
+    background:var(--card);border:1px solid var(--card-edge);border-radius:14px;padding:18px;
+  }
+  .need b{color:var(--white);display:block;margin-bottom:4px;font-weight:600}
+
+  /* ---------- the circuit rail of steps ---------- */
+  .rail{position:relative;margin-top:34px;padding-left:58px}
+  .rail::before{
+    content:'';position:absolute;left:19px;top:14px;bottom:14px;width:2px;
+    background:linear-gradient(var(--royal), var(--sky));
+    box-shadow:0 0 12px rgba(30,111,255,.55);
+  }
+  .step{position:relative;margin-bottom:44px}
+  .step:last-child{margin-bottom:0}
+  .node{
+    position:absolute;left:-58px;top:2px;width:40px;height:40px;border-radius:50%;
+    background:var(--ink);border:2px solid var(--royal);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Orbitron',sans-serif;font-weight:800;color:var(--sky);font-size:15px;
+    box-shadow:0 0 0 5px var(--ink), 0 0 16px rgba(77,184,255,.5);
+  }
+  .step h2{
+    font-family:'Orbitron',sans-serif;font-weight:600;color:var(--white);
+    font-size:clamp(19px,3vw,24px);margin-bottom:10px;letter-spacing:.02em;
+  }
+  .step p{margin-bottom:12px;max-width:660px}
+  .step p:last-child{margin-bottom:0}
+  .path{
+    font-family:var(--mono);font-size:.86em;color:var(--white);
+    background:var(--navy);border:1px solid var(--card-edge);
+    border-radius:6px;padding:2px 8px;white-space:nowrap;
+  }
+  .tip{
+    border-left:3px solid var(--sky);background:rgba(77,184,255,.06);
+    border-radius:0 10px 10px 0;padding:12px 16px;margin:14px 0;max-width:660px;
+    font-size:15.5px;
+  }
+  .tip b{color:var(--sky)}
+
+  /* ---------- code block ---------- */
+  .codewrap{position:relative;max-width:660px;margin:16px 0}
+  pre{
+    background:#050a18;border:1px solid var(--card-edge);border-radius:14px;
+    padding:20px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;
+    line-height:1.55;color:var(--body);
+  }
+  pre .tag{color:var(--sky)}
+  pre .val{color:#8fd0ff}
+  pre .com{color:#5a6b8f}
+  .copy-btn{
+    position:absolute;top:12px;right:12px;
+    font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.1em;
+    font-size:12px;text-transform:uppercase;color:var(--white);
+    background:var(--royal);border:none;border-radius:8px;padding:7px 14px;cursor:pointer;
+  }
+  .copy-btn:hover{background:var(--sky);color:var(--ink)}
+
+  /* ---------- troubleshooting ---------- */
+  .trouble{display:grid;gap:14px;margin-top:18px}
+  .trouble details{
+    background:var(--card);border:1px solid var(--card-edge);border-radius:14px;
+  }
+  .trouble details[open]{border-color:var(--royal)}
+  .trouble summary{
+    cursor:pointer;padding:16px 20px;font-weight:600;color:var(--white);
+    list-style:none;display:flex;gap:12px;align-items:center;
+  }
+  .trouble summary::before{
+    content:'';width:8px;height:8px;border-radius:50%;background:var(--sky);
+    box-shadow:0 0 8px var(--sky);flex-shrink:0;
+  }
+  .trouble div{padding:0 20px 18px;max-width:680px}
+
+  /* ---------- footer ---------- */
+  footer{
+    margin-top:72px;border-top:1px solid var(--trace);
+    padding:30px 0 48px;font-size:15px;
+  }
+  footer .brand{
+    font-family:'Orbitron',sans-serif;font-weight:600;color:var(--white);
+    letter-spacing:.04em;margin-bottom:6px;
+  }
+  @media (max-width:560px){
+    .rail{padding-left:48px}
+    .node{left:-48px;width:34px;height:34px;font-size:13px}
+    .rail::before{left:16px}
+  }
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <p class="eyebrow">A Mushbox Guide</p>
+  <h1>Build Your Own Site.<br>Free. Tonight.</h1>
+  <p class="lede">Your links, your guides, your brand — on a real website with <strong>no hosting fees, no subscriptions, and no code degree</strong>. This site you're reading runs exactly this way, and setting yours up takes about 30 minutes.</p>
+  <p class="hero-fact"><b>THE SECRET:</b> GitHub hosts websites for free. Streamers just don't know it yet.</p>
+</header>
+
+<main class="wrap">
+
+  <p class="section-label">What you need</p>
+  <div class="need">
+    <div><b>A GitHub account</b>Free. It's where your site's files live.</div>
+    <div><b>30 minutes</b>Most of it is copy, paste, and one short wait.</div>
+    <div><b>Zero experience</b>If you can set up OBS, this is easy mode.</div>
+  </div>
+
+  <p class="section-label">The build</p>
+  <div class="rail">
+
+    <div class="step">
+      <span class="node">1</span>
+      <h2>Create your GitHub account</h2>
+      <p>Go to <a href="https://github.com" target="_blank" rel="noopener">github.com</a> and sign up. <strong>Pick your username carefully</strong> — it becomes your website address. Sign up as <span class="path">coolstreamer</span> and your site lives at <span class="path">coolstreamer.github.io</span>. Your Twitch name is usually the move.</p>
+    </div>
+
+    <div class="step">
+      <span class="node">2</span>
+      <h2>Create the magic repository</h2>
+      <p>A repository ("repo") is just a folder that lives on GitHub. Click the <strong>+</strong> in the top-right corner → <strong>New repository</strong>. Now the one rule that matters:</p>
+      <p>Name it <strong>exactly</strong> <span class="path">yourusername.github.io</span> — your actual username, then <span class="path">.github.io</span>. That exact name is what tells GitHub "this is my website." Any other name won't work the same way.</p>
+      <p>Set it to <strong>Public</strong> (free hosting requires it), check <strong>"Add a README file"</strong>, and click <strong>Create repository</strong>.</p>
+    </div>
+
+    <div class="step">
+      <span class="node">3</span>
+      <h2>Make your homepage</h2>
+      <p>Your homepage is a file named <span class="path">index.html</span> — that exact name is what browsers load automatically. Open Notepad (or any text editor), paste the starter below, and make it yours: swap in your name, links, and colors.</p>
+      <div class="codewrap">
+        <button class="copy-btn" onclick="copyStarter(this)">Copy</button>
+        <pre id="starter">&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;YourName — Links&lt;/title&gt;
+  &lt;style&gt;
+    body{
+      background:#060810; color:#fff;
+      font-family:system-ui,sans-serif;
+      text-align:center; padding:60px 20px;
+    }
+    h1{font-size:2.2em; margin-bottom:8px}
+    p{color:#C9D4E8; margin-bottom:30px}
+    a.btn{
+      display:block; max-width:340px; margin:12px auto;
+      padding:14px; background:#0A1535; color:#4DB8FF;
+      border:1px solid #1E6FFF; border-radius:12px;
+      text-decoration:none; font-weight:600;
+    }
+    a.btn:hover{background:#1E6FFF; color:#fff}
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;YourName&lt;/h1&gt;
+  &lt;p&gt;Streamer • Your tagline here&lt;/p&gt;
+  &lt;a class="btn" href="https://twitch.tv/yourname"&gt;Twitch&lt;/a&gt;
+  &lt;a class="btn" href="https://youtube.com/@yourname"&gt;YouTube&lt;/a&gt;
+  &lt;a class="btn" href="https://discord.gg/yourinvite"&gt;Discord&lt;/a&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+      </div>
+      <p>Save it as <span class="path">index.html</span> — in Notepad, set <strong>"Save as type" to "All Files"</strong> first, or it secretly saves as <span class="path">index.html.txt</span> and nothing works. This mistake has claimed many good streamers.</p>
+    </div>
+
+    <div class="step">
+      <span class="node">4</span>
+      <h2>Upload it</h2>
+      <p>On your repo's page on GitHub, click <strong>Add file → Upload files</strong>, then drag your <span class="path">index.html</span> in. Type a short note in the box at the bottom (like "add homepage" — every save needs a note) and click <strong>Commit changes</strong>.</p>
+      <p>That's it. Your file is on GitHub. Every future update works the same way: edit the file on your computer, drag the new version in, commit.</p>
+    </div>
+
+    <div class="step">
+      <span class="node">5</span>
+      <h2>Flip the switch</h2>
+      <p>In your repo: <strong>Settings → Pages</strong> (left sidebar). Under <strong>Build and deployment</strong>, set Source to <strong>Deploy from a branch</strong>, pick branch <span class="path">main</span> and folder <span class="path">/(root)</span>, and click <strong>Save</strong>.</p>
+      <p>GitHub now builds your site. Watch it happen on the <strong>Actions</strong> tab — a run called "pages build and deployment" appears and earns a green check in about a minute.</p>
+    </div>
+
+    <div class="step">
+      <span class="node">6</span>
+      <h2>Visit your website</h2>
+      <p>Open a <strong>private/incognito window</strong> (Ctrl+Shift+N) and go to <span class="path">yourusername.github.io</span>. That's your site. Live. On the internet. For free.</p>
+      <div class="tip"><b>Why incognito?</b> Your normal browser saves old copies of pages to load them faster — so after updates, it can show you a stale version and make you think your changes failed. Incognito always fetches fresh. Make it a habit: update → green check → incognito.</div>
+    </div>
+
+  </div>
+
+  <p class="section-label">Leveling up</p>
+  <div class="rail">
+
+    <div class="step">
+      <span class="node">+</span>
+      <h2>Add more pages</h2>
+      <p>Want a commands page, a setup guide, a schedule? Make a <strong>folder</strong> in your repo for each one, and put an <span class="path">index.html</span> inside it. A folder named <span class="path">commands</span> with an index inside becomes <span class="path">yourusername.github.io/commands/</span> — clean URL, no filename showing.</p>
+      <p>Also add one <strong>empty file named <span class="path">.nojekyll</span></strong> (dot at the front, no extension, nothing inside it) to the top level of your repo. It tells GitHub to serve your files exactly as-is, and it prevents a maddening bug where folder pages 404 even though the files are right there. Just trust us on this one.</p>
+    </div>
+
+    <div class="step">
+      <span class="node">+</span>
+      <h2>Add images</h2>
+      <p>Upload image files to the repo the same drag-and-drop way, then reference them in your HTML: <span class="path">&lt;img src="banner.jpg"&gt;</span> for a file next to the page, or <span class="path">&lt;img src="/photos/setup.jpg"&gt;</span> for one in a folder. Resize photos before uploading — phone photos are 10× bigger than a web page needs.</p>
+    </div>
+
+    <div class="step">
+      <span class="node">+</span>
+      <h2>Get the desktop app (when you outgrow drag-and-drop)</h2>
+      <p>Once your site is more than a couple of files, install <a href="https://desktop.github.com" target="_blank" rel="noopener">GitHub Desktop</a>. It keeps a copy of your repo on your PC — edit files normally, then commit and push all your changes in one shot, with one-click rollback if you ever break something. Drag-and-drop never stops working; the app is just faster at scale.</p>
+    </div>
+
+    <div class="step">
+      <span class="node">+</span>
+      <h2>Use your own domain</h2>
+      <p>Want <span class="path">yourname.com</span> instead of the github.io address? Buy the domain (~$10–15/year — the only money in this entire guide), then: at your registrar, add four <strong>A records</strong> for <span class="path">@</span> pointing to <span class="path">185.199.108.153</span>, <span class="path">.109.153</span>, <span class="path">.110.153</span>, <span class="path">.111.153</span>, plus a <strong>CNAME</strong> for <span class="path">www</span> pointing to <span class="path">yourusername.github.io</span>. Delete any "forwarding" your registrar set up — forwarding and real DNS fight each other.</p>
+      <p>Then in your repo: <strong>Settings → Pages → Custom domain</strong> → enter your domain → Save. When the DNS check goes green, tick <strong>Enforce HTTPS</strong>. Give it up to an hour and don't panic early.</p>
+    </div>
+
+  </div>
+
+  <p class="section-label">When it 404s — the checklist</p>
+  <div class="trouble">
+    <details>
+      <summary>I just changed something and it's not showing</summary>
+      <div><p>Three suspects, in order: the build might still be running (check the Actions tab for the green check), your browser might be showing you a cached copy (incognito window), and GitHub's servers cache pages for up to 10 minutes (wait, then try again). Half of web debugging is refusing to panic during the waiting period.</p></div>
+    </details>
+    <details>
+      <summary>My folder page 404s but the files are definitely there</summary>
+      <div><p>Two classics: the folder is missing its <span class="path">index.html</span> (a folder with no index has no page to show), or you need the <span class="path">.nojekyll</span> file from the Leveling Up section. If <span class="path">/commands/index.html</span> loads but <span class="path">/commands/</span> doesn't — that's the .nojekyll fix, guaranteed.</p></div>
+    </details>
+    <details>
+      <summary>The link works for me but not for someone else</summary>
+      <div><p>Web addresses are <strong>case-sensitive</strong>: <span class="path">/Commands/</span> and <span class="path">/commands/</span> are different pages. Whatever you named the folder is what the link must say, capitals and all. Naming everything lowercase from day one avoids this forever.</p></div>
+    </details>
+    <details>
+      <summary>My whole site says "There isn't a GitHub Pages site here"</summary>
+      <div><p>Pages isn't turned on (or got turned off) — revisit Step 5 and make sure branch shows <span class="path">main</span> / <span class="path">(root)</span> and you clicked Save. If you *just* turned it on, give it a few minutes.</p></div>
+    </details>
+    <details>
+      <summary>Notepad saved my file as .txt</summary>
+      <div><p>Change "Save as type" to <strong>All Files</strong> before saving anything for your site. If it already happened: in File Explorer turn on View → Show → File name extensions, then rename the file and delete the <span class="path">.txt</span> ending. Windows will warn you dramatically; proceed anyway.</p></div>
+    </details>
+  </div>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <p class="brand">🍄 MUSHR00MSAUCE</p>
+    <p>This guide is powered by the exact setup it teaches. Questions? Find me at <a href="https://mushr00msauce.com">mushr00msauce.com</a> or in the Discord — and when your site's live, send me the link.</p>
+  </div>
+</footer>
+
+<script>
+function copyStarter(btn){
+  const text = document.getElementById('starter').innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent = 'Copied!';
+    setTimeout(()=>{ btn.textContent = 'Copy'; }, 2000);
+  });
+}
+</script>
+
+</body>
+</html>
