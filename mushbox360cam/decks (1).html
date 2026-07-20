@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mushbox 360 Cam — Deck &amp; Wrapper Setup</title>
+<style>
+  :root{
+    --ink:#060810;
+    --navy:#0A1535;
+    --royal:#1E6FFF;
+    --sky:#4DB8FF;
+    --white:#FFFFFF;
+    --panel:#0d1730;
+    --line:rgba(77,184,255,.18);
+    --dim:#9db4d8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--ink);
+    color:var(--white);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6;
+  }
+  .wrap{max-width:860px;margin:0 auto;padding:0 20px 80px}
+
+  header{
+    padding:52px 0 34px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:40px;
+  }
+  .stamp{
+    display:inline-block;
+    font-size:.75rem;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--sky);
+    border:1px solid var(--line);
+    border-radius:999px;
+    padding:4px 12px;
+    margin-bottom:16px;
+  }
+  h1{font-size:2rem;line-height:1.2;margin-bottom:10px}
+  h1 .blue{color:var(--royal)}
+  header p{color:var(--dim);max-width:620px}
+  header a{color:var(--sky)}
+
+  h2{
+    font-size:1.35rem;
+    margin:56px 0 8px;
+    padding-top:8px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  h2 .part{
+    flex:none;
+    font-size:.8rem;
+    font-weight:700;
+    letter-spacing:.08em;
+    color:var(--ink);
+    background:var(--sky);
+    border-radius:6px;
+    padding:2px 9px;
+  }
+  h3{font-size:1.05rem;margin:26px 0 6px;color:var(--sky)}
+  p{margin:10px 0;color:#dbe6f7}
+  .muted{color:var(--dim);font-size:.92rem}
+  strong{color:var(--white)}
+
+  code{
+    background:var(--navy);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:1px 7px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:.9em;
+    color:var(--sky);
+    white-space:nowrap;
+  }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:20px 22px;
+    margin:18px 0;
+  }
+  .card.callout{border-left:4px solid var(--royal)}
+  .card.warn{border-left:4px solid #ffb020}
+  .card.good{border-left:4px solid #2fd573}
+
+  ol.steps{margin:14px 0 6px 0;padding-left:0;list-style:none;counter-reset:step}
+  ol.steps>li{
+    counter-increment:step;
+    position:relative;
+    padding:0 0 18px 52px;
+  }
+  ol.steps>li::before{
+    content:counter(step);
+    position:absolute;left:0;top:2px;
+    width:34px;height:34px;
+    border-radius:10px;
+    background:var(--royal);
+    color:var(--white);
+    font-weight:800;
+    display:flex;align-items:center;justify-content:center;
+  }
+  ol.steps>li:not(:last-child)::after{
+    content:"";
+    position:absolute;left:16px;top:42px;bottom:4px;
+    width:2px;background:var(--line);
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:14px 0;
+    font-size:.92rem;
+  }
+  th{
+    text-align:left;
+    color:var(--sky);
+    font-size:.78rem;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    padding:8px 10px;
+    border-bottom:2px solid var(--line);
+  }
+  td{
+    padding:9px 10px;
+    border-bottom:1px solid rgba(77,184,255,.09);
+    vertical-align:top;
+    color:#dbe6f7;
+  }
+  tr:hover td{background:rgba(30,111,255,.05)}
+
+  /* architecture diagram */
+  .arch{display:block;width:100%;height:auto;margin:6px 0 2px}
+
+  /* deck mock */
+  .deck{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+    margin:16px 0 6px;
+    max-width:520px;
+  }
+  .key{
+    aspect-ratio:1/1;
+    background:linear-gradient(160deg,#101c3d,#0A1535);
+    border:1px solid var(--line);
+    border-radius:14px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    box-shadow:0 4px 14px rgba(0,0,0,.5), inset 0 1px 0 rgba(77,184,255,.15);
+    text-align:center;
+    padding:6px;
+  }
+  .key .ico{font-size:1.35rem;line-height:1}
+  .key .lbl{font-size:.68rem;font-weight:700;letter-spacing:.04em;color:var(--sky);text-transform:uppercase}
+  .key.accent{border-color:var(--royal);box-shadow:0 4px 14px rgba(30,111,255,.35), inset 0 1px 0 rgba(77,184,255,.2)}
+
+  ul.checklist{list-style:none;margin:12px 0;padding:0}
+  ul.checklist li{
+    padding:8px 0 8px 34px;
+    position:relative;
+    border-bottom:1px solid rgba(77,184,255,.08);
+    color:#dbe6f7;
+  }
+  ul.checklist li::before{
+    content:"✓";
+    position:absolute;left:4px;top:8px;
+    color:#2fd573;
+    font-weight:800;
+  }
+
+  details{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:12px;
+    margin:10px 0;
+    overflow:hidden;
+  }
+  summary{
+    cursor:pointer;
+    padding:14px 18px;
+    font-weight:700;
+    color:var(--white);
+    list-style:none;
+  }
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"▸ ";color:var(--sky)}
+  details[open] summary::before{content:"▾ "}
+  details .inner{padding:0 18px 16px;color:#dbe6f7}
+
+  footer{
+    margin-top:70px;
+    padding-top:24px;
+    border-top:1px solid var(--line);
+    color:var(--dim);
+    font-size:.85rem;
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  footer a{color:var(--sky)}
+  @media (max-width:560px){
+    h1{font-size:1.55rem}
+    .deck{grid-template-columns:repeat(3,1fr)}
+  }
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="stamp">Mushbox 360 Cam · Deck Guide · matches script v4.4</span>
+  <h1>Streamer.bot <span class="blue">Decks &amp; Actions</span> Setup</h1>
+  <p>Companion to the <a href="index.html">360 Cam setup guide</a>. That page gets the camera working from chat — this page wires the same moves to Stream&nbsp;Deck buttons (and any other trigger) using wrapper actions, without duplicating a single line of code.</p>
+</header>
+
+<h2><span class="part">Part 1</span> How it fits together</h2>
+<p>Everything runs through <strong>one</strong> action: <code>Cam360 Control</code>. It holds the v4.4 C# script, the OBS WebSocket plumbing, the chat command triggers, and the blocking <code>camera</code> queue. You never copy that script anywhere else.</p>
+<p>Deck buttons don't talk to the engine directly. Each button fires a tiny <strong>wrapper action</strong> whose only job is to hand the engine a note — an argument named <code>camAction</code> — and ring its doorbell. The engine reads the note and performs the move.</p>
+
+<svg class="arch" viewBox="0 0 820 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Deck buttons fire wrapper actions, which set camAction and run the Cam360 Control engine through the camera queue to OBS">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4DB8FF"/>
+    </marker>
+  </defs>
+  <!-- deck -->
+  <rect x="20" y="70" width="170" height="160" rx="16" fill="#0A1535" stroke="rgba(77,184,255,.35)"/>
+  <text x="105" y="58" text-anchor="middle" fill="#4DB8FF" font-size="13" font-weight="700" letter-spacing="2">STREAM DECK</text>
+  <g fill="#101c3d" stroke="rgba(77,184,255,.3)">
+    <rect x="38" y="90" width="40" height="40" rx="8"/><rect x="88" y="90" width="40" height="40" rx="8"/><rect x="138" y="90" width="40" height="40" rx="8"/>
+    <rect x="38" y="140" width="40" height="40" rx="8"/><rect x="88" y="140" width="40" height="40" rx="8"/><rect x="138" y="140" width="40" height="40" rx="8"/>
+  </g>
+  <rect x="88" y="90" width="40" height="40" rx="8" fill="#1E6FFF"/>
+  <text x="108" y="115" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">SPIN</text>
+  <!-- wrappers -->
+  <rect x="270" y="52" width="200" height="52" rx="12" fill="#0d1730" stroke="rgba(77,184,255,.35)"/>
+  <text x="370" y="74" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">Wrapper: Cam Spin</text>
+  <text x="370" y="92" text-anchor="middle" fill="#9db4d8" font-size="11">Set Argument → Run Action</text>
+  <rect x="270" y="122" width="200" height="52" rx="12" fill="#0d1730" stroke="rgba(77,184,255,.2)"/>
+  <text x="370" y="144" text-anchor="middle" fill="#dbe6f7" font-size="13" font-weight="700">Wrapper: Cam Left</text>
+  <text x="370" y="162" text-anchor="middle" fill="#9db4d8" font-size="11">camAction = left</text>
+  <rect x="270" y="192" width="200" height="52" rx="12" fill="#0d1730" stroke="rgba(77,184,255,.2)"/>
+  <text x="370" y="214" text-anchor="middle" fill="#dbe6f7" font-size="13" font-weight="700">Wrapper: Barrel Roll</text>
+  <text x="370" y="232" text-anchor="middle" fill="#9db4d8" font-size="11">camAction = barrelroll</text>
+  <!-- engine -->
+  <rect x="550" y="92" width="180" height="116" rx="14" fill="#0A1535" stroke="#1E6FFF" stroke-width="2"/>
+  <text x="640" y="122" text-anchor="middle" fill="#fff" font-size="14" font-weight="800">Cam360 Control</text>
+  <text x="640" y="142" text-anchor="middle" fill="#4DB8FF" font-size="11">v4.4 script · triggers</text>
+  <text x="640" y="160" text-anchor="middle" fill="#4DB8FF" font-size="11">blocking “camera” queue</text>
+  <text x="640" y="186" text-anchor="middle" fill="#9db4d8" font-size="11">→ OBS shader (yaw · pitch · fov · roll)</text>
+  <!-- arrows -->
+  <line x1="192" y1="110" x2="266" y2="78" stroke="#4DB8FF" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="472" y1="78" x2="546" y2="120" stroke="#4DB8FF" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="472" y1="148" x2="546" y2="150" stroke="#4DB8FF" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="472" y1="218" x2="546" y2="180" stroke="#4DB8FF" stroke-width="2" marker-end="url(#arr)"/>
+</svg>
+<p class="muted">Chat commands (<code>!cam</code>, <code>!spin</code>, <code>!zoom</code>, <code>!barrelroll</code>) skip the wrappers and hit the engine directly — both paths merge in the same queue, so a deck press landing mid-<code>!spin</code> simply waits its turn.</p>
+
+<div class="card callout">
+  <strong>Rule of thumb:</strong> triggers and code live on the core; decks, raids, subs, and redemptions point at wrappers. Never attach a Raid/Sub/deck trigger to <code>Cam360 Control</code> itself — the engine treats "no instructions" as <em>spin</em>, so everything would spin.
+</div>
+
+<h2><span class="part">Part 2</span> Before you start</h2>
+<ul class="checklist">
+  <li><code>Cam360 Control</code> action exists with the v4.4 script compiled (no red errors in the code editor)</li>
+  <li>The action's <strong>Queue</strong> is set to <code>camera</code> — a blocking, non-concurrent queue (create it under Settings → Queues if it's missing)</li>
+  <li>Chat commands already work: <code>!cam left</code> pans, <code>!spin</code> spins</li>
+  <li>OBS is connected in Streamer.bot (Servers/Clients → OBS Studio shows green)</li>
+</ul>
+<p class="muted">If any of these fail, fix them on the <a href="index.html">main guide</a> first — the deck layer sits entirely on top of a working engine.</p>
+
+<h2><span class="part">Part 3</span> Build your first wrapper</h2>
+<p>We'll build <strong>Cam Spin</strong>. Every other wrapper is this exact recipe with a different name and a different <code>camAction</code> value.</p>
+<ol class="steps">
+  <li><strong>Create the action.</strong> In Streamer.bot's Actions tab, right-click → <strong>Add Action</strong>. Name it <code>Cam Spin</code>. Optional but tidy: put all wrappers in a group called <code>Cam Deck</code>. Leave the wrapper's queue blank — the queueing happens on the core.</li>
+  <li><strong>Add the note.</strong> Right-click its Sub-Actions pane → <strong>Core → Arguments → Set Argument</strong>.<br>Variable Name: <code>camAction</code> &nbsp;·&nbsp; Value: <code>spin</code></li>
+  <li><strong>Ring the doorbell.</strong> Right-click Sub-Actions again → <strong>Core → Actions → Run Action</strong> → select <code>Cam360 Control</code>.<br><strong>Leave "Run Immediately" UNCHECKED.</strong> This is the whole trick — unchecked means the engine runs on its own <code>camera</code> queue, so button mashing queues moves politely instead of fighting over the yaw. Checked would run it inline and bypass the queue.</li>
+  <li><strong>Test it.</strong> Right-click the wrapper → <strong>Test Trigger</strong>. The camera should do a full spin. If it does, you've built your last hard one — the rest take about five seconds each.</li>
+</ol>
+
+<div class="card warn">
+  <strong>The #1 mistake:</strong> checking "Run Immediately." Everything still <em>works</em> in isolation, but two quick presses will fight each other mid-animation. If your camera ever stutters or snaps when buttons stack, check this box first — it should be unchecked on every wrapper.
+</div>
+
+<h2><span class="part">Part 4</span> The full wrapper set</h2>
+<p>Make one wrapper per move you want on the deck. Same recipe every time; only the name and the <code>camAction</code> value change. Two-word values go in as a single string — e.g. Value: <code>tilt 45</code>, <code>roll 15</code>, or <code>planet out</code>.</p>
+<table>
+  <thead><tr><th>Wrapper name</th><th>camAction value</th><th>What the engine does</th></tr></thead>
+  <tbody>
+    <tr><td>Cam Front</td><td><code>front</code></td><td>Pan to front heading, re-level pitch + roll</td></tr>
+    <tr><td>Cam Back</td><td><code>back</code></td><td>Pan to rear, re-level pitch + roll</td></tr>
+    <tr><td>Cam Left</td><td><code>left</code></td><td>Pan left, re-level pitch + roll</td></tr>
+    <tr><td>Cam Right</td><td><code>right</code></td><td>Pan right, re-level pitch + roll</td></tr>
+    <tr><td>Cam Spin</td><td><code>spin</code></td><td>Full 360° yaw spin — holds pitch and zoom</td></tr>
+    <tr><td>Cam Up</td><td><code>up</code></td><td>Pitch preset: look up</td></tr>
+    <tr><td>Cam Down</td><td><code>down</code></td><td>Pitch preset: look down</td></tr>
+    <tr><td>Cam Level</td><td><code>level</code></td><td>Fully level: zero pitch and roll</td></tr>
+    <tr><td>Cam Tilt 45</td><td><code>tilt 45</code></td><td>Pitch to an exact angle (−90…90)</td></tr>
+    <tr><td>Cam Dutch</td><td><code>roll 15</code></td><td>Dutch angle at an exact roll (−180…180)</td></tr>
+    <tr><td>Barrel Roll</td><td><code>barrelroll</code></td><td>Full 360° roll, ends where it started</td></tr>
+    <tr><td>Cam Heading 90</td><td><code>90</code></td><td>Bare number = yaw to that heading</td></tr>
+    <tr><td>Zoom In</td><td><code>zoomin</code></td><td>Step FOV tighter by one zoom step</td></tr>
+    <tr><td>Zoom Out</td><td><code>zoomout</code></td><td>Step FOV wider by one zoom step</td></tr>
+    <tr><td>Zoom Punch</td><td><code>zoom 60</code></td><td>Jump to an exact FOV (lower = tighter)</td></tr>
+    <tr><td>Zoom Reset</td><td><code>zoomreset</code></td><td>Return to DefaultFov (115)</td></tr>
+    <tr><td>Tiny Planet</td><td><code>planet</code></td><td>Toggle stereographic tiny-planet view on / off</td></tr>
+    <tr><td>Planet On</td><td><code>planet on</code></td><td>Force tiny planet on</td></tr>
+    <tr><td>Planet Off</td><td><code>planet off</code></td><td>Force tiny planet off — back to the normal view</td></tr>
+    <tr><td>Planet Bigger</td><td><code>planet in</code></td><td>Grow the planet (less sky)</td></tr>
+    <tr><td>Planet Smaller</td><td><code>planet out</code></td><td>Shrink the planet (more sky)</td></tr>
+    <tr><td>Planet 280</td><td><code>planet 280</code></td><td>Enter planet, set size directly (deck 160–320)</td></tr>
+    <tr><td>Planet Reset</td><td><code>planet reset</code></td><td>Planet size back to DefaultPlanetFov (250)</td></tr>
+  </tbody>
+</table>
+<p class="muted">Deck wrappers get the trusted FOV range (30–150). Chat's <code>!zoom</code> is clamped tighter (60–120) inside the script — so your deck can punch in further than viewers can.</p>
+<p class="muted">While tiny planet is active, the <code>Zoom In</code> / <code>Zoom Out</code> wrappers automatically resize the planet instead of changing FOV — the same reroute chat's <code>!zoom</code> gets. Any framing wrapper (<code>front</code>, <code>left</code>, a heading, etc.) snaps back out of planet mode; <code>spin</code> and <code>barrelroll</code> keep it on.</p>
+
+<div class="card good">
+  <strong>Free bonus:</strong> anything in Streamer.bot can fire a wrapper. Put a <strong>Twitch → Channel → Raid</strong> trigger on the Barrel Roll wrapper and raids roll the camera. Add Subscription / Resub / Gift Sub triggers to the same wrapper to stack more events on one move. Channel point redemptions and hotkeys work the same way — the triggers always go on the <em>wrapper</em>, never the core.
+</div>
+
+<h2><span class="part">Part 5</span> Put them on the deck</h2>
+<ol class="steps">
+  <li>In Streamer.bot, open the <strong>Decks</strong> tab and create a deck (e.g. <code>360 Cam</code>). Set rows/columns to fit your hardware or use it on-screen from the Streamer.bot mobile/web deck.</li>
+  <li>Add a button → set its action to a wrapper (<code>Cam Left</code>, <code>Cam Spin</code>, …). One button per wrapper. Label and color it however you like.</li>
+  <li>Using the official Elgato Stream Deck instead? Install the <strong>Streamer.bot Stream Deck plugin</strong>, then drag its "Do Action" tile onto a key and pick the wrapper from the dropdown. Same wrappers, same queue, same behavior.</li>
+</ol>
+
+<p>A layout that's worked well — directions across the top, motion moves in the middle, zoom on the bottom row:</p>
+<div class="deck" aria-hidden="true">
+  <div class="key"><span class="ico">⬆️</span><span class="lbl">Front</span></div>
+  <div class="key"><span class="ico">⬅️</span><span class="lbl">Left</span></div>
+  <div class="key"><span class="ico">➡️</span><span class="lbl">Right</span></div>
+  <div class="key"><span class="ico">⬇️</span><span class="lbl">Back</span></div>
+  <div class="key accent"><span class="ico">🌀</span><span class="lbl">Spin</span></div>
+  <div class="key accent"><span class="ico">🛩️</span><span class="lbl">Barrel Roll</span></div>
+  <div class="key"><span class="ico">📐</span><span class="lbl">Dutch</span></div>
+  <div class="key"><span class="ico">🧘</span><span class="lbl">Level</span></div>
+  <div class="key"><span class="ico">🔍</span><span class="lbl">Zoom In</span></div>
+  <div class="key"><span class="ico">🔭</span><span class="lbl">Zoom Out</span></div>
+  <div class="key"><span class="ico">🎯</span><span class="lbl">Punch 60</span></div>
+  <div class="key"><span class="ico">♻️</span><span class="lbl">Zoom Reset</span></div>
+</div>
+
+<h2><span class="part">Part 6</span> Test checklist</h2>
+<ul class="checklist">
+  <li>Press <strong>Spin</strong> — full smooth 360, ends where it started</li>
+  <li>Mash <strong>Left / Right / Front</strong> quickly — moves queue up and play one after another, no snapping</li>
+  <li>Press <strong>Zoom In</strong> twice, then <strong>Front</strong> — pan happens but zoom holds</li>
+  <li>Press <strong>Zoom Reset</strong> — FOV glides back to 115</li>
+  <li>Type <code>!spin</code> in chat, then immediately press <strong>Barrel Roll</strong> — spin finishes, then the roll fires</li>
+  <li>Right-click a raid/sub wrapper → <strong>Test Trigger</strong> — no need to wait for a real event</li>
+</ul>
+
+<h2><span class="part">Part 7</span> Troubleshooting</h2>
+<details>
+  <summary>Button does nothing</summary>
+  <div class="inner">
+    <p>Test the wrapper directly (right-click → Test Trigger). If that works, the deck button is pointed at the wrong action. If it doesn't, open the wrapper and check the two sub-actions: Set Argument spelling must be exactly <code>camAction</code> (capital A, no spaces), and Run Action must point at <code>Cam360 Control</code>.</p>
+  </div>
+</details>
+<details>
+  <summary>Moves fight each other / camera snaps mid-animation</summary>
+  <div class="inner">
+    <p>"Run Immediately" is checked on one of your wrappers. Uncheck it everywhere so every move rides the blocking <code>camera</code> queue. Also confirm the queue on <code>Cam360 Control</code> is set to <code>camera</code> and that queue is non-concurrent.</p>
+  </div>
+</details>
+<details>
+  <summary>Deck press spins instead of doing its move</summary>
+  <div class="inner">
+    <p>The engine got "empty hands" — no <code>camAction</code> arrived. Usually the Set Argument name is misspelled, or the trigger was attached to <code>Cam360 Control</code> instead of the wrapper. The engine's rule is: no instructions = spin (that's how the follower spin works).</p>
+  </div>
+</details>
+<details>
+  <summary>Zoom won't return to your DefaultFov</summary>
+  <div class="inner">
+    <p>Streamer.bot's stored globals (like <code>cam360_fov</code>) persist across recompiles and override script constants. Fire <strong>Zoom Reset</strong> (or chat <code>!zoom reset</code>), or restart Streamer.bot to clear stored globals.</p>
+  </div>
+</details>
+<details>
+  <summary>Script won't compile after pasting</summary>
+  <div class="inner">
+    <p>CS1519/CS0103 errors usually mean truncated or dirty paste. Use the Copy button on the <a href="index.html">main guide</a> or a downloaded file — selecting code out of a chat window can carry invisible characters. The file should end with the <code>Escape</code> method and a closing brace.</p>
+  </div>
+</details>
+
+<footer>
+  <span>Mushbox 360 Cam · Deck &amp; Wrapper Guide · script v4.4</span>
+  <span><a href="index.html">← Back to the 360 Cam setup guide</a></span>
+</footer>
+
+</div>
+</body>
+</html>
