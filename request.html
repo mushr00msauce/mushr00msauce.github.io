@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Request a Mushbox · Mushr00msauce</title>
+<meta name="description" content="Request a Mushbox bonded IRL streaming rig. Tell us your setup and we'll get back to you personally.">
+<style>
+  :root{
+    --navy:#0A1535;
+    --navy-deep:#060D24;
+    --royal:#1E6FFF;
+    --sky:#4DB8FF;
+    --ink:#04081A;
+    --white:#FFFFFF;
+    --text:#D7E3FF;
+    --text-dim:#8FA3CC;
+    --card:#0E1B42;
+    --card-edge:#1B2C5E;
+    --twitch:#9146FF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(900px 480px at 50% -10%, rgba(30,111,255,.30), transparent 60%),
+      radial-gradient(700px 420px at 85% 100%, rgba(77,184,255,.10), transparent 55%),
+      var(--navy-deep);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex;flex-direction:column;align-items:center;
+    padding:56px 20px 48px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .col{width:100%;max-width:560px;display:flex;flex-direction:column;align-items:center}
+
+  /* signature: bonded uplink */
+  .uplink{display:flex;align-items:center;gap:8px;margin-bottom:18px}
+  .uplink span{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--sky);
+    animation:pulse 2.4s infinite;
+  }
+  .uplink span:nth-child(2){animation-delay:.4s}
+  .uplink span:nth-child(3){animation-delay:.8s}
+  @keyframes pulse{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+
+  .eyebrow{
+    font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--text-dim);text-align:center;
+  }
+  h1{
+    font-size:clamp(26px,6vw,34px);font-weight:800;letter-spacing:-.01em;
+    color:var(--white);text-align:center;margin-top:10px;line-height:1.12;
+  }
+  .sub{
+    color:var(--text-dim);font-size:15.5px;text-align:center;
+    margin-top:14px;max-width:46ch;line-height:1.5;
+  }
+
+  form{
+    width:100%;margin-top:34px;
+    background:var(--card);
+    border:1px solid var(--card-edge);
+    border-radius:14px;
+    padding:26px 24px 28px;
+    box-shadow:0 18px 48px rgba(4,8,26,.55);
+  }
+  .field{margin-bottom:20px}
+  .field:last-of-type{margin-bottom:8px}
+  label{
+    display:block;font-size:12.5px;font-weight:700;letter-spacing:.02em;
+    color:var(--text);margin-bottom:8px;
+  }
+  label .req{color:var(--sky)}
+  label .hint{display:block;font-weight:500;color:var(--text-dim);font-size:12px;margin-top:3px}
+
+  input[type=text],input[type=email],textarea,select{
+    width:100%;
+    background:rgba(4,8,26,.65);
+    border:1px solid var(--card-edge);
+    border-radius:12px;
+    color:var(--text);
+    font:inherit;font-size:15px;
+    padding:12px 14px;
+    transition:border-color .12s ease, box-shadow .12s ease;
+  }
+  textarea{min-height:92px;resize:vertical;line-height:1.5}
+  select{appearance:none;-webkit-appearance:none;cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238FA3CC' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 14px center;padding-right:38px}
+  input::placeholder,textarea::placeholder{color:#5f7098}
+  input:focus,textarea:focus,select:focus{
+    outline:none;border-color:var(--royal);
+    box-shadow:0 0 0 3px rgba(30,111,255,.22);
+  }
+
+  .checks{display:flex;flex-wrap:wrap;gap:10px}
+  .chk{
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(4,8,26,.55);
+    border:1px solid var(--card-edge);
+    border-radius:999px;
+    padding:8px 14px;font-size:14px;cursor:pointer;
+    transition:border-color .12s ease, background .12s ease;
+    user-select:none;
+  }
+  .chk:hover{border-color:var(--royal)}
+  .chk input{accent-color:var(--royal);width:15px;height:15px;cursor:pointer}
+  .chk:has(input:checked){border-color:var(--royal);background:rgba(30,111,255,.14)}
+
+  .hp{position:absolute;left:-9999px;opacity:0;height:0;width:0;overflow:hidden}
+
+  button[type=submit]{
+    width:100%;margin-top:14px;
+    background:var(--royal);
+    color:var(--white);
+    border:none;border-radius:12px;
+    font:inherit;font-size:15.5px;font-weight:800;letter-spacing:.02em;
+    padding:15px 18px;cursor:pointer;
+    box-shadow:0 6px 20px rgba(30,111,255,.35);
+    transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
+  }
+  button[type=submit]:hover{transform:translateY(-1px);box-shadow:0 10px 26px rgba(30,111,255,.45)}
+  button[type=submit]:active{transform:translateY(0)}
+  button[type=submit]:disabled{opacity:.6;cursor:default;transform:none;box-shadow:none}
+
+  .foot-note{
+    color:var(--text-dim);font-size:12.5px;text-align:center;
+    margin-top:18px;line-height:1.5;
+  }
+  .foot-note b{color:var(--sky);font-weight:700}
+  .back{display:inline-block;margin-top:26px;color:var(--sky);text-decoration:none;font-size:14px;font-weight:700}
+  .back:hover{text-decoration:underline}
+
+  /* success state */
+  .done{
+    display:none;width:100%;margin-top:34px;text-align:center;
+    background:var(--card);border:1px solid var(--card-edge);border-radius:14px;
+    padding:38px 28px;box-shadow:0 18px 48px rgba(4,8,26,.55);
+  }
+  .done.show{display:block;animation:rise .35s ease both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .done h2{color:var(--white);font-size:22px;font-weight:800;margin-bottom:12px}
+  .done p{color:var(--text-dim);font-size:15px;line-height:1.55;max-width:42ch;margin:0 auto}
+  .done .badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:52px;height:52px;border-radius:50%;margin-bottom:18px;
+    background:rgba(30,111,255,.16);border:1px solid var(--royal);
+  }
+  .done .badge svg{width:26px;height:26px}
+</style>
+</head>
+<body>
+  <main class="col">
+    <div class="uplink" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="eyebrow">Mushr00msauce · Mushbox</div>
+    <h1>Request a Mushbox</h1>
+    <p class="sub">Bonded IRL streaming rigs, built to order. Tell me about your setup and I'll get back to you personally.</p>
+
+    <!-- ============ FORM ============ -->
+    <form id="mbxForm" action="https://api.web3forms.com/submit" method="POST">
+      <!-- 1. Get your free access key at https://web3forms.com and paste it below -->
+      <input type="hidden" name="access_key" value="YOUR_WEB3FORMS_ACCESS_KEY">
+      <input type="hidden" name="subject" value="New Mushbox request from themushbox.com">
+      <input type="hidden" name="from_name" value="Mushbox Website">
+
+      <!-- honeypot: bots fill this, humans never see it -->
+      <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off">
+
+      <div class="field">
+        <label for="name">Name / streamer handle <span class="req">*</span></label>
+        <input type="text" id="name" name="Name / handle" required placeholder="e.g. AriAtHome">
+      </div>
+
+      <div class="field">
+        <label for="email">Best email <span class="req">*</span></label>
+        <input type="email" id="email" name="Email" required placeholder="you@example.com">
+      </div>
+
+      <div class="field">
+        <label for="socials">Discord / socials <span class="hint">Optional — where else I can reach you</span></label>
+        <input type="text" id="socials" name="Discord / socials" placeholder="@handle, Discord tag, etc.">
+      </div>
+
+      <div class="field">
+        <label>Platforms you stream on</label>
+        <div class="checks">
+          <label class="chk"><input type="checkbox" name="Platforms" value="Twitch"> Twitch</label>
+          <label class="chk"><input type="checkbox" name="Platforms" value="YouTube"> YouTube</label>
+          <label class="chk"><input type="checkbox" name="Platforms" value="TikTok"> TikTok</label>
+          <label class="chk"><input type="checkbox" name="Platforms" value="Kick"> Kick</label>
+          <label class="chk"><input type="checkbox" name="Platforms" value="Instagram"> Instagram</label>
+          <label class="chk"><input type="checkbox" name="Platforms" value="Other"> Other</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="setup">What do you use now for mobile / IRL streaming?
+          <span class="hint">Phone hotspot, single SIM, LiveU, Belabox, etc.</span></label>
+        <input type="text" id="setup" name="Current setup" placeholder="e.g. phone + single SIM">
+      </div>
+
+      <div class="field">
+        <label for="carriers">Which carriers do you have access to?
+          <span class="hint">Helps me plan your bonding SIMs</span></label>
+        <input type="text" id="carriers" name="Carriers" placeholder="e.g. Verizon, T-Mobile">
+      </div>
+
+      <div class="field">
+        <label for="problem">Biggest connection problem you're trying to fix?</label>
+        <textarea id="problem" name="Biggest problem" placeholder="Where and how does your stream drop on you?"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="timeline">How soon do you need it?</label>
+        <select id="timeline" name="Timeline">
+          <option value="">Select one…</option>
+          <option>ASAP</option>
+          <option>Within 1–2 months</option>
+          <option>Just exploring</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="fulfill">Ship to you, or arrange in person?
+          <span class="hint">Add your city so I can plan it</span></label>
+        <input type="text" id="fulfill" name="Ship or in-person" placeholder="e.g. Ship to Brooklyn, NY">
+      </div>
+
+      <div class="field">
+        <label for="color">Enclosure color preference
+          <span class="hint">Printed in PETG to match your setup</span></label>
+        <input type="text" id="color" name="Enclosure color" placeholder="e.g. royal blue">
+      </div>
+
+      <div class="field">
+        <label for="notes">Anything else / budget expectations</label>
+        <textarea id="notes" name="Notes" placeholder="Anything else I should know"></textarea>
+      </div>
+
+      <button type="submit" id="submitBtn">Send request</button>
+
+      <p class="foot-note">Goes straight to my inbox — I read and reply to every one personally.
+        Current build queue is roughly <b>[X] weeks</b>.</p>
+    </form>
+
+    <!-- ============ SUCCESS ============ -->
+    <div class="done" id="doneBox">
+      <div class="badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#4DB8FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <h2>Request received</h2>
+      <p>Thanks! Your request landed in my queue. Current build time is roughly <b>[X] weeks</b> — I'll personally get back to you at the email you gave.</p>
+    </div>
+
+    <a class="back" href="/">← Back to themushbox.com</a>
+  </main>
+
+  <script>
+    const form = document.getElementById('mbxForm');
+    const btn  = document.getElementById('submitBtn');
+    const done = document.getElementById('doneBox');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      try {
+        const res = await fetch(form.action, { method:'POST', body:new FormData(form),
+          headers:{ 'Accept':'application/json' } });
+        const data = await res.json();
+        if (data.success) {
+          form.style.display = 'none';
+          done.classList.add('show');
+          done.scrollIntoView({ behavior:'smooth', block:'center' });
+        } else {
+          throw new Error(data.message || 'Submit failed');
+        }
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Send request';
+        alert("Something went wrong sending that. Please try again, or email mushboxirl@gmail.com directly.");
+      }
+    });
+  </script>
+</body>
+</html>
