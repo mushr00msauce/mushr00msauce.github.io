@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mushbox 360 Chat-Controlled Camera — Setup Guide</title>
+<style>
+  :root{
+    --navy:#0A1535;
+    --navy-deep:#060D24;
+    --royal:#1E6FFF;
+    --sky:#4DB8FF;
+    --ink:#04081A;
+    --white:#FFFFFF;
+    --text:#D7E3FF;
+    --text-dim:#8FA3CC;
+    --card:#0E1B42;
+    --card-edge:#1B2C5E;
+    --good:#39D98A;
+    --warn:#FFC24D;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--navy-deep);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6;
+  }
+  code,pre,.pill{font-family:"SF Mono",Consolas,"Cascadia Code",Menlo,monospace}
+
+  /* ---------- header ---------- */
+  header{
+    background:
+      radial-gradient(1200px 500px at 70% -10%, rgba(30,111,255,.28), transparent 60%),
+      radial-gradient(800px 400px at 10% 0%, rgba(77,184,255,.14), transparent 60%),
+      var(--navy);
+    border-bottom:1px solid var(--card-edge);
+    padding:48px 24px 40px;
+  }
+  .wrap{max-width:880px;margin:0 auto}
+  .brand{
+    display:inline-block;
+    font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--sky);
+    border:1px solid rgba(77,184,255,.4);
+    border-radius:999px;
+    padding:5px 14px;
+    margin-bottom:18px;
+  }
+  h1{
+    color:var(--white);
+    font-size:clamp(28px,5vw,42px);
+    line-height:1.15;
+    letter-spacing:-.02em;
+    margin-bottom:12px;
+  }
+  h1 .accent{color:var(--sky)}
+  .lede{max-width:640px;color:var(--text-dim);font-size:17px}
+
+  /* compass */
+  .hero-flex{display:flex;gap:36px;align-items:center;flex-wrap:wrap;margin-top:8px}
+  .hero-copy{flex:1 1 380px}
+  .compass{flex:0 0 auto;margin:8px auto 0}
+  .compass text{font-family:"SF Mono",Consolas,Menlo,monospace}
+
+  /* ---------- nav ---------- */
+  nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(6,13,36,.92);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--card-edge);
+    overflow-x:auto;white-space:nowrap;
+  }
+  nav .wrap{display:flex;gap:4px;padding:0 16px}
+  nav a{
+    display:inline-block;padding:12px 14px;
+    color:var(--text-dim);text-decoration:none;font-size:13.5px;font-weight:600;
+    border-bottom:2px solid transparent;
+  }
+  nav a:hover{color:var(--sky)}
+  nav a:focus-visible{outline:2px solid var(--sky);outline-offset:-2px}
+
+  /* ---------- sections ---------- */
+  main{padding:16px 24px 80px}
+  section{margin-top:52px;scroll-margin-top:64px}
+  .part{
+    display:flex;align-items:baseline;gap:14px;margin-bottom:18px;
+    border-bottom:1px solid var(--card-edge);padding-bottom:10px;
+  }
+  .part-num{
+    color:var(--royal);font-weight:800;font-size:14px;letter-spacing:.14em;
+    text-transform:uppercase;white-space:nowrap;
+  }
+  h2{color:var(--white);font-size:24px;letter-spacing:-.01em}
+  h3{color:var(--white);font-size:17px;margin:26px 0 8px}
+  p{margin:10px 0;max-width:72ch}
+  .dim{color:var(--text-dim)}
+  a.inline{color:var(--sky)}
+
+  ol.steps{margin:14px 0 0 0;padding-left:0;counter-reset:step;list-style:none}
+  ol.steps li{
+    counter-increment:step;
+    position:relative;
+    padding:10px 14px 10px 52px;
+    margin-bottom:8px;
+    background:var(--card);
+    border:1px solid var(--card-edge);
+    border-radius:10px;
+  }
+  ol.steps li::before{
+    content:counter(step);
+    position:absolute;left:14px;top:12px;
+    width:24px;height:24px;border-radius:7px;
+    background:var(--royal);color:var(--white);
+    font-weight:800;font-size:13px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .pill{
+    background:var(--ink);
+    border:1px solid var(--card-edge);
+    border-radius:6px;
+    padding:1px 7px;
+    color:var(--sky);
+    font-size:.9em;
+    white-space:nowrap;
+  }
+  .callout{
+    border-left:4px solid var(--warn);
+    background:rgba(255,194,77,.07);
+    border-radius:0 10px 10px 0;
+    padding:12px 16px;margin:16px 0;
+  }
+  .callout.good{border-left-color:var(--good);background:rgba(57,217,138,.07)}
+  .callout b{color:var(--white)}
+
+  /* ---------- code blocks ---------- */
+  .codebox{
+    border:1px solid var(--card-edge);
+    border-radius:12px;
+    overflow:hidden;
+    margin:16px 0;
+    background:var(--ink);
+  }
+  .codebox-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 14px;
+    background:var(--card);
+    border-bottom:1px solid var(--card-edge);
+  }
+  .codebox-title{font-size:13px;font-weight:700;color:var(--sky);letter-spacing:.04em}
+  .copybtn{
+    font:inherit;font-size:12.5px;font-weight:700;
+    color:var(--white);
+    background:var(--royal);
+    border:none;border-radius:7px;
+    padding:6px 14px;cursor:pointer;
+    transition:background .15s;
+  }
+  .copybtn:hover{background:var(--sky);color:var(--ink)}
+  .copybtn:focus-visible{outline:2px solid var(--white);outline-offset:2px}
+  .copybtn.copied{background:var(--good);color:var(--ink)}
+  pre{
+    padding:16px;
+    overflow-x:auto;
+    font-size:12.8px;
+    line-height:1.55;
+    color:#BFD4FF;
+    max-height:460px;
+    overflow-y:auto;
+  }
+
+  /* ---------- command table ---------- */
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14.5px}
+  th{
+    text-align:left;color:var(--sky);font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+    padding:8px 12px;border-bottom:1px solid var(--card-edge);
+  }
+  td{padding:9px 12px;border-bottom:1px solid rgba(27,44,94,.6)}
+  tr:hover td{background:rgba(30,111,255,.06)}
+
+  /* ---------- troubleshooting ---------- */
+  details{
+    background:var(--card);
+    border:1px solid var(--card-edge);
+    border-radius:10px;
+    margin-bottom:8px;
+  }
+  summary{
+    cursor:pointer;
+    padding:12px 16px;
+    font-weight:700;color:var(--white);font-size:15px;
+    list-style:none;position:relative;padding-right:40px;
+  }
+  summary::-webkit-details-marker{display:none}
+  summary::after{
+    content:"+";position:absolute;right:16px;top:9px;
+    color:var(--sky);font-size:20px;font-weight:400;
+  }
+  details[open] summary::after{content:"–"}
+  details .body{padding:0 16px 14px;color:var(--text)}
+  summary:focus-visible{outline:2px solid var(--sky);outline-offset:-2px;border-radius:10px}
+
+  footer{
+    border-top:1px solid var(--card-edge);
+    padding:28px 24px 40px;
+    text-align:center;color:var(--text-dim);font-size:13.5px;
+  }
+  footer b{color:var(--sky)}
+
+  @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+  @media (max-width:560px){
+    ol.steps li{padding-left:48px}
+    pre{font-size:12px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <span class="brand">Powered by Mushbox</span>
+    <div class="hero-flex">
+      <div class="hero-copy">
+        <h1>360 Chat-Controlled Camera <span class="accent">Setup Guide</span></h1>
+        <p style="color:var(--text-dim);font-size:.8em;margin:.2em 0 0">Guide v4.5 · July 20, 2026</p>
+        <p class="lede">Turn an Insta360 X5 (or any equirectangular 360 camera) into a camera your Twitch chat can drive. Viewers pan, tilt, zoom, and roll the view with <span class="pill">!cam</span> and <span class="pill">!zoom</span>, flip the whole world into a stereographic tiny planet with <span class="pill">!planet</span>, trigger a full <span class="pill">!spin</span>, <span class="pill">!barrelroll</span>, or a <span class="pill">!corkscrew</span> flip, and every new follower spins the camera automatically.</p>
+        <a href="decks.html" style="display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:10px 18px;background:var(--card);border:1px solid var(--royal);border-radius:10px;color:var(--sky);text-decoration:none;font-weight:700;">🎛️ New: Deck &amp; Wrapper Setup Guide →</a>
+      </div>
+      <svg class="compass" width="190" height="190" viewBox="0 0 190 190" role="img" aria-label="Yaw compass showing !cam presets: front 0 degrees, right 90, back 180, left -90">
+        <circle cx="95" cy="95" r="78" fill="none" stroke="#1B2C5E" stroke-width="2"/>
+        <circle cx="95" cy="95" r="58" fill="none" stroke="#1B2C5E" stroke-width="1" stroke-dasharray="3 5"/>
+        <line x1="95" y1="37" x2="95" y2="17" stroke="#4DB8FF" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="95" cy="95" r="6" fill="#1E6FFF"/>
+        <path d="M95 95 L95 45" stroke="#1E6FFF" stroke-width="3" stroke-linecap="round"/>
+        <path d="M88 54 L95 42 L102 54" fill="none" stroke="#1E6FFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="95" y="12" fill="#FFFFFF" font-size="11" font-weight="700" text-anchor="middle">front 0°</text>
+        <text x="181" y="99" fill="#8FA3CC" font-size="11" font-weight="700" text-anchor="end">right 90°</text>
+        <text x="95" y="186" fill="#8FA3CC" font-size="11" font-weight="700" text-anchor="middle">back 180°</text>
+        <text x="9" y="99" fill="#8FA3CC" font-size="11" font-weight="700" text-anchor="start">left -90°</text>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<nav aria-label="Sections">
+  <div class="wrap">
+    <a href="#prereqs">Prerequisites</a>
+    <a href="#obs">OBS Setup</a>
+    <a href="#shader">Shader</a>
+    <a href="#script">Streamer.bot Script</a>
+    <a href="#wiring">Commands &amp; Triggers</a>
+    <a href="#planet">Tiny Planet</a>
+    <a href="#queue">Queue</a>
+    <a href="#decks">Deck Buttons</a>
+    <a href="#test">Testing</a>
+    <a href="#quality">Image Quality</a>
+    <a href="#trouble">Troubleshooting</a>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <section id="prereqs">
+    <div class="part"><span class="part-num">Part 1</span><h2>Prerequisites</h2></div>
+    <p>Everything in this guide is embedded below — both code files have copy buttons. You'll paste the shader into a text file for OBS and the C# script directly into Streamer.bot.</p>
+    <ol class="steps">
+      <li><b>OBS Studio 28+</b> with the WebSocket server enabled: <span class="pill">Tools → WebSocket Server Settings</span> → Enable, port <span class="pill">4455</span>. Note the password if you set one.</li>
+      <li><b>obs-shaderfilter plugin</b> — download from the plugin's GitHub releases page for your OBS version and OS. Restart OBS after installing.</li>
+      <li><b>Streamer.bot</b> connected to both Twitch and OBS (<span class="pill">Stream Apps → OBS Studio</span> → add connection on port 4455).</li>
+      <li>Your 360 camera feeding OBS in <b>equirectangular</b> mode. The Insta360 X5 in webcam mode outputs 2:1 panoramic at <span class="pill">2880×1440</span>.</li>
+    </ol>
+  </section>
+
+  <section id="obs">
+    <div class="part"><span class="part-num">Part 2</span><h2>OBS: Capture the camera</h2></div>
+    <ol class="steps">
+      <li>Add a <b>Video Capture Device</b> source for the camera. Name it something exact and memorable, e.g. <span class="pill">Insta360 X5</span> — you'll need this name <b>character-for-character</b> in the script later.</li>
+      <li>In the source properties, <b>uncheck "Use Preset"</b> and manually set the resolution to <span class="pill">2880×1440</span> at 30 FPS. If OBS defaults to 1920×1080 or 720p here, your final image quality tanks — this is the #1 quality complaint.</li>
+      <li>Confirm the raw feed looks like a stretched-out unwrapped panorama. That's equirectangular — correct. If you see a normal flat view, the camera is in reframe/single-lens mode instead.</li>
+    </ol>
+  </section>
+
+  <section id="shader">
+    <div class="part"><span class="part-num">Part 3</span><h2>Install the reframe shader</h2></div>
+    <ol class="steps">
+      <li>Copy the shader below and save it as <span class="pill">mushbox-360-reframe.shader</span> anywhere on your PC (Notepad is fine — just make sure the extension isn't secretly <span class="pill">.txt</span>).</li>
+      <li>In OBS: right-click the camera source → <b>Filters</b> → <b>+</b> → <b>User-defined shader</b>. Keep the default filter name <span class="pill">User-defined shader</span> (or note what you name it — the script needs it exactly).</li>
+      <li>In the filter, check <b>Load shader text from file</b> and browse to the file you saved.</li>
+      <li>You should now see a flat, normal-looking view with sliders: <b>Yaw, Pitch, Roll, Field of view, Output aspect</b>, plus <b>Projection</b> and <b>Tiny-planet wrap</b> (new in v2.4). Set <b>Output aspect</b> to <span class="pill">1.7778</span> for 16:9. FOV around 95–115 looks natural. Leave <b>Projection</b> at 0 for the normal view.</li>
+      <li>Fix the frame: right-click the source → <b>Transform → Edit Transform</b> → Bounding Box Type <b>Stretch to bounds</b>, size <span class="pill">1920×1080</span> (or your canvas size).</li>
+    </ol>
+    <div class="callout good"><b>Sanity check:</b> drag the Yaw slider by hand. The view should pan smoothly through the full 360, including cleanly across the seam behind the camera.</div>
+
+    <div class="codebox">
+      <div class="codebox-head">
+        <span class="codebox-title">mushbox-360-reframe.shader (v2.4 — tiny-planet projection + seam / pitch / BASE_YAW fixes)</span>
+        <button class="copybtn" data-copy="shader-code">Copy shader</button>
+      </div>
+<pre id="shader-code">// ============================================================
+// Mushbox 360 Reframe Shader (for obs-shaderfilter) -- v2.4
+// Converts equirectangular 360 video (e.g. Insta360 X5, 2:1)
+// into a flat rectilinear view OR a stereographic "tiny planet"
+// view, with adjustable yaw / pitch / roll / FOV / output aspect.
+//
+// v2.1: fixed the vertical seam visible when facing the rear
+// (yaw 180) by manually blending across the texture edge.
+// v2.2: fixed inverted pitch -- positive pitch now looks UP.
+// v2.3: added BASE_YAW mounting offset so yaw 0 = true front
+// regardless of which lens faces forward.
+// v2.4: added tiny-planet (stereographic) projection mode.
+//   Set "projection" to 1 for little-planet. In planet mode the
+//   view looks straight DOWN at the nadir and wraps the horizon
+//   (plus some sky) into a ring around the planet. "planet_fov"
+//   controls how much of the sphere wraps -- BIGGER = smaller
+//   planet with more sky ring. "yaw" and "roll" spin the planet,
+//   so !spin still works. Pitch is intentionally ignored in
+//   planet mode (nadir-locked) to keep the classic look.
+//
+// IMPORTANT: The uniform names below (yaw, pitch, roll, fov,
+// output_aspect, projection, planet_fov) are what the Streamer.bot
+// script writes to. If you rename them, rename them in the C#
+// script too.
+// ============================================================
+
+// Mounting offset in degrees. 180 = camera's "rear" lens faces
+// the front of the vehicle. Change to 0 / 90 / -90 as needed.
+#define BASE_YAW 180.0
+
+uniform float yaw&lt;
+    string label = "Yaw (degrees)";
+    string widget_type = "slider";
+    float minimum = -360.0;
+    float maximum = 360.0;
+    float step = 0.1;
+&gt; = 0.0;
+uniform float pitch&lt;
+    string label = "Pitch (degrees)";
+    string widget_type = "slider";
+    float minimum = -90.0;
+    float maximum = 90.0;
+    float step = 0.1;
+&gt; = 0.0;
+uniform float roll&lt;
+    string label = "Roll (degrees)";
+    string widget_type = "slider";
+    float minimum = -180.0;
+    float maximum = 180.0;
+    float step = 0.1;
+&gt; = 0.0;
+uniform float fov&lt;
+    string label = "Field of view (degrees)";
+    string widget_type = "slider";
+    float minimum = 30.0;
+    float maximum = 150.0;
+    float step = 0.5;
+&gt; = 95.0;
+uniform float output_aspect&lt;
+    string label = "Output aspect (width/height, 1.7778 = 16:9)";
+    string widget_type = "slider";
+    float minimum = 0.5;
+    float maximum = 4.0;
+    float step = 0.0001;
+&gt; = 1.7778;
+
+// --- v2.4 additions -----------------------------------------
+// Projection mode: 0 = normal rectilinear reframe, 1 = tiny planet.
+uniform float projection&lt;
+    string label = "Projection (0 = normal, 1 = tiny planet)";
+    string widget_type = "slider";
+    float minimum = 0.0;
+    float maximum = 1.0;
+    float step = 1.0;
+&gt; = 0.0;
+// Tiny-planet wrap amount (degrees): the effective field of view
+// measured from the nadir out to the top/bottom frame edge.
+// ~200 = tight planet just past the horizon; ~250 = horizon plus
+// a healthy sky ring; ~300 = tiny planet floating in lots of sky.
+uniform float planet_fov&lt;
+    string label = "Tiny-planet wrap (degrees)";
+    string widget_type = "slider";
+    float minimum = 120.0;
+    float maximum = 320.0;
+    float step = 1.0;
+&gt; = 250.0;
+
+#define PI 3.14159265358979
+
+float4 mainImage(VertData v_in) : TARGET
+{
+    // Both projection modes produce a unit direction vector "dir"
+    // (x right, y up, z forward), which then feeds the shared
+    // equirect-UV + seam-fix tail below.
+    float3 dir;
+
+    if (projection &lt; 0.5)
+    {
+        // ================= Rectilinear (v2.3 path) =================
+        float fovRad  = radians(clamp(fov, 30.0, 150.0));
+        float halfTan = tan(fovRad * 0.5);
+        float ndcX = (v_in.uv.x - 0.5) * 2.0;
+        float ndcY = (0.5 - v_in.uv.y) * 2.0;
+        float3 ray = normalize(float3(
+            ndcX * halfTan,
+            ndcY * halfTan / output_aspect,
+            1.0
+        ));
+        // Roll (around forward/z axis)
+        float cr = cos(radians(roll));
+        float sr = sin(radians(roll));
+        ray = float3(cr * ray.x - sr * ray.y,
+                     sr * ray.x + cr * ray.y,
+                     ray.z);
+        // Pitch (around x axis; negated so positive = up)
+        float cp = cos(radians(pitch));
+        float sp = sin(radians(-pitch));
+        ray = float3(ray.x,
+                     cp * ray.y - sp * ray.z,
+                     sp * ray.y + cp * ray.z);
+        // Yaw (around vertical/y axis; BASE_YAW mount offset)
+        float yawTotal = yaw + BASE_YAW;
+        float cy = cos(radians(yawTotal));
+        float sy = sin(radians(yawTotal));
+        ray = float3( cy * ray.x + sy * ray.z,
+                      ray.y,
+                     -sy * ray.x + cy * ray.z);
+        dir = ray;
+    }
+    else
+    {
+        // ================= Tiny planet (stereographic) =================
+        // Centered, aspect-corrected screen coords so the planet is
+        // round rather than oval on a 16:9 canvas.
+        float2 sc = float2((v_in.uv.x - 0.5) * 2.0 * output_aspect,
+                           (0.5 - v_in.uv.y) * 2.0);
+        // Roll spins the flat planet image.
+        float cr = cos(radians(roll));
+        float sr = sin(radians(roll));
+        sc = float2(cr * sc.x - sr * sc.y,
+                    sr * sc.x + cr * sc.y);
+
+        float rr = length(sc);
+        // Yaw (+ mount offset) rotates the planet, so !spin works.
+        float az = atan2(sc.y, sc.x) + radians(yaw + BASE_YAW);
+
+        // Inverse stereographic: the top/bottom frame edge (rr ~= 1
+        // in height units) maps to planet_fov/2 degrees from the
+        // nadir. theta is the polar angle measured from straight-down.
+        float s     = tan(radians(clamp(planet_fov, 120.0, 320.0)) * 0.25);
+        float theta = 2.0 * atan(s * rr);
+
+        float st = sin(theta);
+        dir = float3( st * cos(az),
+                     -cos(theta),      // nadir (straight down) at center
+                      st * sin(az));
+    }
+
+    // ================= Shared: direction -&gt; equirect UV =================
+    float lon = atan2(dir.x, dir.z);              // -PI..PI
+    float lat = asin(clamp(dir.y, -1.0, 1.0));    // -PI/2..PI/2
+    float u = frac(lon / (2.0 * PI) + 0.5);
+    float v = 0.5 - lat / PI;
+
+    // --- Seam fix: manually blend across the texture edge ---
+    // Bilinear filtering clamps at the left/right edges, which
+    // draws a thin line when the view crosses the rear seam.
+    float w = max(uv_pixel_interval.x, 0.0001); // one texel width
+    if (u &lt; w || u &gt; 1.0 - w)
+    {
+        float t = frac(u + w) / (2.0 * w); // 0 at right edge, 1 at left edge
+        float4 cRight = image.Sample(textureSampler, float2(1.0 - 0.5 * w, v));
+        float4 cLeft  = image.Sample(textureSampler, float2(0.5 * w, v));
+        return lerp(cRight, cLeft, t);
+    }
+    return image.Sample(textureSampler, float2(u, v));
+}</pre>
+    </div>
+  </section>
+
+  <section id="script">
+    <div class="part"><span class="part-num">Part 4</span><h2>Streamer.bot: the script</h2></div>
+    <ol class="steps">
+      <li><b>Actions</b> tab → right-click → <b>Add</b> → name it <span class="pill">Cam360 Control</span>.</li>
+      <li>In its <b>Sub-Actions</b> pane: right-click → <b>Core → C# → Execute C# Code</b>.</li>
+      <li>Delete <b>all</b> the placeholder code and paste in the entire script below. Don't paste it inside the existing template — replace everything.</li>
+      <li>Edit the config block at the top: <span class="pill">SourceName</span> and <span class="pill">FilterName</span> must match OBS exactly (case, spaces, everything). <span class="pill">ObsConnection</span> is <span class="pill">0</span> if OBS is your first/only connection in Stream Apps.</li>
+      <li>Click the <b>References</b> tab and confirm these exist (add via "Add from Assembly Name" if missing): <span class="pill">mscorlib.dll</span>, <span class="pill">System.dll</span>, <span class="pill">System.Core.dll</span>.</li>
+      <li><b>Compile</b> → look for "Compiled Successfully" → <b>Save and Compile</b> → <b>OK</b>.</li>
+    </ol>
+    <div class="callout"><b>Heads up:</b> a missing <span class="pill">System.Core.dll</span> reference is the most common compile failure. If you see errors about dynamic binding or missing references, that's the fix.</div>
+
+    <div class="codebox">
+      <div class="codebox-head">
+        <span class="codebox-title">Cam360Control.cs v4.5 (pan / tilt / zoom / roll / tiny planet / corkscrew) — full drop-in replacement</span>
+        <button class="copybtn" data-copy="cs-code">Copy script</button>
+      </div>
+<pre id="cs-code">using System;
+using System.Globalization;
+using System.Threading;
+
+// ============================================================
+// Mushbox Cam360 Control — v4.5 (adds corkscrew flip+roll)
+// Built on v4.2. Writes two new shader uniforms: "projection"
+// (0 = normal reframe, 1 = stereographic tiny planet) and
+// "planet_fov" (how much sphere wraps; bigger = smaller planet).
+// Requires mushbox-360-reframe shader v2.4 or newer.
+//
+// camAction / !cam values:
+//   front|back|left|right  -&gt; pan to heading, re-level; EXITS planet
+//   up|down|level          -&gt; pitch presets; EXITS planet
+//   tilt &lt;-90..90&gt;         -&gt; pitch to exact angle; EXITS planet
+//   roll &lt;-180..180&gt;       -&gt; dutch angle; EXITS planet
+//   barrelroll             -&gt; full 360 roll (keeps current mode)
+//   corkscrew              -&gt; flip + roll (+ yaw) tumble, lands level
+//   &lt;degrees&gt;              -&gt; yaw only; EXITS planet
+//   spin                   -&gt; full 360 yaw spin (keeps current mode;
+//                             in planet mode this spins the globe)
+//   zoomin|zoomout         -&gt; step FOV (normal) OR planet wrap (planet)
+//   zoom &lt;fov&gt;             -&gt; exact FOV (normal) OR wrap (planet)
+//   zoomreset              -&gt; reset FOV (normal) OR wrap (planet)
+//   planet                 -&gt; toggle tiny planet on/off
+//   planet on|off          -&gt; force tiny planet on/off
+//   planet in|out          -&gt; bigger / smaller planet
+//   planet reset           -&gt; planet wrap back to default
+//   planet &lt;deg&gt;           -&gt; enter planet + set wrap (160..320)
+//
+// Commands: !cam &lt;value&gt;, !spin, !zoom &lt;...&gt;, !barrelroll, !corkscrew, !planet &lt;...&gt;
+// (You can add a dedicated !planet command in the Commands tab, OR
+//  just use "!cam planet ..." with no new trigger — both route here.)
+//
+// Clamping: chat zoom/wrap use the tighter Chat* ranges; deck
+// wrappers (camAction) get the full Deck* ranges.
+// ============================================================
+
+public class CPHInline
+{
+    // ======= EDIT THESE TO MATCH YOUR OBS SETUP =======
+    private const string SourceName = "Insta360 X5";
+    private const string FilterName = "User-defined shader";
+    private const int    ObsConnection = 0;
+
+    // ======= ANIMATION TUNING =======
+    private const int    StepMs                 = 25;
+    private const double PanDurationSec          = 1.5;
+    private const double SpinDurationSec         = 4.0;
+    private const double ZoomDurationSec         = 1.0;
+    private const double BarrelRollDurationSec   = 2.5;
+    private const double CorkscrewDurationSec    = 3.0;   // flip + roll tumble
+    private const double CorkscrewYawTurns       = 1.0;   // full turns per axis
+    private const double CorkscrewPitchTurns     = 1.0;   //   (set Yaw=0 for pure flip+roll,
+    private const double CorkscrewRollTurns      = 1.0;   //    Pitch=2 for a double flip, etc.)
+    private const double PlanetDurationSec       = 1.2;   // wrap grow/shrink tween
+    private const bool   ChatFeedback            = true;
+
+    // ======= ZOOM TUNING (rectilinear FOV) =======
+    private const double DefaultFov  = 115.0;
+    private const double ZoomStep    = 15.0;
+    private const double DeckFovMin  = 30.0;
+    private const double DeckFovMax  = 150.0;
+    private const double ChatFovMin  = 60.0;
+    private const double ChatFovMax  = 120.0;
+
+    // ======= TINY-PLANET TUNING (stereographic wrap in degrees) =======
+    // Higher wrap = smaller planet with more sky ring.
+    private const double DefaultPlanetFov = 250.0;
+    private const double PlanetFovStep    = 20.0;
+    private const double DeckPlanetMin    = 160.0;
+    private const double DeckPlanetMax    = 320.0;
+    private const double ChatPlanetMin    = 190.0;
+    private const double ChatPlanetMax    = 300.0;
+
+    private const string YawVar       = "cam360_yaw";
+    private const string PitchVar     = "cam360_pitch";
+    private const string FovVar       = "cam360_fov";
+    private const string RollVar      = "cam360_roll";
+    private const string ProjVar      = "cam360_proj";       // 0 or 1
+    private const string PlanetFovVar = "cam360_planetfov";  // degrees
+
+    // Projection mode being applied by the CURRENT move. SendAll reads this.
+    private double _proj = 0.0;
+    // When false, SendAll does NOT clamp pitch to +/-90 (used by the corkscrew flip).
+    private bool _pitchClamp = true;
+
+    public bool Execute()
+    {
+        string camAction = "";
+        if (args.ContainsKey("camAction") &amp;&amp; args["camAction"] != null)
+            camAction = args["camAction"].ToString().Trim().ToLowerInvariant();
+
+        string command = "";
+        if (args.ContainsKey("command") &amp;&amp; args["command"] != null)
+            command = args["command"].ToString().Trim().ToLowerInvariant();
+
+        string input = "";
+        if (args.ContainsKey("rawInput") &amp;&amp; args["rawInput"] != null)
+            input = args["rawInput"].ToString().Trim().ToLowerInvariant();
+
+        // Deck / wrapper argument takes priority (trusted: full ranges)
+        if (!string.IsNullOrEmpty(camAction))
+        {
+            RunNamedMove(camAction, false);
+            return true;
+        }
+
+        // No command = event trigger (e.g. Follow) -&gt; spin
+        if (string.IsNullOrEmpty(command))
+        {
+            DoSpin();
+            return true;
+        }
+
+        if (command == "!spin")
+        {
+            DoSpin();
+            return true;
+        }
+
+        if (command == "!barrelroll")
+        {
+            DoBarrelRoll();
+            return true;
+        }
+
+        if (command == "!corkscrew")
+        {
+            DoCorkscrew();
+            return true;
+        }
+
+        if (command == "!planet")
+        {
+            HandlePlanet(input, true);
+            return true;
+        }
+
+        if (command == "!zoom")
+        {
+            if (input == "")
+            {
+                if (ChatFeedback)
+                    CPH.SendMessage("Usage: !zoom 60-120, !zoom in, !zoom out, or !zoom reset");
+                return true;
+            }
+            if (input == "in")         RunNamedMove("zoomin", true);
+            else if (input == "out")   RunNamedMove("zoomout", true);
+            else if (input == "reset") RunNamedMove("zoomreset", true);
+            else                       RunNamedMove("zoom " + input, true);
+            return true;
+        }
+
+        if (command == "!cam")
+        {
+            if (input == "")
+            {
+                if (ChatFeedback)
+                    CPH.SendMessage("Usage: !cam front | back | left | right | up | down | level, !cam &lt;degrees&gt;, !cam tilt &lt;angle&gt;, !cam roll &lt;angle&gt;, !cam barrelroll, !cam corkscrew, !cam zoom &lt;fov&gt;, !cam zoomin | zoomout | zoomreset, !cam planet &lt;on|off|in|out|reset|degrees&gt;");
+                return true;
+            }
+            RunNamedMove(input, true);
+            return true;
+        }
+
+        return true;
+    }
+
+    // ================= MOVE DISPATCH =================
+
+    private void RunNamedMove(string move, bool fromChat)
+    {
+        string[] parts = move.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        string head = parts.Length &gt; 0 ? parts[0] : "";
+        string arg  = parts.Length &gt; 1 ? parts[1] : "";
+
+        double target;
+
+        switch (head)
+        {
+            case "spin":       DoSpin();           return;
+            case "barrelroll": DoBarrelRoll();     return;
+            case "corkscrew":  DoCorkscrew();      return;
+            case "planet":     HandlePlanet(arg, fromChat); return;
+
+            case "front":      MoveTo(0.0,   0.0); return;  // heading + level, exits planet
+            case "back":       MoveTo(180.0, 0.0); return;
+            case "left":       MoveTo(-90.0, 0.0); return;
+            case "right":      MoveTo(90.0,  0.0); return;
+            case "up":         PitchOnly(90.0);    return;
+            case "down":       PitchOnly(-90.0);   return;
+            case "level":      LevelAll();         return;
+
+            case "tilt":
+                if (double.TryParse(arg, NumberStyles.Float, CultureInfo.InvariantCulture, out target))
+                {
+                    PitchOnly(Clamp90(target));
+                }
+                else if (fromChat &amp;&amp; ChatFeedback)
+                {
+                    CPH.SendMessage("Usage: !cam tilt &lt;-90 to 90&gt;, e.g. !cam tilt 45");
+                }
+                return;
+
+            case "roll":
+                if (double.TryParse(arg, NumberStyles.Float, CultureInfo.InvariantCulture, out target))
+                {
+                    RollTo(Wrap180(target));
+                }
+                else if (fromChat &amp;&amp; ChatFeedback)
+                {
+                    CPH.SendMessage("Usage: !cam roll &lt;-180 to 180&gt;, e.g. !cam roll 15 (or !cam barrelroll)");
+                }
+                return;
+
+            case "zoomin":
+                if (InPlanet()) PlanetWrapTo(GetStoredPlanetFov() - PlanetFovStep, fromChat);
+                else            ZoomTo(GetStoredFov() - ZoomStep, fromChat);
+                return;
+
+            case "zoomout":
+                if (InPlanet()) PlanetWrapTo(GetStoredPlanetFov() + PlanetFovStep, fromChat);
+                else            ZoomTo(GetStoredFov() + ZoomStep, fromChat);
+                return;
+
+            case "zoomreset":
+                if (InPlanet()) PlanetWrapTo(DefaultPlanetFov, false);
+                else            ZoomTo(DefaultFov, false);
+                return;
+
+            case "zoom":
+                if (double.TryParse(arg, NumberStyles.Float, CultureInfo.InvariantCulture, out target))
+                {
+                    if (InPlanet()) PlanetWrapTo(target, fromChat);
+                    else            ZoomTo(target, fromChat);
+                }
+                else if (fromChat &amp;&amp; ChatFeedback)
+                {
+                    if (InPlanet())
+                        CPH.SendMessage("Planet mode: !cam zoom " + (int)ChatPlanetMin + "-" + (int)ChatPlanetMax + " sets planet size, or !cam planet off");
+                    else
+                        CPH.SendMessage("Usage: !cam zoom " + (int)ChatFovMin + "-" + (int)ChatFovMax + ", e.g. !cam zoom 80");
+                }
+                return;
+
+            default:
+                if (!double.TryParse(head, NumberStyles.Float, CultureInfo.InvariantCulture, out target))
+                {
+                    if (fromChat &amp;&amp; ChatFeedback)
+                        CPH.SendMessage("Couldn't read that. Try: !cam front | back | left | right | up | down | level, !cam 135, !cam tilt 45, !cam roll 15, !cam zoom 90, or !cam planet");
+                    return;
+                }
+                YawOnly(target);
+                return;
+        }
+    }
+
+    // ================= CAMERA MOVES (rectilinear -&gt; exit planet) =================
+
+    private void MoveTo(double targetYaw, double targetPitch)
+    {
+        _proj = 0.0;
+        double fromYaw   = GetStored(YawVar);
+        double fromPitch = GetStored(PitchVar);
+        double fromFov   = GetStoredFov();
+        double fromRoll  = GetStored(RollVar);
+        double yawDelta   = Wrap180(targetYaw - fromYaw);
+        double pitchDelta = Clamp90(targetPitch) - fromPitch;
+        double rollDelta  = Wrap180(0.0 - fromRoll);
+        Animate(fromYaw, yawDelta, fromPitch, pitchDelta, fromFov, 0.0, fromRoll, rollDelta, PanDurationSec);
+    }
+
+    private void YawOnly(double targetYaw)
+    {
+        _proj = 0.0;
+        double fromYaw   = GetStored(YawVar);
+        double fromPitch = GetStored(PitchVar);
+        double fromFov   = GetStoredFov();
+        double fromRoll  = GetStored(RollVar);
+        double yawDelta  = Wrap180(targetYaw - fromYaw);
+        Animate(fromYaw, yawDelta, fromPitch, 0.0, fromFov, 0.0, fromRoll, 0.0, PanDurationSec);
+    }
+
+    private void PitchOnly(double targetPitch)
+    {
+        _proj = 0.0;
+        double fromYaw    = GetStored(YawVar);
+        double fromPitch  = GetStored(PitchVar);
+        double fromFov    = GetStoredFov();
+        double fromRoll   = GetStored(RollVar);
+        double pitchDelta = Clamp90(targetPitch) - fromPitch;
+        Animate(fromYaw, 0.0, fromPitch, pitchDelta, fromFov, 0.0, fromRoll, 0.0, PanDurationSec);
+    }
+
+    private void RollTo(double targetRoll)
+    {
+        _proj = 0.0;
+        double fromYaw   = GetStored(YawVar);
+        double fromPitch = GetStored(PitchVar);
+        double fromFov   = GetStoredFov();
+        double fromRoll  = GetStored(RollVar);
+        double rollDelta = Wrap180(targetRoll - fromRoll);
+        Animate(fromYaw, 0.0, fromPitch, 0.0, fromFov, 0.0, fromRoll, rollDelta, PanDurationSec);
+    }
+
+    private void LevelAll()
+    {
+        _proj = 0.0;
+        double fromYaw   = GetStored(YawVar);
+        double fromPitch = GetStored(PitchVar);
+        double fromFov   = GetStoredFov();
+        double fromRoll  = GetStored(RollVar);
+        double pitchDelta = 0.0 - fromPitch;
+        double rollDelta  = Wrap180(0.0 - fromRoll);
+        Animate(fromYaw, 0.0, fromPitch, pitchDelta, fromFov, 0.0, fromRoll, rollDelta, PanDurationSec);
+    }
+
+    private void ZoomTo(double targetFov, bool fromChat)
+    {
+        _proj = 0.0;
+        double fromYaw   = GetStored(YawVar);
+        double fromPitch = GetStored(PitchVar);
+        double fromFov   = GetStoredFov();
+        double fromRoll  = GetStored(RollVar);
+        double clamped   = fromChat
+            ? ClampRange(targetFov, ChatFovMin, ChatFovMax)
+            : ClampRange(targetFov, DeckFovMin, DeckFovMax);
+        double fovDelta  = clamped - fromFov;
+        Animate(fromYaw, 0.0, fromPitch, 0.0, fromFov, fovDelta, fromRoll, 0.0, ZoomDurationSec);
+    }
+
+    // ================= SPIN / BARREL ROLL (keep current mode) =================
+
+    private void DoSpin()
+    {
+        _proj = GetStoredProjection();
+        double fromYaw   = GetStored(YawVar);
+        double fromPitch = GetStored(PitchVar);
+        double fromFov   = GetStoredFov();
+        double fromRoll  = GetStored(RollVar);
+        Animate(fromYaw, 360.0, fromPitch, 0.0, fromFov, 0.0, fromRoll, 0.0, SpinDurationSec);
+    }
+
+    private void DoBarrelRoll()
+    {
+        _proj = GetStoredProjection();
+        double fromYaw   = GetStored(YawVar);
+        double fromPitch = GetStored(PitchVar);
+        double fromFov   = GetStoredFov();
+        double fromRoll  = GetStored(RollVar);
+        Animate(fromYaw, 0.0, fromPitch, 0.0, fromFov, 0.0, fromRoll, 360.0, BarrelRollDurationSec);
+    }
+
+    // Corkscrew: flip (pitch) + roll (+ optional yaw) all at once, then land level.
+    // Needs the pitch clamp lifted so the flip can go over the top past 90 degrees.
+    private void DoCorkscrew()
+    {
+        _proj = 0.0;            // a tumble only reads correctly in the normal (rectilinear) view
+        _pitchClamp = false;    // let pitch travel the full turn instead of stopping at +/-90
+
+        double fromYaw   = GetStored(YawVar);
+        double fromPitch = GetStored(PitchVar);
+        double fromFov   = GetStoredFov();
+        double fromRoll  = GetStored(RollVar);
+        double heldPlanet = GetStoredPlanetFov();
+
+        double yawDelta   = 360.0 * CorkscrewYawTurns;
+        double pitchDelta = 360.0 * CorkscrewPitchTurns;
+        double rollDelta  = 360.0 * CorkscrewRollTurns;
+
+        int totalSteps = Math.Max(1, (int)(CorkscrewDurationSec * 1000.0 / StepMs));
+        for (int i = 1; i &lt;= totalSteps; i++)
+        {
+            double t = (double)i / totalSteps;
+            double eased = t * t * (3.0 - 2.0 * t);
+            SendAll(fromYaw   + yawDelta   * eased,
+                    fromPitch + pitchDelta * eased,   // sent unclamped while _pitchClamp == false
+                    fromFov,
+                    fromRoll  + rollDelta  * eased,
+                    heldPlanet);
+            Thread.Sleep(StepMs);
+        }
+
+        // Whole turns net to zero, so land exactly where we started, level and clamped again.
+        _pitchClamp = true;
+        double finalYaw   = Wrap180(fromYaw  + yawDelta);
+        double finalPitch = Clamp90(fromPitch);
+        double finalRoll  = Wrap180(fromRoll + rollDelta);
+        SendAll(finalYaw, finalPitch, fromFov, finalRoll, heldPlanet);
+
+        CPH.SetGlobalVar(YawVar,       finalYaw,   false);
+        CPH.SetGlobalVar(PitchVar,     finalPitch, false);
+        CPH.SetGlobalVar(FovVar,       fromFov,    false);
+        CPH.SetGlobalVar(RollVar,      finalRoll,  false);
+        CPH.SetGlobalVar(ProjVar,      _proj,      false);
+        CPH.SetGlobalVar(PlanetFovVar, heldPlanet, false);
+    }
+
+    // ================= TINY PLANET =================
+
+    private void HandlePlanet(string arg, bool fromChat)
+    {
+        arg = (arg ?? "").Trim();
+
+        if (arg == "")
+        {
+            PlanetToggle();
+            return;
+        }
+        if (arg == "on")
+        {
+            PlanetSnap(1.0, GetStoredPlanetFov());
+            if (ChatFeedback) CPH.SendMessage("Tiny planet ON — !planet out for a smaller planet, !spin to rotate it");
+            return;
+        }
+        if (arg == "off")
+        {
+            PlanetSnap(0.0, GetStoredPlanetFov());
+            if (ChatFeedback) CPH.SendMessage("Tiny planet OFF");
+            return;
+        }
+        if (arg == "reset")
+        {
+            PlanetWrapTo(DefaultPlanetFov, false);
+            return;
+        }
+        if (arg == "in")  // punch in -&gt; bigger planet -&gt; lower wrap
+        {
+            PlanetWrapTo(GetStoredPlanetFov() - PlanetFovStep, fromChat);
+            return;
+        }
+        if (arg == "out") // pull back -&gt; smaller planet -&gt; higher wrap
+        {
+            PlanetWrapTo(GetStoredPlanetFov() + PlanetFovStep, fromChat);
+            return;
+        }
+
+        double val;
+        if (double.TryParse(arg, NumberStyles.Float, CultureInfo.InvariantCulture, out val))
+        {
+            PlanetWrapTo(val, fromChat);
+        }
+        else if (fromChat &amp;&amp; ChatFeedback)
+        {
+            CPH.SendMessage("Usage: !planet (toggle), !planet on|off, !planet in|out, !planet reset, !planet &lt;" + (int)ChatPlanetMin + "-" + (int)ChatPlanetMax + "&gt;");
+        }
+    }
+
+    private void PlanetToggle()
+    {
+        if (InPlanet())
+        {
+            PlanetSnap(0.0, GetStoredPlanetFov());
+            if (ChatFeedback) CPH.SendMessage("Tiny planet OFF");
+        }
+        else
+        {
+            PlanetSnap(1.0, GetStoredPlanetFov());
+            if (ChatFeedback) CPH.SendMessage("Tiny planet ON — !planet out for a smaller planet, !spin to rotate it");
+        }
+    }
+
+    // Instant projection switch (can't tween between projections). Holds
+    // yaw/pitch/fov/roll, sets projection + wrap.
+    private void PlanetSnap(double proj, double wrap)
+    {
+        _proj = (proj &gt;= 0.5) ? 1.0 : 0.0;
+        double y = GetStored(YawVar);
+        double p = GetStored(PitchVar);
+        double f = GetStoredFov();
+        double r = GetStored(RollVar);
+        double w = ClampRange(wrap, DeckPlanetMin, DeckPlanetMax);
+        SendAll(y, p, f, r, w);
+        CPH.SetGlobalVar(ProjVar, _proj, false);
+        CPH.SetGlobalVar(PlanetFovVar, w, false);
+    }
+
+    // Smoothly grow/shrink the planet. Implies planet mode ON.
+    private void PlanetWrapTo(double targetWrap, bool fromChat)
+    {
+        _proj = 1.0;
+        double fromWrap = GetStoredPlanetFov();
+        double clamped  = fromChat
+            ? ClampRange(targetWrap, ChatPlanetMin, ChatPlanetMax)
+            : ClampRange(targetWrap, DeckPlanetMin, DeckPlanetMax);
+        double y = GetStored(YawVar);
+        double p = GetStored(PitchVar);
+        double f = GetStoredFov();
+        double r = GetStored(RollVar);
+        double delta = clamped - fromWrap;
+
+        int totalSteps = Math.Max(1, (int)(PlanetDurationSec * 1000.0 / StepMs));
+        for (int i = 1; i &lt;= totalSteps; i++)
+        {
+            double t = (double)i / totalSteps;
+            double eased = t * t * (3.0 - 2.0 * t);
+            SendAll(y, p, f, r, fromWrap + delta * eased);
+            Thread.Sleep(StepMs);
+        }
+        SendAll(y, p, f, r, clamped);
+        CPH.SetGlobalVar(ProjVar, 1.0, false);
+        CPH.SetGlobalVar(PlanetFovVar, clamped, false);
+    }
+
+    // ================= ANIMATION CORE =================
+
+    private void Animate(double fromYaw, double yawDelta, double fromPitch, double pitchDelta,
+                         double fromFov, double fovDelta, double fromRoll, double rollDelta,
+                         double durationSec)
+    {
+        double heldPlanet = GetStoredPlanetFov(); // wrap doesn't change on these moves
+        int totalSteps = Math.Max(1, (int)(durationSec * 1000.0 / StepMs));
+
+        for (int i = 1; i &lt;= totalSteps; i++)
+        {
+            double t = (double)i / totalSteps;
+            double eased = t * t * (3.0 - 2.0 * t);
+            SendAll(fromYaw + yawDelta * eased,
+                    fromPitch + pitchDelta * eased,
+                    fromFov + fovDelta * eased,
+                    fromRoll + rollDelta * eased,
+                    heldPlanet);
+            Thread.Sleep(StepMs);
+        }
+
+        double finalYaw   = Wrap180(fromYaw + yawDelta);
+        double finalPitch = Clamp90(fromPitch + pitchDelta);
+        double finalFov   = ClampRange(fromFov + fovDelta, DeckFovMin, DeckFovMax);
+        double finalRoll  = Wrap180(fromRoll + rollDelta);
+        SendAll(finalYaw, finalPitch, finalFov, finalRoll, heldPlanet);
+
+        CPH.SetGlobalVar(YawVar,       finalYaw,   false);
+        CPH.SetGlobalVar(PitchVar,     finalPitch, false);
+        CPH.SetGlobalVar(FovVar,       finalFov,   false);
+        CPH.SetGlobalVar(RollVar,      finalRoll,  false);
+        CPH.SetGlobalVar(ProjVar,      _proj,      false);
+        CPH.SetGlobalVar(PlanetFovVar, heldPlanet, false);
+    }
+
+    // ================= OBS PLUMBING =================
+
+    private void SendAll(double yaw, double pitch, double fov, double roll, double planetFov)
+    {
+        string json =
+            "{\"sourceName\":\"" + Escape(SourceName) + "\"," +
+            "\"filterName\":\"" + Escape(FilterName) + "\"," +
+            "\"filterSettings\":{" +
+            "\"yaw\":"        + Wrap180(yaw).ToString("F2", CultureInfo.InvariantCulture) + "," +
+            "\"pitch\":"      + (_pitchClamp ? Clamp90(pitch) : pitch).ToString("F2", CultureInfo.InvariantCulture) + "," +
+            "\"fov\":"        + ClampRange(fov, DeckFovMin, DeckFovMax).ToString("F2", CultureInfo.InvariantCulture) + "," +
+            "\"roll\":"       + Wrap180(roll).ToString("F2", CultureInfo.InvariantCulture) + "," +
+            "\"projection\":" + _proj.ToString("F0", CultureInfo.InvariantCulture) + "," +
+            "\"planet_fov\":" + ClampRange(planetFov, DeckPlanetMin, DeckPlanetMax).ToString("F2", CultureInfo.InvariantCulture) +
+            "}}";
+
+        CPH.ObsSendRaw("SetSourceFilterSettings", json, ObsConnection);
+    }
+
+    private double GetStored(string varName)
+    {
+        try { return CPH.GetGlobalVar&lt;double&gt;(varName, false); }
+        catch { return 0.0; }
+    }
+
+    // FOV fallback: an unset global reads as 0, which is not a valid FOV.
+    private double GetStoredFov()
+    {
+        double f = GetStored(FovVar);
+        if (f &lt; DeckFovMin || f &gt; DeckFovMax) return DefaultFov;
+        return f;
+    }
+
+    // Planet wrap fallback: unset/out-of-range -&gt; default.
+    private double GetStoredPlanetFov()
+    {
+        double f = GetStored(PlanetFovVar);
+        if (f &lt; DeckPlanetMin || f &gt; DeckPlanetMax) return DefaultPlanetFov;
+        return f;
+    }
+
+    private double GetStoredProjection()
+    {
+        return (GetStored(ProjVar) &gt;= 0.5) ? 1.0 : 0.0;
+    }
+
+    private bool InPlanet()
+    {
+        return GetStoredProjection() &gt;= 0.5;
+    }
+
+    // ================= HELPERS =================
+
+    private static double ClampRange(double v, double min, double max)
+    {
+        return Math.Max(min, Math.Min(max, v));
+    }
+
+    private static double Wrap180(double degrees)
+    {
+        double d = degrees % 360.0;
+        if (d &gt; 180.0)  d -= 360.0;
+        if (d &lt; -180.0) d += 360.0;
+        return d;
+    }
+
+    private static double Clamp90(double degrees)
+    {
+        return Math.Max(-90.0, Math.Min(90.0, degrees));
+    }
+
+    private static string Escape(string s)
+    {
+        return s.Replace("\\", "\\\\").Replace("\"", "\\\"");
+    }
+}</pre>
+    </div>
+  </section>
+
+  <section id="wiring">
+    <div class="part"><span class="part-num">Part 5</span><h2>Commands &amp; triggers</h2></div>
+    <ol class="steps">
+      <li><b>Commands</b> tab → right-click → <b>Add</b> → create <span class="pill">!cam</span>. Set <b>Location</b> to <b>Starts With</b> — <b>not Exact</b>. Exact silently ignores <span class="pill">!cam 90</span> because of the argument.</li>
+      <li>Create <span class="pill">!zoom</span> the same way — <b>Starts With</b> (it takes arguments like <span class="pill">!zoom 80</span>).</li>
+      <li>Create <span class="pill">!spin</span>, <span class="pill">!barrelroll</span>, and <span class="pill">!corkscrew</span> (Exact is fine — no arguments). Make sure all commands are <b>Enabled</b>.</li>
+      <li><b>Tiny planet (optional):</b> create <span class="pill">!planet</span> — <b>Starts With</b> (it takes arguments like <span class="pill">!planet out</span>). Skip it if you like; <span class="pill">!cam planet ...</span> drives the same thing with no extra command.</li>
+      <li>In the <span class="pill">Cam360 Control</span> action, right-click the <b>Triggers</b> pane → <b>Twitch → Chat → Command</b> → select <span class="pill">!cam</span>. Repeat for <span class="pill">!zoom</span>, <span class="pill">!spin</span>, <span class="pill">!barrelroll</span>, <span class="pill">!corkscrew</span>, and <span class="pill">!planet</span> (if you added it).</li>
+      <li>For the follower spin: right-click Triggers again → <b>Twitch → Channel → Follow</b>. The script treats any trigger without a chat command as a spin, so followers spin the camera automatically.</li>
+    </ol>
+
+    <h3>Command reference</h3>
+    <table>
+      <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><span class="pill">!cam front</span></td><td>Pan to 0° (camera forward)</td></tr>
+        <tr><td><span class="pill">!cam back</span></td><td>Pan to 180°</td></tr>
+        <tr><td><span class="pill">!cam left</span></td><td>Pan to -90°</td></tr>
+        <tr><td><span class="pill">!cam right</span></td><td>Pan to 90°</td></tr>
+        <tr><td><span class="pill">!cam 135</span></td><td>Pan to any absolute angle</td></tr>
+        <tr><td><span class="pill">!cam up</span> / <span class="pill">!cam down</span></td><td>Tilt straight up / straight down</td></tr>
+        <tr><td><span class="pill">!cam level</span></td><td>Return pitch and roll to level</td></tr>
+        <tr><td><span class="pill">!cam tilt 45</span></td><td>Tilt to any exact angle (-90 to 90)</td></tr>
+        <tr><td><span class="pill">!cam roll 15</span></td><td>Hold a dutch angle (-180 to 180); <span class="pill">roll 0</span> straightens out</td></tr>
+        <tr><td><span class="pill">!barrelroll</span></td><td>Full 360° roll, ends where it started</td></tr>
+        <tr><td><span class="pill">!corkscrew</span></td><td>Flip + roll (+ spin) tumble, lands level; forces normal view for the move</td></tr>
+        <tr><td><span class="pill">!zoom 80</span></td><td>Zoom to an exact FOV — lower = punched in (chat clamped 60–120)</td></tr>
+        <tr><td><span class="pill">!zoom in</span> / <span class="pill">!zoom out</span></td><td>Step the zoom by 15° of FOV</td></tr>
+        <tr><td><span class="pill">!zoom reset</span></td><td>Glide back to the default FOV</td></tr>
+        <tr><td><span class="pill">!spin</span></td><td>Full 360° spin, ends where it started (holds tilt + zoom)</td></tr>
+        <tr><td><span class="pill">!planet</span></td><td>Toggle stereographic tiny-planet view on / off</td></tr>
+        <tr><td><span class="pill">!planet on</span> / <span class="pill">!planet off</span></td><td>Force tiny planet on or off</td></tr>
+        <tr><td><span class="pill">!planet in</span> / <span class="pill">!planet out</span></td><td>Bigger planet / smaller planet with more sky. In planet mode <span class="pill">!zoom</span> reroutes here</td></tr>
+        <tr><td><span class="pill">!planet 280</span></td><td>Enter planet and set size directly (chat 190–300)</td></tr>
+        <tr><td><span class="pill">!planet reset</span></td><td>Planet size back to the default (250°)</td></tr>
+        <tr><td><em>new follower</em></td><td>Automatic full spin</td></tr>
+      </tbody>
+    </table>
+    <p class="dim">The direction presets (<span class="pill">front</span>/<span class="pill">back</span>/<span class="pill">left</span>/<span class="pill">right</span>) also return pitch and roll to level in one smooth move — one preset always rescues a camera chat has left crooked. Zoom holds across pans until changed or reset.</p>
+    <p class="dim">Tuning lives at the top of the script: <span class="pill">PanDurationSec</span>, <span class="pill">SpinDurationSec</span>, <span class="pill">ZoomDurationSec</span>, <span class="pill">BarrelRollDurationSec</span>, <span class="pill">StepMs</span>, <span class="pill">ChatFeedback</span> (false silences chat replies), plus the zoom block: <span class="pill">DefaultFov</span> (your resting FOV), <span class="pill">ZoomStep</span>, and the chat FOV clamp (<span class="pill">ChatFovMin</span>/<span class="pill">ChatFovMax</span>, default 60–120 so chat can’t mush-zoom or fisheye the stream). Deck buttons get the full 30–150 range.</p>
+
+    <h3 id="planet">Tiny planet mode</h3>
+    <p>Tiny planet is a separate <b>stereographic</b> projection — not just pitching down and zooming out, since a normal rectilinear view physically can't wrap past 180°. Flip it on and the camera looks straight down at the nadir with the horizon (and some sky) curled into a ring around a little globe. Needs <b>shader v2.4+</b> and <b>script v4.4+</b>; the <span class="pill">Projection</span> switch is an instant cut (you can't tween between two projections), but growing and shrinking the planet animates smoothly.</p>
+    <ol class="steps">
+      <li>Any normal framing command — <span class="pill">!cam front</span>, <span class="pill">tilt</span>, a heading, etc. — automatically snaps back to the normal view, so chat can never get stuck in planet mode.</li>
+      <li>In planet mode, <span class="pill">!spin</span> rotates the globe instead of panning, and <span class="pill">!zoom in</span> / <span class="pill">!zoom out</span> are rerouted to planet size.</li>
+      <li>Higher <b>Tiny-planet wrap</b> = smaller planet with more sky. Tune the resting value with <span class="pill">DefaultPlanetFov</span> at the top of the script.</li>
+    </ol>
+    <div class="callout"><b>Roof-mount tip:</b> straight down is your vehicle, so on a car rig the sweet spot is usually around <span class="pill">270–290</span> — the car shrinks to a tidy planet core and the street and scenery dominate the ring. Try <span class="pill">!planet out</span> a couple of times live to dial it in, then set <span class="pill">DefaultPlanetFov</span> to that number.</div>
+  </section>
+
+  <section id="queue">
+    <div class="part"><span class="part-num">Part 6</span><h2>The queue — don't skip this</h2></div>
+    <p>If a follow spin fires while a <span class="pill">!cam</span> move is mid-animation, both threads fight over the yaw value and the camera stutters. The fix takes 30 seconds:</p>
+    <ol class="steps">
+      <li><b>Settings → Action Queues → Add</b>.</li>
+      <li>Name it <span class="pill">camera</span> and leave <b>Blocking</b> checked (runs one action at a time).</li>
+      <li>In the <span class="pill">Cam360 Control</span> action's settings, set its <b>Queue</b> to <span class="pill">camera</span>.</li>
+    </ol>
+    <p>Stacked events now wait their turn instead of colliding. Any future camera actions (raid spins, sub moves) should go on this same queue.</p>
+  </section>
+
+  <section id="decks">
+    <div class="part"><span class="part-num">Optional</span><h2>Stream Deck / Decks buttons</h2></div>
+    <p>Deck buttons trigger actions directly with no chat command attached, so pointing a deck button straight at <span class="pill">Cam360 Control</span> would always fall into the "no command = spin" path. The fix: keep the core action as the engine, and create one tiny <b>wrapper action</b> per button that passes it a <span class="pill">camAction</span> argument. The script above already understands this argument.</p>
+    <ol class="steps">
+      <li>Create a new action per button, e.g. <span class="pill">Cam Left</span>, <span class="pill">Cam Right</span>, <span class="pill">Cam Front</span>, <span class="pill">Cam Back</span>, <span class="pill">Cam Spin</span>.</li>
+      <li>In each wrapper, add sub-action <b>Core → Arguments → Set Argument</b> — Name: <span class="pill">camAction</span>, Value: <span class="pill">left</span> (or <span class="pill">right</span>, <span class="pill">front</span>, <span class="pill">back</span>, <span class="pill">up</span>, <span class="pill">down</span>, <span class="pill">level</span>, <span class="pill">spin</span>, <span class="pill">barrelroll</span>, <span class="pill">corkscrew</span>, <span class="pill">zoomin</span>, <span class="pill">zoomout</span>, <span class="pill">zoomreset</span>, any number like <span class="pill">135</span>, or two-word values like <span class="pill">tilt 45</span>, <span class="pill">roll 15</span>, <span class="pill">zoom 90</span> — deck buttons get the full 30–150 FOV range).</li>
+      <li>Add sub-action <b>Core → Actions → Run Action</b> → select <span class="pill">Cam360 Control</span> → leave <b>"Run Immediately" UNCHECKED</b>. Unchecked routes the move through the blocking <span class="pill">camera</span> queue, so mashing buttons queues moves politely instead of fighting over the yaw.</li>
+      <li>In the Decks editor, point each button at its wrapper action. The wrappers need no triggers and no queue of their own.</li>
+    </ol>
+    <div class="callout good"><b>Rule of thumb:</b> triggers and code live on the core action; decks, hotkeys, and channel point redemptions point at wrappers. Never delete the core — everything routes through it.</div>
+  </section>
+
+  <section id="test">
+    <div class="part"><span class="part-num">Part 7</span><h2>Test it</h2></div>
+    <ol class="steps">
+      <li>From your own chat: <span class="pill">!cam left</span>, <span class="pill">!cam back</span>, <span class="pill">!cam 135</span>, <span class="pill">!cam tilt 45</span>, <span class="pill">!zoom 80</span>, <span class="pill">!barrelroll</span>, <span class="pill">!cam front</span> (should re-level but hold the zoom), <span class="pill">!zoom reset</span>, <span class="pill">!spin</span>, <span class="pill">!corkscrew</span>.</li>
+      <li>Test the follow trigger without a real follower: right-click the action → <b>Test Trigger</b>.</li>
+      <li>Expected: smooth ~1.5-second eased pans always taking the shortest direction, ~1-second zooms, a 2.5-second barrel roll and a 4-second spin that both end exactly where they started.</li>
+    </ol>
+  </section>
+
+  <section id="quality">
+    <div class="part"><span class="part-num">Part 8</span><h2>Getting the best image quality</h2></div>
+    <p>A 360 camera spreads its pixels across an entire sphere, and this view only shows a slice of them — at ~95° FOV you're seeing roughly a quarter of the horizontal resolution stretched to full frame. It will never match a dedicated webcam, but these settings close most of the gap:</p>
+    <ol class="steps">
+      <li><b>Capture at full resolution.</b> Uncheck "Use Preset" and set <span class="pill">2880×1440</span> manually (Part 2). This is the single biggest factor.</li>
+      <li><b>Widen the FOV.</b> Every degree wider uses more source pixels. 110–120° is noticeably sharper than 90°, with a slight fisheye look. Avoid narrow "zoomed" FOVs as a resting state.</li>
+      <li><b>Lanczos scaling.</b> Right-click the source → <b>Scale Filtering → Lanczos</b>. The default is soft.</li>
+      <li><b>Mild sharpening.</b> Add OBS's built-in <b>Sharpen</b> filter <em>after</em> the shader filter, around 0.08–0.15.</li>
+      <li><b>Light the room well.</b> Small 360 sensors get noisy in dim light, and noise plus upscaling reads as blur on stream.</li>
+      <li><b>Feed the encoder.</b> Spins are full-frame motion. Bump your bitrate or step your encoder preset up in quality — smearing during moves is usually bitrate starvation.</li>
+    </ol>
+    <div class="callout good"><b>Pro layout:</b> keep a normal cam (or the camera's single-lens mode) as your primary sharp "face" scene, and use the 360 chat-controlled view as its own scene or corner source. The 360 cam is the interactive toy — it doesn't have to carry your image quality.</div>
+  </section>
+
+  <section id="trouble">
+    <div class="part"><span class="part-num">Part 9</span><h2>Troubleshooting</h2></div>
+    <p class="dim">In the order things actually break:</p>
+
+    <details>
+      <summary>Script won't compile — errors about dynamic binding or missing references</summary>
+      <div class="body"><p>Add <span class="pill">System.Core.dll</span> in the References tab of the Execute C# Code window ("Add from Assembly Name"). This is the most common failure by a wide margin.</p></div>
+    </details>
+    <details>
+      <summary>Commands do nothing, no errors anywhere</summary>
+      <div class="body"><p>1) Check the <span class="pill">!cam</span> command's Location is <b>Starts With</b>, not Exact. 2) Check the command is Enabled and its trigger is actually attached to the action. 3) Check Stream Apps → OBS shows connected (green).</p></div>
+    </details>
+    <details>
+      <summary>Compiles and triggers fire, but the camera doesn't move</summary>
+      <div class="body"><p><span class="pill">SourceName</span> or <span class="pill">FilterName</span> in the script doesn't exactly match OBS. Copy-paste the names from OBS directly into the script constants — one wrong space breaks it silently.</p></div>
+    </details>
+    <details>
+      <summary>Changed DefaultFov (or another default) but OBS snaps back to the old value</summary>
+      <div class="body"><p>The script remembers its last position in Streamer.bot global variables (<span class="pill">cam360_yaw</span>, <span class="pill">cam360_pitch</span>, <span class="pill">cam360_fov</span>, <span class="pill">cam360_roll</span>) and those win over the constants. After changing <span class="pill">DefaultFov</span>, run <span class="pill">!zoom reset</span> once to store the new value — or just restart Streamer.bot, which clears the globals so the first move falls back to your new defaults. Same logic applies after moving the sliders by hand in OBS: the script doesn’t see manual slider changes and will snap back on the next move.</p></div>
+    </details>
+    <details>
+      <summary>Camera jumps or stutters when events overlap</summary>
+      <div class="body"><p>You skipped Part 6. Set up the blocking <span class="pill">camera</span> queue and assign the action to it.</p></div>
+    </details>
+    <details>
+      <summary>Visible seam or heavy distortion in the view</summary>
+      <div class="body"><p><b>Thin vertical line exactly when facing the rear (yaw 180):</b> you're running the original (v1) shader. The v2.1 shader in this guide fixes it with a horizontal-wrap sampler — re-copy the shader above into your .shader file and reload the filter. <b>Ghosting or misalignment on close objects at the sides (±90°):</b> that's the camera's optical stitch line where the two lenses meet, worst on close subjects. Fix is physical: rotate the camera so the lenses face what matters and the stitch zones land somewhere boring. <b>Everything looks warped:</b> confirm the camera is outputting equirectangular (a 2:1 resolution like 2880×1440), not a fisheye or already-reframed mode.</p></div>
+    </details>
+    <details>
+      <summary>Chat commands animate from the wrong starting position</summary>
+      <div class="body"><p>The script tracks yaw itself (starting at 0). If you drag the OBS slider by hand, the next chat command animates from the script's last known angle, not the slider's. Run any <span class="pill">!cam</span> command and it re-syncs from there.</p></div>
+    </details>
+    <details>
+      <summary>OBS WebSocket connection refused</summary>
+      <div class="body"><p>Confirm OBS WebSocket is enabled on port <span class="pill">4455</span> and the password in Streamer.bot matches. If another app is squatting on the port, change it in both places.</p></div>
+    </details>
+  </section>
+
+</main>
+
+<footer>
+  Built by mushroom (Mushr00msauce) — <b>powered by Mushbox</b><br>
+  <span style="color:var(--text-dim);font-size:.85em">Guide v4.5 — updated July 20, 2026 · script v4.5 · shader v2.4 · <a href="decks.html" style="color:var(--sky)">Deck &amp; Wrapper Guide</a></span>
+</footer>
+
+<script>
+(function(){
+  var buttons = document.querySelectorAll('.copybtn');
+  buttons.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var pre = document.getElementById(btn.getAttribute('data-copy'));
+      if(!pre) return;
+      var text = pre.textContent;
+      function done(){
+        var original = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(function(){
+          btn.textContent = original;
+          btn.classList.remove('copied');
+        }, 1800);
+      }
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(done, function(){ fallback(); });
+      } else {
+        fallback();
+      }
+      function fallback(){
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); done(); } catch(e){}
+        document.body.removeChild(ta);
+      }
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
