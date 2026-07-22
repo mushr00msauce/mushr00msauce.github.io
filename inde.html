@@ -99,6 +99,12 @@
   a.link.twitch:hover{border-color:var(--twitch)}
   a.link.twitch .ico{background:rgba(145,70,255,.15)}
 
+  /* Fourthwall store card — product thumbnail instead of an SVG icon */
+  a.link.shop{border-color:rgba(77,184,255,.45)}
+  a.link.shop:hover{border-color:var(--sky)}
+  a.link.shop .ico{flex:0 0 56px;height:56px;background:#fff;overflow:hidden;padding:0}
+  a.link.shop .ico img{width:100%;height:100%;object-fit:cover;display:block}
+
   /* primary CTA — Request a Mushbox */
   a.link.cta{background:var(--royal);border-color:var(--royal);box-shadow:0 8px 24px rgba(30,111,255,.38);justify-content:center;text-align:center}
   a.link.cta:hover{transform:translateY(-2px);background:#2f7bff;border-color:#2f7bff;box-shadow:0 12px 30px rgba(30,111,255,.5)}
@@ -305,6 +311,12 @@
     <a class="link" href="https://www.youtube.com/user/wkennedy74">
       <span class="ico"><svg viewBox="0 0 24 24" fill="#FF0000" aria-hidden="true"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.5 15.5v-7l6.3 3.5-6.3 3.5z"/></svg></span>
       <span class="meta"><span class="name">YouTube</span><span class="desc">VODs &amp; highlights</span></span>
+      <span class="arrow">›</span>
+    </a>
+
+    <a class="link shop link-center" href="https://mushr00msauce-shop.fourthwall.com/collections/all" target="_blank" rel="noopener">
+      <span class="ico"><img src="https://imgproxy.fourthwall.dev/11vM7n8d-MV8hvYnh3ivMYrmtGLs0whOteSOfwfTagk/w:1200/sm:1/enc/J4yqJmaJYc7rdv3P/qWOYjhA9_Mpg-eAp/rvMpDOmwfMycQJ4D/wVcr2skpcObIv7L2/DySyvLwn79yikss3/7duJS_yJi3PzVQdb/jfgcxvsGeDuRYVeU/_z1LkSkROy2TTlt-/LKYc3l8nvET2KooD/5JoZ0ahg7oLSdwba/sYy5ao8M11uHHEXR/jY7ZWcSeIQCycLxk/FiuJJM7Ts1hGB1Hf/A32KwxbUxHuGDFmQ/1NfnLwxwm2M.png" alt="Mushbox Mug — shop Mushr00msauce merch"></span>
+      <span class="meta"><span class="name">Shop the Store</span><span class="desc">Mugs, hoodies, stickers &amp; more</span></span>
       <span class="arrow">›</span>
     </a>
 
