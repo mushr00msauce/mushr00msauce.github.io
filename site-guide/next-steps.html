@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Next Steps — A Mushbox Guide</title>
+<meta name="description" content="You built a site. Now point a real domain at it, see who's visiting, and let people reach you — all without running a server.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#060810;
+    --navy:#0A1535;
+    --royal:#1E6FFF;
+    --sky:#4DB8FF;
+    --white:#FFFFFF;
+    --body:#C9D4E8;
+    --card:#0A1128;
+    --card-edge:#16264d;
+    --trace:#12224d;
+    --warn:#FFC24D;
+    --danger:#FF6B6B;
+    --mono:ui-monospace,'Cascadia Code',Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--ink);
+    color:var(--body);
+    font-family:'Inter',system-ui,sans-serif;
+    font-size:17px;
+    line-height:1.65;
+    background-image:
+      radial-gradient(circle at 15% 8%, rgba(30,111,255,.07), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(77,184,255,.05), transparent 45%);
+    background-attachment:fixed;
+    padding-bottom:20px;
+  }
+  .wrap{max-width:880px;margin:0 auto;padding:0 22px}
+
+  /* ---------- hero ---------- */
+  header{padding:64px 0 10px}
+  .eyebrow{
+    font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.28em;
+    text-transform:uppercase;font-size:13px;color:var(--sky);
+    display:flex;align-items:center;gap:12px;
+  }
+  .eyebrow::before{content:'';width:34px;height:2px;background:var(--royal);display:inline-block}
+  h1{
+    font-family:'Orbitron',sans-serif;font-weight:800;color:var(--white);
+    font-size:clamp(30px,6vw,52px);line-height:1.12;margin:18px 0 20px;
+    text-shadow:0 0 34px rgba(30,111,255,.35);
+  }
+  .lede{max-width:640px;font-size:18px}
+  .lede strong{color:var(--white)}
+  .hero-fact{
+    margin-top:26px;display:inline-flex;gap:10px;align-items:baseline;
+    background:var(--card);border:1px solid var(--card-edge);border-radius:12px;
+    padding:12px 18px;font-size:15px;
+  }
+  .hero-fact b{color:var(--sky);font-family:'Rajdhani',sans-serif;letter-spacing:.06em}
+
+  /* ---------- sections ---------- */
+  .section-label{
+    font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.24em;
+    text-transform:uppercase;font-size:14px;color:var(--sky);
+    margin:56px 0 8px;display:flex;align-items:center;gap:12px;
+  }
+  .section-label::after{content:'';flex:1;height:1px;background:var(--trace)}
+  p{margin-bottom:12px;max-width:660px}
+  ul,ol{margin:12px 0 12px 22px;max-width:660px}
+  li{margin:7px 0}
+  strong{color:var(--white);font-weight:600}
+  a{color:var(--sky)}
+
+  /* ---------- need grid ---------- */
+  .need{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:18px}
+  .need div{
+    background:var(--card);border:1px solid var(--card-edge);border-radius:14px;padding:18px;
+    font-size:15.5px;
+  }
+  .need b{color:var(--white);display:block;margin-bottom:4px;font-weight:600}
+
+  /* ---------- rail / steps ---------- */
+  .rail{position:relative;margin-top:34px;padding-left:58px}
+  .rail::before{
+    content:'';position:absolute;left:19px;top:14px;bottom:14px;width:2px;
+    background:linear-gradient(var(--royal), var(--sky));
+    box-shadow:0 0 12px rgba(30,111,255,.55);
+  }
+  .step{position:relative;margin-bottom:44px}
+  .step:last-child{margin-bottom:0}
+  .step h2{
+    font-family:'Orbitron',sans-serif;font-weight:600;color:var(--white);
+    font-size:clamp(19px,3vw,24px);margin-bottom:10px;letter-spacing:.02em;
+  }
+  .node{
+    position:absolute;left:-58px;top:2px;width:40px;height:40px;border-radius:50%;
+    background:var(--ink);border:2px solid var(--royal);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Orbitron',sans-serif;font-weight:600;color:var(--sky);font-size:15px;
+    box-shadow:0 0 14px rgba(30,111,255,.4);
+  }
+
+  /* ---------- inline bits ---------- */
+  .path{
+    font-family:var(--mono);font-size:.86em;color:var(--white);
+    background:var(--navy);border:1px solid var(--card-edge);
+    border-radius:6px;padding:2px 8px;white-space:nowrap;
+  }
+  .tip{
+    border-left:3px solid var(--sky);background:rgba(77,184,255,.06);
+    border-radius:0 10px 10px 0;padding:12px 16px;margin:14px 0;max-width:660px;
+    font-size:15.5px;
+  }
+  .tip b{color:var(--sky)}
+  .tip.warn{border-left-color:var(--warn);background:rgba(255,194,77,.06)}
+  .tip.warn b{color:var(--warn)}
+  .tip.danger{border-left-color:var(--danger);background:rgba(255,107,107,.07)}
+  .tip.danger b{color:var(--danger)}
+
+  /* ---------- tables ---------- */
+  .tablewrap{overflow-x:auto;margin:18px 0;max-width:660px}
+  table{border-collapse:collapse;width:100%;font-size:15px;min-width:420px}
+  th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--trace)}
+  th{
+    font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;font-size:12.5px;color:var(--sky);
+  }
+  td{color:var(--body)}
+  td.m{font-family:var(--mono);font-size:14px;color:var(--white)}
+  tbody tr:last-child td{border-bottom:none}
+
+  /* ---------- code ---------- */
+  .codewrap{position:relative;max-width:660px;margin:16px 0}
+  pre{
+    background:var(--navy);border:1px solid var(--card-edge);border-radius:12px;
+    padding:18px 18px;overflow-x:auto;font-family:var(--mono);
+    font-size:13.5px;line-height:1.6;color:#DCE8FF;
+  }
+  .copy-btn{
+    position:absolute;top:12px;right:12px;
+    font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.1em;
+    font-size:12px;text-transform:uppercase;color:var(--white);
+    background:var(--royal);border:none;border-radius:8px;padding:7px 14px;cursor:pointer;
+  }
+  .copy-btn:hover{background:var(--sky);color:var(--ink)}
+
+  /* ---------- troubleshooting ---------- */
+  .trouble{display:grid;gap:14px;margin-top:18px}
+  .trouble details{
+    background:var(--card);border:1px solid var(--card-edge);border-radius:14px;
+  }
+  .trouble details[open]{border-color:var(--royal)}
+  .trouble summary{
+    cursor:pointer;padding:16px 20px;font-weight:600;color:var(--white);
+    list-style:none;display:flex;gap:12px;align-items:center;
+  }
+  .trouble summary::-webkit-details-marker{display:none}
+  .trouble summary::before{
+    content:'';width:8px;height:8px;border-radius:50%;background:var(--sky);
+    box-shadow:0 0 8px var(--sky);flex-shrink:0;
+  }
+  .trouble div{padding:0 20px 18px;max-width:680px}
+
+  /* ---------- footer ---------- */
+  footer{
+    margin-top:72px;border-top:1px solid var(--trace);
+    padding:30px 0 48px;font-size:15px;
+  }
+  .brand{
+    font-family:'Orbitron',sans-serif;font-weight:600;color:var(--white);
+    letter-spacing:.04em;margin-bottom:6px;
+  }
+  .btn{
+    display:inline-block;margin-top:14px;
+    font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;font-size:14px;text-decoration:none;
+    color:var(--white);background:var(--royal);
+    border-radius:10px;padding:11px 20px;
+  }
+  .btn:hover{background:var(--sky);color:var(--ink)}
+
+  @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+  @media (max-width:560px){
+    .rail{padding-left:48px}
+    .rail::before{left:16px}
+    .node{left:-48px;width:34px;height:34px;font-size:13px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Part Two</p>
+  <h1>Next Steps.</h1>
+  <p class="lede">You've got a site online. Now put <strong>your own domain</strong> on it, find out <strong>who's actually visiting</strong>, and give people a <strong>way to reach you</strong> — all still free, and still with no server to run.</p>
+  <div class="hero-fact"><b>Time</b> <span>About an hour, plus waiting on DNS.</span></div>
+</header>
+
+<!-- ================= WHAT YOU NEED ================= -->
+<p class="section-label">What you need</p>
+<div class="need">
+  <div><b>Your site, already live</b>Finish the first guide before this one. You should have a working <span class="path">username.github.io</span>.</div>
+  <div><b>A domain name</b>Roughly $10–20/year from any registrar — Namecheap, Porkbun, Cloudflare, GoDaddy. Any of them work.</div>
+  <div><b>A Cloudflare account</b>Free. Used only for analytics here — you don't have to move your DNS to it.</div>
+  <div><b>A form service account</b>Free. Web3Forms or Formspree. This is what lets a form work without a backend.</div>
+</div>
+
+<!-- ================= DOMAIN ================= -->
+<p class="section-label">Put your own domain on it</p>
+<p>Right now your site lives at <span class="path">username.github.io</span>. Here's how to make it answer at a name you own. The order matters — do DNS first, so the name resolves before GitHub goes looking for it.</p>
+
+<div class="rail">
+
+  <div class="step">
+    <div class="node">1</div>
+    <h2>Find your DNS settings</h2>
+    <p>Log into wherever you bought the domain and find the DNS or <em>DNS Records</em> page. You're looking for a list of records with types like <span class="path">A</span>, <span class="path">CNAME</span>, and <span class="path">TXT</span>.</p>
+    <p>You're not moving anything. You're just editing which servers the name points at.</p>
+  </div>
+
+  <div class="step">
+    <div class="node">2</div>
+    <h2>Delete the placeholder records first</h2>
+    <p>Registrars add their own records automatically so a freshly bought domain shows a parking page. If you leave them in, your visitors get the parking page part of the time instead of your site — which looks like a random, impossible-to-reproduce outage.</p>
+    <p>Delete any existing <span class="path">A</span> record on <span class="path">@</span>, and any existing <span class="path">CNAME</span> on <span class="path">www</span>. Leave everything else alone — especially <span class="path">MX</span> records, which carry your email.</p>
+    <div class="tip warn"><b>Watch for:</b> records named things like "Parked", "WebsiteBuilder", or "Domain Forwarding". Those are the ones that fight with your site.</div>
+  </div>
+
+  <div class="step">
+    <div class="node">3</div>
+    <h2>Add GitHub's records</h2>
+    <p>Five records. The four IP addresses are GitHub's public servers — everyone uses the same four, so these aren't secret and you can copy them exactly.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Type</th><th>Name</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>A</td><td class="m">@</td><td class="m">185.199.108.153</td></tr>
+          <tr><td>A</td><td class="m">@</td><td class="m">185.199.109.153</td></tr>
+          <tr><td>A</td><td class="m">@</td><td class="m">185.199.110.153</td></tr>
+          <tr><td>A</td><td class="m">@</td><td class="m">185.199.111.153</td></tr>
+          <tr><td>CNAME</td><td class="m">www</td><td class="m">username.github.io</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Swap <span class="path">username.github.io</span> for your actual repo name. The four A records send <span class="path">yourdomain.com</span> to GitHub; the CNAME does the same for <span class="path">www.yourdomain.com</span>.</p>
+    <p>Now wait. DNS changes take anywhere from a few minutes to a couple of hours to spread. Grab a coffee before the next step.</p>
+  </div>
+
+  <div class="step">
+    <div class="node">4</div>
+    <h2>Tell GitHub about it</h2>
+    <p>In your repo: <strong>Settings → Pages → Custom domain</strong>. Type <span class="path">yourdomain.com</span> and hit Save. GitHub runs a DNS check and shows a green tick when it can see your records.</p>
+    <div class="tip"><b>Don't hand-edit the CNAME file.</b> Saving here creates a file called <span class="path">CNAME</span> in your repo automatically. Let this box manage it. If you edit that file directly, the two fall out of sync and the domain breaks in a confusing way.</div>
+  </div>
+
+  <div class="step">
+    <div class="node">5</div>
+    <h2>Turn on HTTPS — but wait for the tick</h2>
+    <p>Under the domain box is an <strong>Enforce HTTPS</strong> checkbox. GitHub gives you a free certificate, but it takes time to issue — sometimes an hour.</p>
+    <p>Leave the box alone until it stops being greyed out. Tick it too early and visitors get scary security warnings.</p>
+    <div class="tip"><b>Then test both:</b> <span class="path">yourdomain.com</span> and <span class="path">www.yourdomain.com</span>. Both should land on your site over <span class="path">https://</span>.</div>
+  </div>
+
+</div>
+
+<!-- ================= RETIRING A DOMAIN ================= -->
+<p class="section-label">If you ever change domains — read this</p>
+<p>This one bites people, and the failure is worse than a broken link. Say you move from an old name to a new one and update your GitHub custom domain. Job done, right?</p>
+<p>Not quite. Your <strong>old domain's DNS is still pointing at GitHub</strong> — but no repo claims that name anymore. It's now aimed at GitHub's servers with nobody home. That's called a <strong>dangling domain</strong>.</p>
+
+<div class="tip danger"><b>Why it matters:</b> anyone with a GitHub account can add your abandoned domain to <em>their</em> repo and serve whatever they want at your old address. Everyone following an old link, bookmark, or business card lands on a stranger's page under your name. This is a well-known attack, not a hypothetical.</div>
+
+<p>So whenever you retire a domain, deal with it in the same sitting. You have two clean options:</p>
+<ul>
+  <li><strong>Leave the DNS pointing at GitHub.</strong> GitHub automatically redirects <em>any</em> domain aimed at your Pages site to your current custom domain — so old links keep working, with free HTTPS, for zero effort. Usually the better choice.</li>
+  <li><strong>Or strip it entirely.</strong> Delete those four A records and the www CNAME at your registrar, then set up domain forwarding to the new name instead.</li>
+</ul>
+<p>What you must never do is leave the records pointing at GitHub with no repo of yours claiming the name.</p>
+
+<div class="tip"><b>Belt and braces:</b> in <strong>Settings → Pages</strong> there's a <strong>verified domains</strong> feature at the account level. Turn it on. It permanently stops anyone else claiming your domains on GitHub Pages. Five minutes, once, forever.</div>
+
+<!-- ================= ANALYTICS ================= -->
+<p class="section-label">See who's visiting</p>
+<p>Cloudflare Web Analytics is free, needs no cookies, and doesn't require you to move your DNS to Cloudflare. It's a small script that reports from the visitor's browser.</p>
+
+<div class="rail">
+  <div class="step">
+    <div class="node">1</div>
+    <h2>Add your site</h2>
+    <p>Make a free Cloudflare account. In the dashboard sidebar find <strong>Web Analytics</strong>, then <strong>Add a site</strong> and enter <span class="path">yourdomain.com</span>. It hands you a snippet with a token in it.</p>
+  </div>
+
+  <div class="step">
+    <div class="node">2</div>
+    <h2>Paste it into every page</h2>
+    <p>Drop this just before the closing <span class="path">&lt;/head&gt;</span> tag, with your own token swapped in:</p>
+    <div class="codewrap">
+      <button class="copy-btn" data-copy>Copy</button>
+      <pre>&lt;script defer src="https://static.cloudflareinsights.com/beacon.min.js"
+  data-cf-beacon='{"token": "YOUR_TOKEN_HERE"}'&gt;&lt;/script&gt;</pre>
+    </div>
+    <div class="tip warn"><b>Every page, not just the homepage.</b> The single most common mistake is putting it only on <span class="path">index.html</span>. Miss it on your contact page and you'll never know how many people got that far — which is exactly the number you want.</div>
+  </div>
+
+  <div class="step">
+    <div class="node">3</div>
+    <h2>Read it in the right place</h2>
+    <p>Stats live under <strong>Web Analytics</strong> in the sidebar — an account-level page, not inside a domain's settings.</p>
+    <div class="tip"><b>If a domain's own Analytics tab looks empty, that's normal.</b> Your traffic goes from your registrar straight to GitHub and never passes through Cloudflare's network, so there's nothing for it to report. The Web Analytics page, fed by that browser script, is your real source.</div>
+  </div>
+</div>
+
+<h2 style="font-family:'Orbitron',sans-serif;color:var(--white);font-size:20px;margin:34px 0 10px">Read the numbers honestly</h2>
+<ul>
+  <li><strong>Recent data is exact; older data is estimated.</strong> Roughly the first week is counted fully, then it's sampled and scaled up. Treat old figures as directional.</li>
+  <li><strong>For a spike</strong> — a shoutout, a viral post — check within the first 24 hours for the cleanest read.</li>
+  <li><strong>It's deleted after about six months.</strong> If you care about year-over-year, screenshot your monthly numbers now and then.</li>
+</ul>
+
+<!-- ================= FORMS ================= -->
+<p class="section-label">Let people contact you</p>
+<p>A plain <span class="path">mailto:</span> link works, but it dumps people into an email client and you get scattered, half-finished messages. A real form asks the questions you actually need answered.</p>
+<p>Normally forms need a server. These services are the way around that: your form posts to them, they email you the result.</p>
+
+<div class="rail">
+  <div class="step">
+    <div class="node">1</div>
+    <h2>Get an access key</h2>
+    <p>Sign up at a form service (Web3Forms needs no account — enter your email and it sends a key straight back). You get a long string that routes submissions to your inbox.</p>
+    <div class="tip warn"><b>This key goes in your public HTML</b>, so treat it as semi-public. It can only send mail to the address you registered, so it's not dangerous — but don't reuse it as a password anywhere, and rotate it if you get spammed hard.</div>
+  </div>
+
+  <div class="step">
+    <div class="node">2</div>
+    <h2>Build the form</h2>
+    <p>A working starting point. The hidden fields do the real work:</p>
+    <div class="codewrap">
+      <button class="copy-btn" data-copy>Copy</button>
+      <pre>&lt;form id="contact"&gt;
+  &lt;input type="hidden" name="access_key" value="YOUR_ACCESS_KEY"&gt;
+  &lt;input type="hidden" name="subject" value="New enquiry from yourdomain.com"&gt;
+
+  &lt;!-- honeypot: hidden from people, bots fill it in --&gt;
+  &lt;input type="checkbox" name="botcheck" style="display:none"&gt;
+
+  &lt;label&gt;Your name
+    &lt;input type="text" name="name" required&gt;&lt;/label&gt;
+
+  &lt;label&gt;Email
+    &lt;input type="email" name="email" required&gt;&lt;/label&gt;
+
+  &lt;label&gt;How did you hear about me?
+    &lt;select name="heard_via"&gt;
+      &lt;option&gt;Search&lt;/option&gt;
+      &lt;option&gt;Friend / word of mouth&lt;/option&gt;
+      &lt;option&gt;Social media&lt;/option&gt;
+      &lt;option&gt;Other&lt;/option&gt;
+    &lt;/select&gt;&lt;/label&gt;
+
+  &lt;label&gt;Message
+    &lt;textarea name="message" rows="5" required&gt;&lt;/textarea&gt;&lt;/label&gt;
+
+  &lt;button type="submit"&gt;Send&lt;/button&gt;
+  &lt;p id="result"&gt;&lt;/p&gt;
+&lt;/form&gt;</pre>
+    </div>
+    <div class="tip"><b>That honeypot line is worth keeping.</b> It's invisible to humans, but automated spam bots fill in every field they find. The service silently bins anything with it ticked. Costs you one line, kills most junk.</div>
+  </div>
+
+  <div class="step">
+    <div class="node">3</div>
+    <h2>Submit without leaving the page</h2>
+    <p>Without this, people get bounced to a bare third-party thank-you page. This keeps them on your site:</p>
+    <div class="codewrap">
+      <button class="copy-btn" data-copy>Copy</button>
+      <pre>&lt;script&gt;
+document.getElementById('contact').addEventListener('submit', async (e) =&gt; {
+  e.preventDefault();
+  const result = document.getElementById('result');
+  result.textContent = 'Sending…';
+  try {
+    const res = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.fromEntries(new FormData(e.target)))
+    });
+    if (!res.ok) throw new Error();
+    e.target.reset();
+    result.textContent = 'Thanks — I&#39;ll get back to you soon.';
+  } catch {
+    result.textContent = 'Something went wrong. Please email me directly.';
+  }
+});
+&lt;/script&gt;</pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="node">4</div>
+    <h2>Close the loop</h2>
+    <p>Two numbers, two places. <strong>Submissions</strong> land in your inbox and the form service's dashboard. <strong>How many people reached the form</strong> is in Cloudflare, as page views for that page.</p>
+    <p>Divide one by the other and you have your conversion rate — the most useful number your site will ever give you. That's also why the analytics snippet needs to be on the form page.</p>
+    <div class="tip"><b>Keep that "how did you hear about me?" field.</b> It's the only way to tell which of your efforts is actually bringing people in, and it costs a single dropdown.</div>
+  </div>
+</div>
+
+<!-- ================= WORKERS ================= -->
+<p class="section-label">Optional — live data on a static site</p>
+<p>Sooner or later you'll want something your HTML can't do alone: a live badge, a follower count, anything that talks to another service's API. You can't do that from a static page, because it would mean putting your secret API key in public HTML.</p>
+<p>The fix is a small serverless function — <strong>Cloudflare Workers</strong> has a free tier. Your key stays on the Worker, your page just asks the Worker for the answer.</p>
+
+<div class="tip danger"><b>The gotcha that gets everybody:</b> a Worker only answers requests from web addresses on its allowlist — that's <span class="path">CORS</span>. Hard-code your domain in there and everything works fine, until the day you change domains. Then your page silently breaks with a CORS error in the browser console while looking perfectly healthy from the outside. <strong>Change your domain, update the allowlist, redeploy — same sitting, every time.</strong> Keep the old address in the list during the switchover.</div>
+
+<!-- ================= TROUBLESHOOTING ================= -->
+<p class="section-label">When it breaks — the checklist</p>
+<div class="trouble">
+
+  <details>
+    <summary>My domain shows a 404, or the registrar's parking page</summary>
+    <div>
+      <p>Usually one of three things. <strong>Check in this order:</strong></p>
+      <ol>
+        <li>Did you delete the registrar's original <span class="path">A</span> and <span class="path">www</span> records? Leftovers compete with GitHub's and you get an intermittent parking page.</li>
+        <li>Has DNS finished propagating? Give it a couple of hours before assuming it's broken.</li>
+        <li>Is the custom domain saved in <strong>Settings → Pages</strong>, with a green tick?</li>
+      </ol>
+      <p>If GitHub shows a green tick and you still get 404s on <em>some</em> pages but not others, it's not DNS at all — see the <span class="path">.nojekyll</span> entry below.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>Some pages 404 even though the site works</summary>
+    <div>
+      <p>GitHub Pages runs a tool called Jekyll over your files by default, and on a plain HTML site it can interfere with how folder addresses resolve — so <span class="path">/mypage/</span> 404s while <span class="path">/index.html</span> is fine.</p>
+      <p>The fix is an empty file named exactly <span class="path">.nojekyll</span> in your repo root. That switches Jekyll off. Note the leading dot, and note there's no file extension.</p>
+      <p>Once it's there, leave it there. If 404s return after you reorganise files, check it's still present before anything else.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>My images have an ugly white border</summary>
+    <div>
+      <p>Almost always a transparency problem, not a CSS one. <strong>JPEG cannot store transparency.</strong> If you export a PNG that has transparent space around the edges as a <span class="path">.jpg</span>, every transparent pixel turns white.</p>
+      <p>The tell-tale sign is that the border is <em>uneven</em> — slightly different thickness on each side. A border you designed would be uniform; a flattened margin isn't.</p>
+      <p>Two fixes: save as <span class="path">.png</span> to keep the transparency, or flatten it onto your background colour deliberately before exporting. Either way, keep the original PNG as your master — re-exporting to JPEG will bring the halo back every single time.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>My browser warns the site isn't secure</summary>
+    <div>
+      <p>You ticked <strong>Enforce HTTPS</strong> before GitHub finished issuing the certificate. Untick it, wait — up to an hour is normal, occasionally longer — then tick it again once the option is no longer greyed out.</p>
+      <p>If it's still failing after a day, remove the custom domain, save, re-add it, and save again. That kicks off a fresh certificate request.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>Analytics shows nothing</summary>
+    <div>
+      <ul>
+        <li>Check the snippet is actually on the live page — open the page, view source, search for <span class="path">beacon.min.js</span>.</li>
+        <li>Confirm you're on the account-level <strong>Web Analytics</strong> page, not a domain's own Analytics tab. If your DNS points straight at GitHub, that tab will always be empty.</li>
+        <li>Give it 20–30 minutes; it isn't instant.</li>
+        <li>Try without an ad blocker. Blockers stop the beacon, so your own visits often won't register.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details>
+    <summary>Something on my page worked yesterday and now doesn't</summary>
+    <div>
+      <p>If you changed your domain recently, that's the first suspect. Anything hard-coded to your old address stops working — a Worker's CORS allowlist, an API service's registered domain, absolute links inside your own HTML.</p>
+      <p>Open your browser's developer console on the broken page. A <span class="path">CORS</span> error names the exact service that needs its allowlist updated.</p>
+      <p>To avoid this: use relative links (<span class="path">/about.html</span>, not <span class="path">https://yourdomain.com/about.html</span>) so your own pages never care what the site is called.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary>My form doesn't send</summary>
+    <div>
+      <ul>
+        <li>Is the access key pasted in, with the quotes intact?</li>
+        <li>Did you confirm your email with the form service? Most won't deliver until you do.</li>
+        <li>Check your spam folder — the first submission often lands there. Mark it as safe.</li>
+        <li>Open the developer console and submit. An error there tells you whether the request left your page at all.</li>
+      </ul>
+    </div>
+  </details>
+
+</div>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <p class="brand">Mushbox</p>
+  <p>Part two of the build-your-own-site guide. Everything here is free tier — no server, no monthly bill.</p>
+  <a class="btn" href="../">← Back to the first guide</a>
+</footer>
+
+</div>
+
+<script>
+  document.querySelectorAll('[data-copy]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var pre = btn.parentElement.querySelector('pre');
+      navigator.clipboard.writeText(pre.innerText).then(function(){
+        var old = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(function(){ btn.textContent = old; }, 1600);
+      });
+    });
+  });
+</script>
+</body>
+</html>
