@@ -296,6 +296,27 @@ sudo systemctl start moblink-relay-service moblink-streamer</pre></div>
     </div>
   </div>
 
+  <p class="section-label">Troubleshooting</p>
+  <div class="tips">
+    <div class="note warn">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+      <div><span class="heads">"REMOTE HOST IDENTIFICATION HAS CHANGED!" on SSH</span>If Step 2 fails with <code>WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!</code> and <code>Host key verification failed</code>, your computer has an old key saved for <code>belabox.local</code> that no longer matches. This is normal after you reflash the box, swap SD cards, or point <code>belabox.local</code> at a different unit — each fresh install generates new host keys. Clear the stale key and reconnect:</div>
+    </div>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-body">
+        <div class="code"><button class="copy" aria-label="Copy command"></button><pre>ssh-keygen -R belabox.local</pre></div>
+        <p>That removes just the old <code>belabox.local</code> entry from your <code>known_hosts</code> file. Then reconnect — this time type <span class="kbd">yes</span> when it prompts about the new fingerprint:</p>
+        <div class="code"><button class="copy" aria-label="Copy command"></button><pre>ssh user@belabox.local</pre></div>
+        <div class="note">
+          <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="var(--sky)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
+          <div><span class="heads">Only clear it if you know why it changed</span>If you didn't reflash or swap boxes and this appears out of nowhere on a network you don't fully trust, the warning is doing its job — confirm nothing's off before clearing the key.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <p class="foot">Moblink by <a href="https://github.com/datagutt/moblink-rust" target="_blank" rel="noopener">datagutt/moblink-rust</a> · guide by Mushbox · <a href="/">mushboxes.com</a></p>
 
