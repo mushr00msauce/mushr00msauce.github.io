@@ -595,6 +595,21 @@
   var PARENT = location.hostname;          // mushr00msauce.github.io
   var MAX_EMBEDS = 2;                      // live players shown at once
 
+  // Only embed players for streamers live in an IRL-type category.
+  var IRL_CATEGORIES = [
+    "just chatting", "irl", "travel & outdoors",
+    "special events", "food & drink", "sports",
+    "fitness & health", "animals, aquariums, and zoos",
+    "makers & crafting", "talk shows & podcasts",
+    "pools, hot tubs, and beach streams"
+  ];
+  function norm(s){
+    return (s||"").toLowerCase().replace(/&/g,"and")
+      .replace(/[^a-z0-9]+/g," ").trim();
+  }
+  var IRL_SET = IRL_CATEGORIES.map(norm);
+  function isIRL(s){ return IRL_SET.indexOf(norm(s.game)) > -1; }
+
   if (WORKER_URL.indexOf("http") !== 0) return;  // not configured yet
 
   fetch(WORKER_URL).then(function(r){ return r.json(); }).then(function(data){
@@ -631,7 +646,7 @@
       }
 
       // embed players for the top streams (already sorted by viewers)
-      if (embeds < MAX_EMBEDS) {
+      if (embeds < MAX_EMBEDS && isIRL(s)) {
         embeds++;
         var wrap = document.createElement("div");
         var tile = document.createElement("div");
