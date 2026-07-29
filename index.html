@@ -242,9 +242,12 @@
     /* build gallery: same 3-up, bigger tiles via the wider container */
     .gallery{gap:14px}
 
-    /* live players sit side by side */
-    .mbxlive-row.on{flex-direction:row;gap:16px}
-    .mbxlive-row.on > div{flex:1;min-width:0}
+    /* live players: up to two per row; a lone third centers below */
+    .mbxlive-row.on{flex-flow:row wrap;justify-content:center;gap:16px}
+    .mbxlive-row.on > div{min-width:0}
+    .mbxlive-row.on.count-1 > div{flex:0 0 100%}
+    .mbxlive-row.on.count-2 > div,
+    .mbxlive-row.on.count-3 > div{flex:0 0 calc(50% - 8px)}
 
     /* family chips get a touch more presence */
     .mbxfam-chip{font-size:14px;padding:7px 15px 7px 11px}
@@ -593,7 +596,7 @@
   var WORKER_URL = "https://mushbox-live.wkennedy74.workers.dev/";
   // =============================================================
   var PARENT = location.hostname;          // mushr00msauce.github.io
-  var MAX_EMBEDS = 2;                      // live players shown at once
+  var MAX_EMBEDS = 3;                      // live players shown at once
 
   // Only embed players for streamers live in an IRL-type category.
   var IRL_CATEGORIES = [
@@ -675,7 +678,7 @@
       }
     });
 
-    if (embeds > 0) row.classList.add("on");
+    if (embeds > 0) row.classList.add("on", "count-" + embeds);
 
     // update the family count label with live count
     var label = null;
