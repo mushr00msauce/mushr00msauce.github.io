@@ -147,6 +147,25 @@
   }
   .trouble div{padding:0 20px 18px;max-width:680px}
 
+  /* next-part hand-off */
+  .nextup{
+    display:block;text-decoration:none;margin-top:20px;max-width:660px;
+    background:var(--card);border:1px solid var(--royal);border-radius:14px;
+    padding:20px 22px;
+    box-shadow:0 0 26px rgba(30,111,255,.14);
+  }
+  .nextup:hover{border-color:var(--sky);box-shadow:0 0 30px rgba(77,184,255,.22)}
+  .nextup b{
+    display:block;font-family:'Orbitron',sans-serif;font-weight:600;
+    color:var(--white);font-size:18px;margin-bottom:6px;letter-spacing:.02em;
+  }
+  .nextup span{color:var(--body);font-size:15.5px}
+  .nextup i{
+    font-style:normal;color:var(--sky);font-family:'Rajdhani',sans-serif;
+    font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:12.5px;
+    display:block;margin-top:10px;
+  }
+
   /* ---------- footer ---------- */
   footer{
     margin-top:72px;border-top:1px solid var(--trace);
@@ -289,6 +308,7 @@
       <h2>Use your own domain</h2>
       <p>Want <span class="path">yourname.com</span> instead of the github.io address? Buy the domain (~$10–15/year — the only money in this entire guide), then: at your registrar, add four <strong>A records</strong> for <span class="path">@</span> pointing to <span class="path">185.199.108.153</span>, <span class="path">.109.153</span>, <span class="path">.110.153</span>, <span class="path">.111.153</span>, plus a <strong>CNAME</strong> for <span class="path">www</span> pointing to <span class="path">yourusername.github.io</span>. Delete any "forwarding" your registrar set up — forwarding and real DNS fight each other.</p>
       <p>Then in your repo: <strong>Settings → Pages → Custom domain</strong> → enter your domain → Save. When the DNS check goes green, tick <strong>Enforce HTTPS</strong>. Give it up to an hour and don't panic early.</p>
+      <div class="tip"><b>Want this walked through properly?</b> <a href="next-steps.html">Part two</a> does the whole thing step by step — including the placeholder records you need to delete first, and the mistake that can let a stranger take over your old domain if you ever switch names.</div>
     </div>
 
   </div>
@@ -317,12 +337,21 @@
     </details>
   </div>
 
+  <p class="section-label">What's next</p>
+  <p>Your site's live — that's genuinely the hard part done. Part two picks up exactly here: putting your own domain on it, seeing who's actually visiting, and giving people a way to contact you. Still free, still no server.</p>
+
+  <a class="nextup" href="next-steps.html">
+    <b>Next Steps →</b>
+    <span>Custom domains and DNS, free privacy-friendly analytics, and a working contact form on a static site.</span>
+    <i>Part Two · about an hour</i>
+  </a>
+
 </main>
 
 <footer>
   <div class="wrap">
     <p class="brand">🍄 MUSHR00MSAUCE</p>
-    <p>This guide is powered by the exact setup it teaches. Questions? Find me at <a href="https://mushr00msauce.com">mushr00msauce.com</a> or in the Discord — and when your site's live, send me the link.</p>
+    <p>This guide is powered by the exact setup it teaches. Questions? Find me at <a href="https://themushbox.com">themushbox.com</a> or in the Discord — and when your site's live, send me the link.</p>
   </div>
 </footer>
 
