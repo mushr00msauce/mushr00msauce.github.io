@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What It Costs to Run a Mushbox</title>
+<meta name="description" content="The honest numbers on running a Mushbox IRL streaming rig — one-time box cost plus what you actually pay per month for bonded data.">
+<meta property="og:title" content="What It Costs to Run a Mushbox">
+<meta property="og:description" content="One-time box, then a setup you own. The real monthly numbers for bonded IRL streaming — and how they compare to locked managed services.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #060810;
+    --navy: #0A1535;
+    --royal: #1E6FFF;
+    --sky: #4DB8FF;
+    --white: #FFFFFF;
+    --ink-1: #EAF1FF;
+    --ink-2: #9DB0D4;
+    --ink-3: #5E6E96;
+    --line: rgba(77, 184, 255, 0.14);
+    --surface: #0B1330;
+    --surface-2: #0E1A44;
+    --glow: rgba(30, 111, 255, 0.35);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--ink-1);
+    font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+
+  a { color: var(--sky); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ---------- Ambient backdrop ---------- */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(900px 500px at 82% -8%, rgba(30,111,255,0.20), transparent 60%),
+      radial-gradient(700px 500px at 8% 8%, rgba(77,184,255,0.10), transparent 55%);
+    z-index: -2;
+    pointer-events: none;
+  }
+
+  /* ---------- Hero ---------- */
+  header.hero {
+    padding: 92px 0 56px;
+    position: relative;
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.74rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--sky);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 26px;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 26px; height: 1px;
+    background: var(--sky);
+    display: inline-block;
+  }
+
+  h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2.3rem, 6vw, 4rem);
+    line-height: 1.02;
+    letter-spacing: -0.01em;
+    color: var(--white);
+    max-width: 16ch;
+  }
+  h1 .accent {
+    background: linear-gradient(100deg, var(--sky), var(--royal));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .lede {
+    margin-top: 26px;
+    font-size: clamp(1.05rem, 2vw, 1.28rem);
+    color: var(--ink-2);
+    max-width: 58ch;
+  }
+
+  /* ---------- Contrast strip ---------- */
+  .contrast {
+    margin-top: 46px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 20px;
+    background: linear-gradient(180deg, var(--surface-2), var(--surface));
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 28px 32px;
+  }
+  .contrast .side { text-align: center; }
+  .contrast .num {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.7rem, 4vw, 2.6rem);
+    color: var(--white);
+    line-height: 1;
+  }
+  .contrast .theirs .num { color: var(--ink-2); }
+  .contrast .ours .num {
+    background: linear-gradient(100deg, var(--sky), var(--royal));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .contrast .cap {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-top: 10px;
+  }
+  .contrast .vs {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    color: var(--ink-3);
+    letter-spacing: 0.2em;
+  }
+
+  /* ---------- Sections ---------- */
+  section { padding: 58px 0; border-top: 1px solid var(--line); }
+
+  .sec-head { margin-bottom: 34px; }
+  .sec-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--royal);
+    margin-bottom: 14px;
+  }
+  h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.5rem, 3.4vw, 2.1rem);
+    color: var(--white);
+    letter-spacing: -0.005em;
+  }
+  .sec-sub { margin-top: 14px; color: var(--ink-2); max-width: 62ch; }
+
+  /* ---------- One-time box breakdown ---------- */
+  .box-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .box-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 26px 26px 28px;
+  }
+  .box-card .k {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.74rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sky);
+  }
+  .box-card .v {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 1.9rem;
+    color: var(--white);
+    margin: 12px 0 6px;
+  }
+  .box-card p { color: var(--ink-2); font-size: 0.95rem; }
+  .box-total {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    background: linear-gradient(120deg, rgba(30,111,255,0.16), rgba(77,184,255,0.06));
+    border: 1px solid rgba(77,184,255,0.28);
+    border-radius: 16px;
+    padding: 24px 28px;
+  }
+  .box-total .lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-1);
+  }
+  .box-total .amt {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    background: linear-gradient(100deg, var(--sky), var(--royal));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+
+  /* ---------- Signature: bonded signal stack ---------- */
+  .stack { display: flex; flex-direction: column; gap: 12px; }
+  .lane {
+    position: relative;
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    align-items: center;
+    gap: 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px 24px;
+    overflow: hidden;
+  }
+  .lane::after {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--sky), var(--royal));
+    opacity: 0.9;
+  }
+  .lane .idx {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--royal);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+  }
+  .lane .body h3 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: var(--white);
+  }
+  .lane .body p { color: var(--ink-2); font-size: 0.9rem; margin-top: 3px; }
+  .lane .cost {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--sky);
+    white-space: nowrap;
+  }
+  .lane .cost small {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 0.64rem;
+    color: var(--ink-3);
+    letter-spacing: 0.08em;
+    text-align: right;
+    margin-top: 2px;
+  }
+  .selfhost {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 20px;
+    align-items: center;
+    background: linear-gradient(120deg, rgba(30,111,255,0.14), rgba(77,184,255,0.05));
+    border: 1px solid rgba(77,184,255,0.28);
+    border-radius: 14px;
+    padding: 22px 26px;
+  }
+  .selfhost .mark {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: var(--sky);
+    border: 1px solid rgba(77,184,255,0.4);
+    border-radius: 12px;
+    width: 52px; height: 52px;
+    display: grid; place-items: center;
+  }
+  .selfhost h3 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: var(--white);
+  }
+  .selfhost p { color: var(--ink-2); font-size: 0.92rem; margin-top: 4px; }
+
+  .lane.optional { border-style: dashed; }
+  .lane.optional::after { opacity: 0.4; }
+  .lane .tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--sky);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 2px 9px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  /* animated flow line */
+  .flow { position: absolute; inset: 0; pointer-events: none; opacity: 0.5; }
+  .flow span {
+    position: absolute;
+    top: 50%;
+    left: -20%;
+    width: 20%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--sky), transparent);
+    animation: sweep 3.2s linear infinite;
+  }
+  .lane:nth-child(2) .flow span { animation-delay: 0.6s; }
+  .lane:nth-child(3) .flow span { animation-delay: 1.2s; }
+  @keyframes sweep { to { left: 120%; } }
+
+  /* ---------- Scenarios ---------- */
+  .scenarios { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .scn {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 26px 24px 28px;
+    display: flex;
+    flex-direction: column;
+  }
+  .scn.feature {
+    background: linear-gradient(180deg, var(--surface-2), var(--surface));
+    border-color: rgba(77,184,255,0.3);
+  }
+  .scn .name {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    color: var(--white);
+    font-size: 1.02rem;
+  }
+  .scn .price {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: 2rem;
+    color: var(--white);
+    margin: 16px 0 2px;
+  }
+  .scn.feature .price {
+    background: linear-gradient(100deg, var(--sky), var(--royal));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .scn .per {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--ink-3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .scn .desc { color: var(--ink-2); font-size: 0.9rem; margin-top: 16px; }
+
+  /* ---------- Compare ---------- */
+  .compare {
+    background: linear-gradient(120deg, var(--surface-2), var(--surface));
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 40px;
+  }
+  .compare-rows { display: flex; flex-direction: column; gap: 2px; margin-top: 8px; }
+  .crow {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 20px;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .crow:last-child { border-bottom: none; }
+  .crow .q { color: var(--ink-1); font-weight: 500; font-size: 0.98rem; }
+  .crow .mark {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    text-align: center;
+    min-width: 120px;
+  }
+  .crow .head {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    text-align: center;
+    min-width: 120px;
+  }
+  .yes { color: var(--sky); }
+  .no { color: var(--ink-3); }
+
+  /* ---------- Fine print + CTA ---------- */
+  .note {
+    font-size: 0.86rem;
+    color: var(--ink-3);
+    border-left: 2px solid var(--line);
+    padding-left: 18px;
+    max-width: 66ch;
+  }
+  .cta {
+    margin-top: 30px;
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .btn {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+    padding: 15px 30px;
+    border-radius: 12px;
+    background: linear-gradient(100deg, var(--royal), var(--sky));
+    color: var(--black);
+    border: none;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 6px 24px var(--glow);
+  }
+  .btn:hover { transform: translateY(-2px); text-decoration: none; box-shadow: 0 10px 30px var(--glow); }
+  .btn.ghost {
+    background: transparent;
+    color: var(--sky);
+    border: 1px solid var(--line);
+    box-shadow: none;
+  }
+  .btn.ghost:hover { border-color: var(--sky); box-shadow: none; }
+
+  footer {
+    padding: 40px 0 64px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-3);
+    font-size: 0.85rem;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  footer .brand {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--ink-2);
+    letter-spacing: 0.04em;
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 760px) {
+    .contrast { grid-template-columns: 1fr; gap: 18px; padding: 24px; }
+    .contrast .vs { display: none; }
+    .box-grid { grid-template-columns: 1fr; }
+    .scenarios { grid-template-columns: 1fr; }
+    .compare { padding: 26px; }
+    .crow { grid-template-columns: 1fr; gap: 6px; text-align: left; }
+    .crow .mark, .crow .head { text-align: left; min-width: 0; }
+    .crow .head { display: none; }
+    .crow .mark::before { content: attr(data-h) ": "; color: var(--ink-3); }
+    .lane { grid-template-columns: 1fr auto; }
+    .lane .idx { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .flow { display: none; }
+    html { scroll-behavior: auto; }
+    .btn:hover { transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Running Costs</span>
+    <h1>Buy the box once.<br><span class="accent">Own your connections.</span></h1>
+    <p class="lede">Managed IRL kits bill you a flat premium every month for data locked to their hardware and their portal. A Mushbox is a one-time build — then you assemble your own connections from carriers you choose, and pay only for what your stream actually uses.</p>
+
+    <div class="contrast">
+      <div class="side theirs">
+        <div class="num">$165+/mo</div>
+        <div class="cap">Managed IRL service &middot; locked to their kit</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="side ours">
+        <div class="num">~$60&ndash;110/mo</div>
+        <div class="cap">Your own connections &middot; everyday streaming</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ONE-TIME BOX -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-label">01 &middot; The one-time build</div>
+      <h2>What the box itself costs</h2>
+      <p class="sec-sub">Parts pricing moves with the market, so the total shifts a little from build to build. Here's a representative rig priced recently.</p>
+    </div>
+
+    <div class="box-grid">
+      <div class="box-card">
+        <div class="k">Hardware &amp; parts</div>
+        <div class="v">~$490</div>
+        <p>Radxa compute board, capture, modems, cabling, enclosure, mounts. Fluctuates with component prices.</p>
+      </div>
+      <div class="box-card">
+        <div class="k">Build &amp; configuration</div>
+        <div class="v">Flat fee</div>
+        <p>Assembly, flashing, NOALBS + OBS tuning, bonding setup, and testing until it's stream-ready out of the bag.</p>
+      </div>
+      <div class="box-total">
+        <span class="lbl">Typical all-in</span>
+        <span class="amt">~$800&ndash;$1,000</span>
+      </div>
+    </div>
+
+    <div class="selfhost" style="margin-top:16px;background:var(--surface);border-color:var(--line);">
+      <div class="mark" style="color:var(--ink-2);border-color:var(--line);font-size:1.1rem;">CAM</div>
+      <div>
+        <h3>Your camera is a separate choice &mdash; and it's yours to make</h3>
+        <p style="margin-bottom:12px;">The camera isn't part of the box or its running costs. The Mushbox works with <strong style="color:var(--ink-1)">any USB camera</strong>, so you're free to pick what suits your content and budget. If you want a starting point, these are the ones I recommend:</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--sky);border:1px solid var(--line);border-radius:20px;padding:5px 12px;">DJI Osmo Action 4</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--sky);border:1px solid var(--line);border-radius:20px;padding:5px 12px;">DJI Osmo Pocket 3</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--sky);border:1px solid var(--line);border-radius:20px;padding:5px 12px;">Insta360 X-series (X2 or newer)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MONTHLY STACK -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-label">02 &middot; The monthly pieces</div>
+      <h2>What you pay to stay live</h2>
+      <p class="sec-sub">The recommended build is simple: two cellular lines through the BELABOX cloud relay &mdash; about <strong style="color:var(--ink-1)">$60/month</strong> for most streamers, on the data plans I help you set up. Everything below the relay and your two lines is optional, added whenever you want it. There's no cap on connections except your budget.</p>
+    </div>
+
+    <figure style="margin:0 0 26px;">
+      <svg viewBox="0 0 940 520" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif" role="img" aria-label="Signal path: two bonded cellular connections carry audio and video to the BELABOX cloud relay, back down to OBS on your home PC, then up to Twitch — about twenty seconds camera to stream." style="width:100%;height:auto;display:block;">
+        <defs>
+          <style>
+            .sp-orb { font-family: 'Orbitron', sans-serif; }
+            .sp-mono { font-family: 'JetBrains Mono', monospace; }
+            .sp-dot { fill: #4DB8FF; }
+            @media (prefers-reduced-motion: reduce) { .sp-dot { display: none; } }
+          </style>
+          <linearGradient id="sp-accent" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#4DB8FF"/>
+            <stop offset="1" stop-color="#1E6FFF"/>
+          </linearGradient>
+          <linearGradient id="sp-panel" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#0A1535"/>
+            <stop offset="1" stop-color="#070C22"/>
+          </linearGradient>
+          <radialGradient id="sp-glow" cx="0.5" cy="0.4" r="0.6">
+            <stop offset="0" stop-color="#1E6FFF" stop-opacity="0.35"/>
+            <stop offset="1" stop-color="#1E6FFF" stop-opacity="0"/>
+          </radialGradient>
+          <marker id="sp-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#4DB8FF"/>
+          </marker>
+        </defs>
+
+        <rect x="0.5" y="0.5" width="939" height="519" rx="22" fill="url(#sp-panel)" stroke="rgba(77,184,255,0.16)"/>
+        <ellipse cx="430" cy="150" rx="360" ry="180" fill="url(#sp-glow)"/>
+
+        <text x="40" y="52" class="sp-mono" font-size="12" letter-spacing="4" fill="#4DB8FF">SIGNAL PATH</text>
+        <text x="40" y="82" class="sp-orb" font-size="22" font-weight="700" fill="#FFFFFF">How your stream travels</text>
+
+        <path id="sp-cell1" d="M225,352 C300,312 300,220 360,188" fill="none" stroke="url(#sp-accent)" stroke-width="2.4" marker-end="url(#sp-arrow)"/>
+        <path id="sp-cell2" d="M225,382 C305,352 320,258 362,214" fill="none" stroke="url(#sp-accent)" stroke-width="2.4" marker-end="url(#sp-arrow)"/>
+        <path id="sp-down" d="M497,200 C560,240 575,268 615,306" fill="none" stroke="url(#sp-accent)" stroke-width="2.6" marker-end="url(#sp-arrow)"/>
+        <path id="sp-out" d="M735,368 L788,368" fill="none" stroke="url(#sp-accent)" stroke-width="2.6" marker-end="url(#sp-arrow)"/>
+
+        <circle class="sp-dot" r="3.2"><animateMotion dur="2.2s" repeatCount="indefinite"><mpath href="#sp-cell1"/></animateMotion></circle>
+        <circle class="sp-dot" r="3.2"><animateMotion dur="2.2s" begin="0.5s" repeatCount="indefinite"><mpath href="#sp-cell2"/></animateMotion></circle>
+        <circle class="sp-dot" r="3.4"><animateMotion dur="1.7s" begin="1s" repeatCount="indefinite"><mpath href="#sp-down"/></animateMotion></circle>
+        <circle class="sp-dot" r="3.4"><animateMotion dur="1s" begin="1.4s" repeatCount="indefinite"><mpath href="#sp-out"/></animateMotion></circle>
+
+        <text x="248" y="286" class="sp-mono" font-size="11" fill="#9DB0D4" transform="rotate(-40 248 286)">2&#215; cellular &#183; SRTLA bonded</text>
+        <text x="556" y="250" class="sp-mono" font-size="11" fill="#9DB0D4" transform="rotate(35 556 250)">SRT down</text>
+        <text x="742" y="356" class="sp-mono" font-size="11" fill="#9DB0D4">RTMP</text>
+
+        <g>
+          <rect x="60" y="312" width="165" height="112" rx="16" fill="#0E1A44" stroke="rgba(77,184,255,0.35)"/>
+          <rect x="80" y="336" width="46" height="34" rx="5" fill="none" stroke="#4DB8FF" stroke-width="2"/>
+          <circle cx="103" cy="353" r="7" fill="none" stroke="#4DB8FF" stroke-width="2"/>
+          <line x1="134" y1="336" x2="140" y2="326" stroke="#4DB8FF" stroke-width="2"/>
+          <line x1="140" y1="336" x2="148" y2="324" stroke="#4DB8FF" stroke-width="2"/>
+          <text x="80" y="392" class="sp-orb" font-size="15" font-weight="700" fill="#FFFFFF">MUSHBOX</text>
+          <text x="80" y="411" font-size="11" fill="#9DB0D4">field encoder + camera</text>
+        </g>
+
+        <g>
+          <path d="M373,205 a34,34 0 0,1 4,-67 a40,40 0 0,1 78,-8 a30,30 0 0,1 12,58 a30,30 0 0,1 -14,17 z"
+                fill="#0E1A44" stroke="rgba(77,184,255,0.35)" stroke-width="1.5"/>
+          <text x="432" y="150" text-anchor="middle" class="sp-orb" font-size="14" font-weight="700" fill="#FFFFFF">BELABOX</text>
+          <text x="432" y="170" text-anchor="middle" class="sp-orb" font-size="14" font-weight="700" fill="#4DB8FF">CLOUD</text>
+          <text x="432" y="190" text-anchor="middle" font-size="10.5" fill="#9DB0D4">SRTLA relay</text>
+        </g>
+
+        <g>
+          <rect x="570" y="312" width="165" height="112" rx="16" fill="#0E1A44" stroke="rgba(77,184,255,0.55)"/>
+          <path d="M590,352 L607,336 L624,352" fill="none" stroke="#4DB8FF" stroke-width="2" stroke-linejoin="round"/>
+          <rect x="596" y="352" width="22" height="18" fill="none" stroke="#4DB8FF" stroke-width="2"/>
+          <text x="590" y="392" class="sp-orb" font-size="15" font-weight="700" fill="#FFFFFF">HOME OBS</text>
+          <text x="590" y="411" font-size="11" fill="#9DB0D4">your PC + internet</text>
+          <text x="726" y="304" text-anchor="end" class="sp-mono" font-size="9" letter-spacing="1" fill="#4DB8FF">$0 HOSTING</text>
+        </g>
+
+        <g>
+          <rect x="790" y="312" width="112" height="112" rx="16" fill="#0E1A44" stroke="rgba(77,184,255,0.35)"/>
+          <path d="M812,340 h30 v18 l-8,8 h-9 l-6,6 v-6 h-7 z" fill="none" stroke="#4DB8FF" stroke-width="2" stroke-linejoin="round"/>
+          <line x1="826" y1="346" x2="826" y2="352" stroke="#4DB8FF" stroke-width="2"/>
+          <line x1="835" y1="346" x2="835" y2="352" stroke="#4DB8FF" stroke-width="2"/>
+          <text x="808" y="392" class="sp-orb" font-size="15" font-weight="700" fill="#FFFFFF">TWITCH</text>
+          <text x="808" y="411" font-size="11" fill="#9DB0D4">live to chat</text>
+        </g>
+
+        <g>
+          <rect x="270" y="452" width="400" height="44" rx="22" fill="rgba(30,111,255,0.12)" stroke="rgba(77,184,255,0.4)"/>
+          <text x="300" y="480" class="sp-orb" font-size="20" font-weight="800" fill="#4DB8FF">~20s</text>
+          <text x="360" y="472" font-size="12.5" fill="#EAF1FF" font-weight="600">Camera to Twitch</text>
+          <text x="360" y="488" class="sp-mono" font-size="10.5" fill="#9DB0D4">or less &#183; typical glass-to-stream</text>
+        </g>
+      </svg>
+    </figure>
+
+    <div class="stack">
+      <div class="lane">
+        <div class="flow"><span></span></div>
+        <div class="idx">R</div>
+        <div class="body">
+          <h3>Bonding relay</h3>
+          <p>BELABOX cloud SRT + SRTLA relay — the server that merges your bonded links into one clean feed.</p>
+        </div>
+        <div class="cost">~$10<small>PER MONTH</small></div>
+      </div>
+
+      <div class="lane">
+        <div class="flow"><span></span></div>
+        <div class="idx">C</div>
+        <div class="body">
+          <h3>Cellular lines <span class="tag">2 recommended</span></h3>
+          <p>Unlimited data SIMs on different networks for diversity. Two is the sweet spot; add more anytime &mdash; the only limit is budget. The plans I recommend and help you set up run about <strong style="color:var(--ink-1)">$25/mo each</strong>. You're free to bring your own instead, but a line on a major carrier usually costs $50+/mo.</p>
+        </div>
+        <div class="cost">$25+<small>PER LINE / MO</small></div>
+      </div>
+
+      <div class="lane optional">
+        <div class="flow"><span></span></div>
+        <div class="idx">S</div>
+        <div class="body">
+          <h3>Satellite <span class="tag">add later</span></h3>
+          <p>Not needed to start. Add Starlink Roam whenever you want truly remote coverage &mdash; from ~$50/mo, or a Mini on an existing account. Pause it in months you're not traveling.</p>
+        </div>
+        <div class="cost">from $50<small>WHEN ACTIVE</small></div>
+      </div>
+    </div>
+
+    <div class="selfhost">
+      <div class="mark">$0</div>
+      <div>
+        <h3>OBS hosting &mdash; because it runs on your own gear</h3>
+        <p>Managed rigs bill a monthly fee for cloud-hosted OBS. Your scenes run on the streaming PC and home internet you already pay for, so that cost simply isn't on the list. It's compute you already own, put to work &mdash; a real slice of the savings, not a rounding error.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 26px;">
+      <h3 style="font-family:'Inter',sans-serif;font-weight:600;font-size:1rem;color:var(--white);">No home PC to host on? There's a cloud option.</h3>
+      <p style="color:var(--ink-2);font-size:0.92rem;margin-top:6px;">If you don't have a streaming PC or reliable home internet to run OBS, you can host it in the cloud instead &mdash; a monthly service, but it keeps you fully mobile with nothing to leave running at home. I recommend <a href="https://antiscuff.com" target="_blank" rel="noopener">antiscuff.com</a>, which starts at <strong style="color:var(--ink-1)">$50/month</strong> for the budget package &mdash; and you get <strong style="color:var(--ink-1)">10% off with code</strong> <span style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--sky);border:1px solid rgba(77,184,255,0.4);border-radius:8px;padding:3px 10px;letter-spacing:0.06em;">mushbox</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- SCENARIOS -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-label">03 &middot; Real-world monthly</div>
+      <h2>What it lands at, in practice</h2>
+      <p class="sec-sub">Almost everyone starts in the first column &mdash; the recommended build. The other two are optional scale-ups you can grow into whenever your streaming takes you further off the grid.</p>
+    </div>
+
+    <div class="scenarios">
+      <div class="scn feature">
+        <div class="name">Everyday / city <span style="display:inline-block;font-family:'JetBrains Mono',monospace;font-size:0.58rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--black);background:var(--sky);border-radius:20px;padding:2px 9px;margin-left:6px;vertical-align:middle;">Recommended</span></div>
+        <div class="price">~$60</div>
+        <div class="per">per month</div>
+        <div class="desc">Relay + two cellular lines on the plans I help you set up. The standard build &mdash; covers the vast majority of urban and suburban IRL streaming with room to spare.</div>
+      </div>
+      <div class="scn">
+        <div class="name">+ Remote backup</div>
+        <div class="price">$90&ndash;110</div>
+        <div class="per">per month</div>
+        <div class="desc">Add a Starlink Mini for the stretches with no reliable cell coverage. Pause it when you're back in town.</div>
+      </div>
+      <div class="scn">
+        <div class="name">Full send</div>
+        <div class="price">$185+</div>
+        <div class="per">per month</div>
+        <div class="desc">Relay + three or more lines + Starlink Roam Unlimited. Maximum resilience for full-time, off-grid travel streaming.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-label">04 &middot; The real difference</div>
+      <h2>Why owning your setup wins</h2>
+    </div>
+
+    <div class="compare">
+      <div class="compare-rows">
+        <div class="crow">
+          <span class="q" style="color:var(--ink-3);font-family:'JetBrains Mono',monospace;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;">Question</span>
+          <span class="head">Managed kit</span>
+          <span class="head">Your Mushbox</span>
+        </div>
+        <div class="crow">
+          <span class="q">Pay only when you're actually streaming remote?</span>
+          <span class="mark no" data-h="Managed">No &mdash; flat monthly</span>
+          <span class="mark yes" data-h="Mushbox">Yes &mdash; pause satellite</span>
+        </div>
+        <div class="crow">
+          <span class="q">Choose your own carriers?</span>
+          <span class="mark no" data-h="Managed">Locked to their SIMs</span>
+          <span class="mark yes" data-h="Mushbox">Any carrier you like</span>
+        </div>
+        <div class="crow">
+          <span class="q">Data tied to one company's portal?</span>
+          <span class="mark no" data-h="Managed">Yes</span>
+          <span class="mark yes" data-h="Mushbox">No &mdash; you own the config</span>
+        </div>
+        <div class="crow">
+          <span class="q">Monthly cloud OBS hosting fee?</span>
+          <span class="mark no" data-h="Managed">Yes &mdash; billed on top</span>
+          <span class="mark yes" data-h="Mushbox">$0 &mdash; runs on your PC</span>
+        </div>
+        <div class="crow">
+          <span class="q">Floor cost every month?</span>
+          <span class="mark no" data-h="Managed">$165+ regardless of use</span>
+          <span class="mark yes" data-h="Mushbox">Scales with what you need</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINE PRINT + CTA -->
+<section>
+  <div class="wrap">
+    <p class="note">Carrier and satellite pricing changes constantly, and budget cellular plans can throttle or deprioritize during a long bonded stream — so treat every figure here as a ballpark for planning, not a locked quote. Your real monthly cost depends on your carrier mix and how far off the grid you stream. Happy to walk through a setup that actually holds up for how you go live.</p>
+
+    <div class="cta">
+      <a class="btn" href="request.html">Request a build</a>
+      <a class="btn ghost" href="index.html">Back to the Mushbox</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap" style="display:flex;justify-content:space-between;width:100%;flex-wrap:wrap;gap:12px;">
+    <span class="brand">THE MUSHBOX</span>
+    <span>Numbers are planning estimates &middot; updated as pricing shifts</span>
+  </div>
+</footer>
+
+</body>
+</html>
