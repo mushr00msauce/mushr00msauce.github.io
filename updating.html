@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Updating Your Mushbox &mdash; BELABOX Software Updates</title>
+<meta name="description" content="How to update the BELABOX software on your Mushbox when a new update is available. Step-by-step guide from the belaUI interface.">
+
+<!-- Open Graph -->
+<meta property="og:title" content="Updating Your Mushbox &mdash; BELABOX Software Updates">
+<meta property="og:description" content="A quick, safe walkthrough for installing BELABOX software updates from belaUI.">
+<meta property="og:type" content="article">
+
+<style>
+  :root {
+    --black: #060810;
+    --navy: #0A1535;
+    --royal: #1E6FFF;
+    --sky: #4DB8FF;
+    --white: #ffffff;
+    --muted: #9fb3d1;
+    --line: rgba(77, 184, 255, 0.18);
+    --card: rgba(10, 21, 53, 0.55);
+    --warn: #ffb020;
+    --warn-bg: rgba(255, 176, 32, 0.09);
+    --good: #35d07f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:
+      radial-gradient(1100px 600px at 15% -10%, rgba(30,111,255,0.18), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(77,184,255,0.10), transparent 55%),
+      var(--black);
+    color: var(--white);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  .wrap {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 48px 22px 90px;
+  }
+
+  /* Header */
+  header {
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 28px;
+  }
+
+  .kicker {
+    display: inline-block;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--sky);
+    font-weight: 700;
+    margin-bottom: 14px;
+    padding: 5px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(30,111,255,0.08);
+  }
+
+  h1 {
+    font-size: clamp(28px, 5vw, 42px);
+    line-height: 1.12;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+
+  h1 .accent {
+    background: linear-gradient(90deg, var(--sky), var(--royal));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .lede {
+    font-size: 17px;
+    color: var(--muted);
+    max-width: 640px;
+  }
+
+  /* Sections */
+  section { margin-top: 44px; }
+
+  h2 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  h2 .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--royal), var(--sky));
+    color: var(--black);
+    font-size: 16px;
+    font-weight: 800;
+    box-shadow: 0 4px 16px rgba(30,111,255,0.35);
+  }
+
+  p { color: #d7e3f5; margin-bottom: 14px; }
+  p.sub { color: var(--muted); font-size: 15px; }
+
+  strong { color: var(--white); }
+
+  code {
+    background: rgba(77,184,255,0.12);
+    border: 1px solid var(--line);
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-family: "SF Mono", "Cascadia Code", Consolas, monospace;
+    font-size: 0.9em;
+    color: var(--sky);
+  }
+
+  /* Cards / steps */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 22px 24px;
+    margin-bottom: 16px;
+    backdrop-filter: blur(6px);
+  }
+
+  ol.steps { list-style: none; counter-reset: step; }
+
+  ol.steps > li {
+    position: relative;
+    counter-increment: step;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 20px 18px 62px;
+    margin-bottom: 14px;
+  }
+
+  ol.steps > li::before {
+    content: counter(step);
+    position: absolute;
+    left: 16px;
+    top: 16px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: rgba(30,111,255,0.15);
+    border: 1px solid var(--royal);
+    color: var(--sky);
+    font-weight: 800;
+    font-size: 15px;
+  }
+
+  ol.steps > li h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  ol.steps > li p { margin-bottom: 0; color: var(--muted); font-size: 15px; }
+
+  /* Checklist */
+  ul.check { list-style: none; }
+  ul.check li {
+    position: relative;
+    padding-left: 30px;
+    margin-bottom: 11px;
+    color: #d7e3f5;
+  }
+  ul.check li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 7px;
+    width: 16px;
+    height: 16px;
+    border-radius: 5px;
+    background: rgba(53,208,127,0.15);
+    border: 1px solid var(--good);
+  }
+  ul.check li::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    top: 9px;
+    width: 4px;
+    height: 8px;
+    border: solid var(--good);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
+  /* Callouts */
+  .callout {
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin: 18px 0;
+    border: 1px solid;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .callout .ico { font-size: 20px; line-height: 1.4; flex: 0 0 auto; }
+  .callout.warn { background: var(--warn-bg); border-color: rgba(255,176,32,0.4); }
+  .callout.warn strong { color: var(--warn); }
+  .callout.tip { background: rgba(30,111,255,0.08); border-color: var(--line); }
+  .callout.tip strong { color: var(--sky); }
+  .callout p { margin: 0; font-size: 15px; color: #e4ecf8; }
+
+  /* Troubleshooting */
+  details {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 4px 20px;
+    margin-bottom: 10px;
+  }
+  details summary {
+    cursor: pointer;
+    padding: 14px 0;
+    font-weight: 700;
+    font-size: 15px;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after {
+    content: "+";
+    color: var(--sky);
+    font-size: 22px;
+    font-weight: 400;
+    transition: transform 0.2s;
+  }
+  details[open] summary::after { transform: rotate(45deg); }
+  details p { padding-bottom: 16px; margin-bottom: 0; font-size: 15px; color: var(--muted); }
+
+  footer {
+    margin-top: 60px;
+    padding-top: 26px;
+    border-top: 1px solid var(--line);
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  footer a { color: var(--sky); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  .mush { color: var(--sky); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="kicker">Mushbox Guides</span>
+    <h1>Updating Your <span class="accent">Mushbox</span></h1>
+    <p class="lede">When a new BELABOX software update is available, installing it takes about a minute and happens right from the belaUI screen you already use to go live. Here's how to do it safely.</p>
+  </header>
+
+  <section>
+    <h2>How you'll know an update is ready</h2>
+    <p>BELABOX checks for updates on its own. When one is available, you'll see a notice on the <strong>System</strong> section of your admin page &mdash; usually a small count of available updates and a button to install them.</p>
+    <p>If you go a while without updating, a reminder message will also appear at the <strong>top of your admin page</strong> so it's hard to miss. That's your cue to run through the steps below when you get a chance.</p>
+    <p class="sub">Open your admin page the same way you always do, using your private link.</p>
+    <div class="callout tip">
+      <span class="ico">💡</span>
+      <p><strong>Good habit:</strong> check for updates every week or two, and always before a big stream. It's much nicer to update on your own schedule than to discover one mid-broadcast.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Before you update</h2>
+    <p>Run through this quick checklist first. The update itself is simple &mdash; these steps just keep it smooth.</p>
+    <div class="card">
+      <ul class="check">
+        <li><strong>Stop your stream.</strong> Never update while you're live. End the broadcast and confirm the encoder is idle.</li>
+        <li><strong>Keep it powered.</strong> Plug into wall power if you can, or make sure your battery is well charged. Don't pull power during the update.</li>
+        <li><strong>Use a stable connection.</strong> Home WiFi or Ethernet is ideal. It'll work over cellular, but a solid connection avoids interruptions mid-download.</li>
+        <li><strong>Give it a few minutes.</strong> Update, wait for the reconnect, and verify &mdash; don't start this right as you're trying to go live.</li>
+      </ul>
+    </div>
+    <div class="callout warn">
+      <span class="ico">⚠️</span>
+      <p><strong>The one rule that matters most:</strong> do not unplug or power off your Mushbox while it's updating. Let it finish and reconnect on its own.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Installing the update</h2>
+    <ol class="steps">
+      <li>
+        <h3>Open your admin page</h3>
+        <p>Open your admin page using your private link.</p>
+      </li>
+      <li>
+        <h3>Make sure you're not streaming</h3>
+        <p>If the stream is running, stop it first. The main controls should show the encoder as idle.</p>
+      </li>
+      <li>
+        <h3>Open the System section</h3>
+        <p>Scroll to the <strong>System</strong> area. If an update is available, you'll see it listed here with the number of packages ready to install.</p>
+      </li>
+      <li>
+        <h3>Tap the update button</h3>
+        <p>Press the install / update button. BELABOX downloads and applies the update automatically &mdash; you don't need to type anything.</p>
+      </li>
+      <li>
+        <h3>Wait for it to finish</h3>
+        <p>You'll see a "software update in progress" message. Your Mushbox will briefly disconnect as it applies the update and restarts the software. This is normal.</p>
+      </li>
+      <li>
+        <h3>Reconnect and verify</h3>
+        <p>After a short wait, your admin page comes back on its own. Confirm everything looks normal, and you're done.</p>
+      </li>
+    </ol>
+    <div class="callout tip">
+      <span class="ico">✅</span>
+      <p><strong>That's it.</strong> A quick test stream is a nice way to confirm the update went through cleanly before your next real broadcast.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>If something looks off</h2>
+    <details>
+      <summary>My admin page didn't come back after the update</summary>
+      <p>Give it a full 2&ndash;3 minutes &mdash; the software restart plus reconnect can take a moment. If it's still unreachable, power-cycle the Mushbox: turn it off, wait ten seconds, and turn it back on. It should reconnect on its own.</p>
+    </details>
+    <details>
+      <summary>The update seemed to stall or the connection dropped</summary>
+      <p>If your internet cut out mid-download, reopen your admin page and try the update again from the System section. BELABOX will pick up where it needs to. A stronger connection (home WiFi or Ethernet) helps here.</p>
+    </details>
+    <details>
+      <summary>I don't see any update available</summary>
+      <p>That means your Mushbox is already up to date &mdash; nothing to do. If you think an update should be there, refresh your admin page and check the System section again.</p>
+    </details>
+    <details>
+      <summary>Something isn't working right after updating</summary>
+      <p>Reach out and I'll take a look. Note what changed and roughly when you updated, and we'll get it sorted. Every Mushbox is supported directly.</p>
+    </details>
+  </section>
+
+  <footer>
+    <p>Part of the <span class="mush">Mushbox</span> guide series &middot; Questions? Reach out anytime and I'll walk you through it.</p>
+  </footer>
+
+</div>
+</body>
+</html>
