@@ -1,0 +1,109 @@
+<svg viewBox="0 0 940 520" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif" role="img" aria-label="Mushbox signal path: two bonded cellular connections carry audio and video to the BELABOX cloud relay, back down to OBS on your home PC, then up to Twitch — about twenty seconds camera to stream.">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap');
+      .orb { font-family: 'Orbitron', sans-serif; }
+      .mono { font-family: 'JetBrains Mono', monospace; }
+      .dot { fill: #4DB8FF; }
+      @media (prefers-reduced-motion: reduce) {
+        .dot { display: none; }
+      }
+    </style>
+
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4DB8FF"/>
+      <stop offset="1" stop-color="#1E6FFF"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0A1535"/>
+      <stop offset="1" stop-color="#070C22"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.4" r="0.6">
+      <stop offset="0" stop-color="#1E6FFF" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#1E6FFF" stop-opacity="0"/>
+    </radialGradient>
+
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4DB8FF"/>
+    </marker>
+  </defs>
+
+  <!-- backdrop -->
+  <rect x="0.5" y="0.5" width="939" height="519" rx="22" fill="url(#panel)" stroke="rgba(77,184,255,0.16)"/>
+  <ellipse cx="430" cy="150" rx="360" ry="180" fill="url(#glow)"/>
+
+  <!-- header -->
+  <text x="40" y="52" class="mono" font-size="12" letter-spacing="4" fill="#4DB8FF">SIGNAL PATH</text>
+  <text x="40" y="82" class="orb" font-size="22" font-weight="700" fill="#FFFFFF">How your stream travels</text>
+
+  <!-- ============ PATHS ============ -->
+  <!-- cellular link 1 -->
+  <path id="cell1" d="M225,352 C300,312 300,220 360,188" fill="none" stroke="url(#accent)" stroke-width="2.4" marker-end="url(#arrow)"/>
+  <!-- cellular link 2 -->
+  <path id="cell2" d="M225,382 C305,352 320,258 362,214" fill="none" stroke="url(#accent)" stroke-width="2.4" marker-end="url(#arrow)"/>
+  <!-- cloud down to OBS -->
+  <path id="down" d="M497,200 C560,240 575,268 615,306" fill="none" stroke="url(#accent)" stroke-width="2.6" marker-end="url(#arrow)"/>
+  <!-- OBS to twitch -->
+  <path id="out" d="M735,368 L788,368" fill="none" stroke="url(#accent)" stroke-width="2.6" marker-end="url(#arrow)"/>
+
+  <!-- flowing dots -->
+  <circle class="dot" r="3.2"><animateMotion dur="2.2s" repeatCount="indefinite"><mpath href="#cell1"/></animateMotion></circle>
+  <circle class="dot" r="3.2"><animateMotion dur="2.2s" begin="0.5s" repeatCount="indefinite"><mpath href="#cell2"/></animateMotion></circle>
+  <circle class="dot" r="3.4"><animateMotion dur="1.7s" begin="1s" repeatCount="indefinite"><mpath href="#down"/></animateMotion></circle>
+  <circle class="dot" r="3.4"><animateMotion dur="1s" begin="1.4s" repeatCount="indefinite"><mpath href="#out"/></animateMotion></circle>
+
+  <!-- path labels -->
+  <text x="298" y="292" text-anchor="middle" class="mono" font-size="11" fill="#B9C9EE" stroke="#0A1535" stroke-width="4.5" stroke-linejoin="round" paint-order="stroke" transform="rotate(-48 298 292)">2&#215; cellular &#183; SRTLA bonded</text>
+  <text x="565" y="243" text-anchor="middle" class="mono" font-size="11" fill="#B9C9EE" stroke="#0A1535" stroke-width="4.5" stroke-linejoin="round" paint-order="stroke" transform="rotate(38 565 243)">SRT down</text>
+  <text x="742" y="356" class="mono" font-size="11" fill="#B9C9EE" stroke="#0A1535" stroke-width="4.5" stroke-linejoin="round" paint-order="stroke">RTMP</text>
+
+  <!-- ============ NODES ============ -->
+  <!-- MUSHBOX -->
+  <g>
+    <rect x="60" y="312" width="165" height="112" rx="16" fill="#0E1A44" stroke="rgba(77,184,255,0.35)"/>
+    <rect x="80" y="336" width="46" height="34" rx="5" fill="none" stroke="#4DB8FF" stroke-width="2"/>
+    <circle cx="103" cy="353" r="7" fill="none" stroke="#4DB8FF" stroke-width="2"/>
+    <line x1="134" y1="336" x2="140" y2="326" stroke="#4DB8FF" stroke-width="2"/>
+    <line x1="140" y1="336" x2="148" y2="324" stroke="#4DB8FF" stroke-width="2"/>
+    <text x="80" y="392" class="orb" font-size="15" font-weight="700" fill="#FFFFFF">MUSHBOX</text>
+    <text x="80" y="411" font-size="11" fill="#9DB0D4">field encoder + camera</text>
+  </g>
+
+  <!-- BELABOX CLOUD -->
+  <g>
+    <path d="M373,205 a34,34 0 0,1 4,-67 a40,40 0 0,1 78,-8 a30,30 0 0,1 12,58 a30,30 0 0,1 -14,17 z"
+          fill="#0E1A44" stroke="rgba(77,184,255,0.35)" stroke-width="1.5"/>
+    <text x="432" y="150" text-anchor="middle" class="orb" font-size="14" font-weight="700" fill="#FFFFFF">BELABOX</text>
+    <text x="432" y="170" text-anchor="middle" class="orb" font-size="14" font-weight="700" fill="#4DB8FF">CLOUD</text>
+    <text x="432" y="190" text-anchor="middle" font-size="10.5" fill="#9DB0D4">SRTLA relay</text>
+  </g>
+
+  <!-- HOME OBS -->
+  <g>
+    <rect x="570" y="312" width="165" height="112" rx="16" fill="#0E1A44" stroke="rgba(77,184,255,0.55)"/>
+    <!-- house roof -->
+    <path d="M590,352 L607,336 L624,352" fill="none" stroke="#4DB8FF" stroke-width="2" stroke-linejoin="round"/>
+    <rect x="596" y="352" width="22" height="18" fill="none" stroke="#4DB8FF" stroke-width="2"/>
+    <text x="590" y="392" class="orb" font-size="15" font-weight="700" fill="#FFFFFF">HOME OBS</text>
+    <text x="590" y="411" font-size="11" fill="#9DB0D4">your PC + internet</text>
+    <text x="726" y="304" text-anchor="end" class="mono" font-size="9" letter-spacing="1" fill="#4DB8FF">$0 HOSTING</text>
+  </g>
+
+  <!-- TWITCH -->
+  <g>
+    <rect x="790" y="312" width="112" height="112" rx="16" fill="#0E1A44" stroke="rgba(77,184,255,0.35)"/>
+    <path d="M812,340 h30 v18 l-8,8 h-9 l-6,6 v-6 h-7 z" fill="none" stroke="#4DB8FF" stroke-width="2" stroke-linejoin="round"/>
+    <line x1="826" y1="346" x2="826" y2="352" stroke="#4DB8FF" stroke-width="2"/>
+    <line x1="835" y1="346" x2="835" y2="352" stroke="#4DB8FF" stroke-width="2"/>
+    <text x="808" y="392" class="orb" font-size="15" font-weight="700" fill="#FFFFFF">TWITCH</text>
+    <text x="808" y="411" font-size="11" fill="#9DB0D4">live to chat</text>
+  </g>
+
+  <!-- ============ LATENCY RIBBON ============ -->
+  <g>
+    <rect x="270" y="452" width="400" height="44" rx="22" fill="rgba(30,111,255,0.12)" stroke="rgba(77,184,255,0.4)"/>
+    <text x="300" y="480" class="orb" font-size="20" font-weight="800" fill="#4DB8FF">~20s</text>
+    <text x="360" y="472" font-size="12.5" fill="#EAF1FF" font-weight="600">Camera to Twitch</text>
+    <text x="360" y="488" class="mono" font-size="10.5" fill="#9DB0D4">or less &#183; typical glass-to-stream</text>
+  </g>
+</svg>
