@@ -424,42 +424,91 @@
     {
       name: "Aprylanonymous",
       handle: "aprylanonymous",
-      video: "assets/videos/aprylanonymous.mp4",
+      video: "assets/videos/aprylanonymousso.mp4",
       poster: "",   // e.g. "assets/videos/aprylanonymous.jpg"
-      quote: ""     // drop in a real line from her clip if you want one
+      quote: ""     // drop in a real line from the clip if you want one
     },
     {
       name: "NeverBeenHappierTV",
       handle: "neverbeenhappiertv",
-      video: "assets/videos/neverbeenhappiertv.mp4",
+      video: "assets/videos/neverbeenhappiertvso.mp4",
       poster: "",
       quote: ""
     },
     {
       name: "DianaTheDogGroomer",
       handle: "dianathedoggroomer",
-      video: "assets/videos/dianathedoggroomer.mp4",
+      video: "assets/videos/dianathedoggroomerso.mp4",
       poster: "",
       quote: ""
     },
     {
       name: "RefurberSteve",
       handle: "refurbersteve",
-      video: "assets/videos/refurbersteve.mp4",
+      video: "assets/videos/refurbersteveso.mp4",
       poster: "",
       quote: ""
     },
     {
       name: "UncleJPop",
       handle: "unclejpop",
-      video: "assets/videos/unclejpop.mp4",
+      video: "assets/videos/unclejpopso.mp4",
       poster: "",
       quote: ""
     },
     {
       name: "SweatyPedals",
       handle: "sweatypedals",
-      video: "assets/videos/sweatypedals.mp4",
+      video: "assets/videos/sweatypedalsso.mp4",
+      poster: "",
+      quote: ""
+    },
+    {
+      name: "AllDayNYC",
+      handle: "alldaynyc",
+      video: "assets/videos/alldaynycmushboxso.mp4",
+      poster: "",
+      quote: ""
+    },
+    {
+      name: "UluMaika",
+      handle: "ulumaika",
+      video: "assets/videos/ulumaikaso.mp4",
+      poster: "",
+      quote: ""
+    },
+    {
+      name: "EmmDeeFit",
+      handle: "emmdeefit",
+      video: "assets/videos/emmdeefitso.mp4",
+      poster: "",
+      quote: ""
+    },
+    {
+      name: "MissyAlcazarMusic",
+      handle: "missyalcazarmusic",   // ← double-check this handle
+      video: "assets/videos/missyalcazarso.mp4",
+      poster: "",
+      quote: ""
+    },
+    {
+      name: "Aprylanonymous",
+      handle: "aprylanonymous",
+      video: "assets/videos/aprylanonymousso2.mp4",
+      poster: "",
+      quote: ""
+    },
+    {
+      name: "PotentialBliss",
+      handle: "potentialbliss",      // ← double-check this handle
+      video: "assets/videos/potentialblissso.mp4",
+      poster: "",
+      quote: ""
+    },
+    {
+      name: "TwitchCon IRL Panel",
+      handle: "",                    // group clip — no @handle, so no link shown
+      video: "assets/videos/twitchcon2026irlpanelshoutout.mp4",
       poster: "",
       quote: ""
     }
@@ -530,6 +579,7 @@
       v.preload = "none";
       // Graceful failure if the file isn't there yet.
       v.addEventListener("error", () => {
+        console.warn("Mushbox: couldn't load video →", t.video, "(check the file exists at this path, named exactly this)");
         media.innerHTML = `<div class="placeholder">${barsSVG()}<span class="ph-name">Video coming soon</span></div>`;
       });
       media.innerHTML = "";
