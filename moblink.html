@@ -211,10 +211,19 @@
     </div>
 
     <div class="step">
-      <div class="step-head"><span class="step-num"></span><span class="step-title">Run the install script</span></div>
+      <div class="step-head"><span class="step-num"></span><span class="step-title">Download the Moblink binaries</span></div>
       <div class="step-body">
-        <div class="code"><button class="copy" aria-label="Copy command"></button><pre>wget -q -O - https://raw.githubusercontent.com/datagutt/moblink-rust/refs/heads/main/install/belabox/install.sh | sudo sh</pre></div>
-        <p>Press <span class="kbd">Ctrl</span>+<span class="kbd">C</span> once it hangs at <em>"Downloading moblink systemd service files"</em> — that's expected, and we create the services manually next.</p>
+        <p>Grab the <b style="color:var(--white)">statically linked (musl)</b> builds. These run on any BELABOX regardless of its system version. The upstream one-liner installer is avoided on purpose: on a BELABOX it pulls a <b>glibc</b> build that fails to start with a <code>GLIBC_… not found</code> error.</p>
+        <div class="code"><button class="copy" aria-label="Copy command"></button><pre>cd /tmp
+TAG=v1.0.0
+BASE=https://github.com/datagutt/moblink-rust/releases/download/$TAG
+wget -O moblink-streamer      $BASE/moblink-streamer-aarch64-unknown-linux-musl
+wget -O moblink-relay-service $BASE/moblink-relay-service-aarch64-unknown-linux-musl
+wget -O moblink-relay         $BASE/moblink-relay-aarch64-unknown-linux-musl
+chmod +x moblink-streamer moblink-relay-service moblink-relay
+sudo mv moblink-streamer      /usr/local/bin/moblink-streamer
+sudo mv moblink-relay-service /usr/local/bin/moblink-relay-service
+sudo mv moblink-relay         /usr/local/bin/moblink-relay</pre></div>
       </div>
     </div>
 
@@ -296,7 +305,11 @@ sudo systemctl start moblink-relay-service moblink-streamer</pre></div>
     </div>
     <div class="note warn">
       <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>
-      <div><span class="heads">Custom 5A configs</span>The installer assumes the standard BELABOX stack. If you run custom configs, confirm the web UI is healthy at <code>belabox.local</code> before running Step 3.</div>
+      <div><span class="heads">Custom 5A configs</span>If you run custom configs on your board, confirm the web UI is healthy at <code>belabox.local</code> before you start — Moblink expects the standard BELABOX stack.</div>
+    </div>
+    <div class="note">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="var(--sky)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
+      <div><span class="heads">Streamer won’t start / nothing on port 7777?</span>Run <code>sudo /usr/local/bin/moblink-streamer --belabox --no-log-timestamps</code> to see the real error. If it says <code>GLIBC_… not found</code>, you have a glibc binary — redo Step 3 to install the <b>musl</b> builds, then <code>sudo systemctl reset-failed moblink-streamer</code> and <code>sudo systemctl start moblink-streamer</code>. A one-off <code>Relay server missing</code> line at startup is harmless — the server still comes up on 7777.</div>
     </div>
   </div>
 
