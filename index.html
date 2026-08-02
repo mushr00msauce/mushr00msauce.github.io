@@ -287,6 +287,7 @@
     .links .mbxfam-foot,
     .links .mbxself-banner,
     .links .mbxlive-row,
+    .links .mbxmeet,
     .links .promo-tin{
       grid-column:1 / -1;
     }
@@ -754,18 +755,371 @@
     <!-- ===== Family IRL — Mushbox brings people together ===== -->
     <span class="section-label centered">The family, IRL — Mushbox brings people together</span>
 
-    <figure class="mbx-irl">
-      <img src="assets/family-nyc.jpg" alt="Three Mushbox family members meeting up on a New York City street at night" loading="lazy">
-      <figcaption class="mbx-irl-cap"><strong>New York City</strong><span>· last night</span></figcaption>
-    </figure>
-    <p class="mbx-irl-note">
-      Every Mushbox bonds cellular and wifi into one bonded connection that holds up anywhere &mdash;
-      and it keeps bonding the people who run them, too. Three of the family crossing paths in NYC.
-      <span class="mbx-irl-tags">In frame:
-        <a href="https://twitch.tv/aprylanonymous" target="_blank" rel="noopener">@Aprylanonymous</a> &middot;
-        <a href="https://twitch.tv/jaynerio" target="_blank" rel="noopener">@JayneRio</a> &middot;
-        <a href="https://twitch.tv/chefmaki" target="_blank" rel="noopener">@Chefmaki</a></span>
-    </p>
+    <div class="mbxmeet" id="mbxMeet">
+      <style>
+        .mbxmeet{ width:100%; max-width:760px; margin:6px auto 0; }
+        .mbxmeet *{ box-sizing:border-box; }
+        .mbxmeet-viewport{ position:relative; }
+        .mbxmeet-track{
+          display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory;
+          scroll-behavior:smooth; padding:2px; scrollbar-width:none; -ms-overflow-style:none;
+          align-items:flex-start;
+        }
+        .mbxmeet-track::-webkit-scrollbar{ display:none; }
+
+        .mbxmeet-tile{ flex:0 0 auto; scroll-snap-align:start; margin:0; }
+        /* fixed HEIGHT; width is set per-photo by JS from its aspect ratio.
+           These are just the pre-load / fallback dimensions. */
+        .mbxmeet-photo{
+          position:relative; height:320px; width:256px;
+          border:1px solid var(--card-edge); border-radius:16px; overflow:hidden;
+          background:var(--card); box-shadow:0 14px 34px -20px rgba(30,111,255,.5);
+        }
+        .mbxmeet-photo img{ width:100%; height:100%; object-fit:cover; display:block; }
+        .mbxmeet-photo.noimg img{ display:none; }
+        .mbxmeet-photo.noimg::before{
+          content:attr(data-place); position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+          color:var(--text-dim); font-size:12px; font-weight:700; text-align:center; padding:10px;
+        }
+        .mbxmeet-photo::after{
+          content:""; position:absolute; inset:0; pointer-events:none;
+          background:linear-gradient(180deg,rgba(4,8,26,0) 55%,rgba(4,8,26,.72) 100%);
+        }
+        .mbxmeet-cap{
+          position:absolute; left:10px; bottom:10px; z-index:2; display:flex; align-items:baseline; gap:6px;
+          padding:6px 11px; border-radius:999px; background:rgba(10,21,53,.72); backdrop-filter:blur(6px);
+          border:1px solid rgba(77,184,255,.3);
+        }
+        .mbxmeet-cap strong{ font-size:12px; font-weight:800; color:var(--white); }
+        .mbxmeet-cap span{ font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--sky); }
+        .mbxmeet-who{ display:block; margin-top:8px; text-align:center; font-size:11px; font-weight:800; letter-spacing:.03em; color:var(--royal); }
+        .mbxmeet-who a{ color:var(--sky); text-decoration:none; border-bottom:1px solid rgba(77,184,255,.35); }
+        .mbxmeet-who a:hover{ color:var(--white); border-bottom-color:var(--sky); }
+
+        .mbxmeet-arrow{
+          position:absolute; top:160px; transform:translateY(-50%); z-index:3;
+          width:38px; height:38px; border-radius:50%; border:1px solid rgba(77,184,255,.3);
+          background:rgba(10,21,53,.85); backdrop-filter:blur(6px); color:#fff; cursor:pointer;
+          display:flex; align-items:center; justify-content:center; transition:background .15s, opacity .15s;
+        }
+        .mbxmeet-arrow:hover{ background:var(--royal); border-color:var(--royal); }
+        .mbxmeet-arrow:disabled{ opacity:.22; cursor:default; }
+        .mbxmeet-arrow.prev{ left:-6px; } .mbxmeet-arrow.next{ right:-6px; }
+        .mbxmeet-arrow svg{ width:18px; height:18px; }
+
+        .mbxmeet-note{ width:100%; margin:16px auto 0; font-size:14.5px; line-height:1.6; color:var(--text-dim); text-align:center; max-width:44ch; }
+
+    /* click-to-enlarge lightbox */
+    .mbxmeet-photo{ cursor:zoom-in; }
+    .mbxmeet-lightbox{
+      position:fixed; inset:0; z-index:9999; padding:24px;
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(4,8,16,.88); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px);
+      opacity:0; visibility:hidden; pointer-events:none; transition:opacity .2s ease;
+    }
+    .mbxmeet-lightbox.open{ opacity:1; visibility:visible; pointer-events:auto; }
+    .mbxmeet-lb-inner{ display:flex; flex-direction:column; align-items:center; gap:14px; max-width:min(1100px,96vw); }
+    .mbxmeet-lb-img{
+      max-width:100%; max-height:82vh; display:block; object-fit:contain; background:#000;
+      border-radius:14px; border:1px solid var(--card-edge); box-shadow:0 24px 60px -20px rgba(0,0,0,.7);
+    }
+    .mbxmeet-lb-meta{ text-align:center; }
+    .mbxmeet-lb-place strong{ font-weight:800; color:#fff; font-size:1.05rem; }
+    .mbxmeet-lb-place span{ color:var(--sky); font-size:.78rem; text-transform:uppercase; letter-spacing:.14em; margin-left:8px; font-weight:700; }
+    .mbxmeet-lb-who{ margin-top:6px; font-size:12px; font-weight:800; color:var(--royal); }
+    .mbxmeet-lb-who a{ color:var(--sky); text-decoration:none; border-bottom:1px solid rgba(77,184,255,.35); }
+    .mbxmeet-lb-who a:hover{ color:#fff; border-bottom-color:var(--sky); }
+    .mbxmeet-lb-close{
+      position:absolute; top:16px; right:18px; width:42px; height:42px; border-radius:50%;
+      border:1px solid rgba(77,184,255,.35); background:rgba(10,21,53,.85); color:#fff;
+      cursor:pointer; font-size:24px; line-height:1; display:flex; align-items:center; justify-content:center;
+    }
+    .mbxmeet-lb-close:hover{ background:var(--royal); border-color:var(--royal); }
+    @media (prefers-reduced-motion:reduce){ .mbxmeet-lightbox{ transition:none; } }
+
+        @media (max-width:560px){
+          .mbxmeet-photo{ height:240px; width:192px; }
+          .mbxmeet-arrow{ top:120px; }
+          .mbxmeet-arrow.prev{ left:2px; } .mbxmeet-arrow.next{ right:2px; }
+        }
+        @media (prefers-reduced-motion:reduce){ .mbxmeet-track{ scroll-behavior:auto; } }
+      </style>
+
+      <div class="mbxmeet-viewport">
+        <button class="mbxmeet-arrow prev" aria-label="Previous">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="mbxmeet-track" id="mbxMeetTrack"></div>
+        <button class="mbxmeet-arrow next" aria-label="Next">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+
+      <p class="mbxmeet-note">
+        Every Mushbox bonds cellular and wifi into one bonded connection that holds up anywhere &mdash;
+        and it keeps bonding the people who run them, too.
+      </p>
+
+      <script>
+      (function(){
+        var root = document.getElementById('mbxMeet');
+        if (!root || root.dataset.init) return; root.dataset.init = '1';
+
+        var AUTOPLAY = true;
+        var AUTOPLAY_MS = 4000;
+
+        // One entry per meetup photo. Put photos in assets/photos/.
+        // Controls + autoplay appear automatically at 2+ photos.
+        var MEETS = [
+          {
+            img:'assets/photos/NYC2026AprylJayneMaki.jpg', place:'NYC', when:'July 2026',
+            tags:[['Aprylanonymous','aprylanonymous'],['JayneRio','jaynerio'],['Chefmaki','chefmaki']]
+          },
+          {
+            img:'assets/photos/NYC2026EdAprylJayneMaki.jpg', place:'NYC', when:'July 2026',
+            tags:[['Aprylanonymous','aprylanonymous'],['JayneRio','jaynerio'],['Chefmaki','chefmaki'],['Edventures','edventureslive']]
+          },
+          {
+            img:'assets/photos/twitchcon-2025/TwitchCon2025AlldayNYC.JPG', place:'TwitchCon', when:'2025',
+            tags:[['Mushr00msauce','mushr00msauce'],['AllDayNYC','alldaynyc']]
+          },
+          {
+            img:'assets/photos/twitchcon-2025/TwitchCon2025barklalatom.JPG', place:'TwitchCon', when:'2025',
+            tags:[['Barktok','barktok'],['LalaCarpediem','lalacarpediem']]
+          },
+          {
+            img:'assets/photos/twitchcon-2025/TwitchCon2025BarktokGmanHamandLizAlldayNYC.jpeg', place:'TwitchCon', when:'2025',
+            tags:[['AllDayNYC','alldaynyc'],['Barktok','barktok'],['Hamandlizgaming','hamandlizgaming'],['Gman5o5','gman5o5']]
+          },
+          {
+            img:'assets/photos/twitchcon-2025/TwitchCon2025BlissRensz.JPG', place:'TwitchCon', when:'2025',
+            tags:[['PotentialBliss','potentialbliss'],['Rensz','rensz']]
+          },
+          {
+            img:'assets/photos/twitchcon-2025/TwitchCon2025BurgersandBait.JPG', place:'TwitchCon', when:'2025',
+            tags:[['Hamandlizgaming','hamandlizgaming'],['Barktok','barktok'],['AllDayNYC','alldaynyc'],['JonathanAkaJohnWick','jonathanakajohnwick'],['SweatyPedals','sweatypedals'],['PoliceChaseNetwork','policechasenetwork']]
+          },
+          {
+            img:'assets/photos/twitchcon-2025/TwitchCon2025GroupDinner.JPG', place:'TwitchCon', when:'2025',
+            tags:[['Barktok','barktok'],['PotentialBliss','potentialbliss'],['SweatyPedals','sweatypedals'],['UncleJPop','unclejpop'],['Hardwareguy','hardwareguy'],['PoliceChaseNetwork','policechasenetwork'],['ChicagoSuperman','chicagosuperman']]
+          },
+          {
+            img:'assets/photos/twitchcon-2025/TwitchCon2025Hamandliz.JPG', place:'TwitchCon', when:'2025',
+            tags:[['Hamandlizgaming','hamandlizgaming']]
+          },
+          {
+            img:'assets/photos/twitchcon-2025/TwitchCon2025HamandlizIraAba.JPG', place:'TwitchCon', when:'2025',
+            tags:[['Hamandlizgaming','hamandlizgaming'],['Ira_Aba','ira_aba']]
+          },
+          {
+            img:'assets/photos/twitchcon-2025/TwitchCon2025HomerAlldayNYC.JPG', place:'TwitchCon', when:'2025',
+            tags:[['Deepseahomer','deepseahomer'],['AllDayNYC','alldaynyc']]
+          },
+          {
+            img:'assets/photos/twitchcon-2025/TwitchCon2025HomerHamandlizSewercop.JPG', place:'TwitchCon', when:'2025',
+            tags:[['Hamandlizgaming','hamandlizgaming'],['Deepseahomer','deepseahomer'],['Sewercop','sewercop']]
+          },
+          {
+            img:'assets/photos/twitchcon-2025/TwitchCon2025LaLaTomHamandlizBarktok.JPG', place:'TwitchCon', when:'2025',
+            tags:[['LalaCarpediem','lalacarpediem'],['Barktok','barktok'],['Hamandlizgaming','hamandlizgaming']]
+          },
+          {
+            img:'assets/photos/twitchcon-2025/TwitchCon2025RedBullCart.JPG', place:'TwitchCon', when:'2025',
+            tags:[['Hamandlizgaming','hamandlizgaming'],['Deepseahomer','deepseahomer']]
+          },
+          {
+            img:'assets/photos/twitchcon-2025/TwitchCon2025RedBullGroup.JPG', place:'TwitchCon', when:'2025',
+            tags:[['Hamandlizgaming','hamandlizgaming'],['AllDayNYC','alldaynyc'],['Poultry_Motion','poultry_motion'],['Gman5o5','gman5o5'],['JonathanAkaJohnWick','jonathanakajohnwick'],['Sewercop','sewercop']]
+          },
+          {
+            img:'assets/photos/twitchcon-2025/TwitchCon2025RedBullRooftop.JPG', place:'TwitchCon', when:'2025',
+            tags:[['AllDayNYC','alldaynyc'],['Hamandlizgaming','hamandlizgaming'],['Barktok','barktok'],['Poultry_Motion','poultry_motion'],['Sewercop','sewercop'],['JonathanAkaJohnWick','jonathanakajohnwick']]
+          },
+          {
+            img:'assets/photos/twitchcon-2025/TwitchCon2025Sewercop.JPG', place:'TwitchCon', when:'2025',
+            tags:[['Sewercop','sewercop']]
+          },
+          {
+            img:'assets/photos/twitchcon-2025/TwitchCon2025SweatyRellimIraAba.JPG', place:'TwitchCon', when:'2025',
+            tags:[['Ira_Aba','ira_aba'],['Rellim','rellim'],['SweatyPedals','sweatypedals']]
+          },
+          {
+            img:'assets/photos/twitchcon-2025/TwitchCon2025PoliteKam.JPG', place:'TwitchCon', when:'2025',
+            tags:[['PoliteKam','politekam']]
+          },
+          {
+            img:'assets/photos/twitchcon-2025/TwitchCon2025JonaHamandliz.JPG', place:'TwitchCon', when:'2025',
+            tags:[['JonathanAkaJohnWick','jonathanakajohnwick'],['Hamandlizgaming','hamandlizgaming']]
+          },
+          {
+            img:'assets/photos/indy500-2026/Indy5002026aprilrenee1209kozybean.JPG', place:'Indy 500', when:'2026',
+            tags:[['AprilRenee1209','aprilrenee1209'],['Kozybean','kozybean']]
+          },
+          {
+            img:'assets/photos/indy500-2026/Indy5002026Kozybean.JPG', place:'Indy 500', when:'2026',
+            tags:[['Kozybean','kozybean']]
+          },
+          {
+            img:'assets/photos/indy500-2026/Indy5002026kozybeanhamandlizgaming__2_.JPG', place:'Indy 500', when:'2026',
+            tags:[['Kozybean','kozybean'],['Hamandlizgaming','hamandlizgaming']]
+          },
+          {
+            img:'assets/photos/indy500-2026/Indy5002026kozybeanhamandlizgaming__3_.JPG', place:'Indy 500', when:'2026',
+            tags:[['Kozybean','kozybean'],['Hamandlizgaming','hamandlizgaming']]
+          },
+          {
+            img:'assets/photos/indy500-2026/Indy5002026kozybeanhamandlizgaming.JPG', place:'Indy 500', when:'2026',
+            tags:[['Kozybean','kozybean'],['Hamandlizgaming','hamandlizgaming']]
+          },
+          {
+            img:'assets/photos/indy500-2026/Indy5002026politekamunclejpopkozybean.JPG', place:'Indy 500', when:'2026',
+            tags:[['PoliteKam','politekam'],['UncleJPop','unclejpop'],['Kozybean','kozybean']]
+          },
+          {
+            img:'assets/photos/indy500-2026/Indy5002026sweatykamdahllia_rexhamandliz.JPG', place:'Indy 500', when:'2026',
+            tags:[['SweatyPedals','sweatypedals'],['PoliteKam','politekam'],['Dahlia_Rex','dahlia_rex'],['Hamandlizgaming','hamandlizgaming']]
+          },
+          {
+            img:'assets/photos/indy500-2026/Indy5002026unclejpopsweatydahliakamkozy.JPG', place:'Indy 500', when:'2026',
+            tags:[['UncleJPop','unclejpop'],['SweatyPedals','sweatypedals'],['Dahlia_Rex','dahlia_rex'],['PoliteKam','politekam'],['Kozybean','kozybean']]
+          },
+          {
+            img:'assets/photos/indy500-2026/Indy5002026unclejpopsweatypedalskozybeandahlia_rex.JPG', place:'Indy 500', when:'2026',
+            tags:[['UncleJPop','unclejpop'],['SweatyPedals','sweatypedals'],['Kozybean','kozybean'],['Dahlia_Rex','dahlia_rex']]
+          },
+          {
+            img:'assets/photos/stjude-summit-2026/StJudeSummit2026HomerJtenglandcoppertailwolfbrunodiaz.JPG', place:'St. Jude Summit', when:'2026',
+            tags:[['Deepseahomer','deepseahomer'],['JTEngland','jtengland'],['CopperTailWolf','coppertailwolf'],['BrunoDiaz','brunodiaz']]
+          },
+          {
+            img:'assets/photos/stjude-summit-2026/StJudeSummit2026homerPoisonHearrtBruno.JPG', place:'St. Jude Summit', when:'2026',
+            tags:[['Deepseahomer','deepseahomer'],['PoisonHearrt','poisonhearrt'],['BrunoDiaz','brunodiaz']]
+          },
+          {
+            img:'assets/photos/stjude-summit-2026/StJudeSummit2026JTengland.JPG', place:'St. Jude Summit', when:'2026',
+            tags:[['JTEngland','jtengland']]
+          },
+          {
+            img:'assets/photos/stjude-summit-2026/StJudeSummit2026HardwareGuy.JPG', place:'St. Jude Summit', when:'2026',
+            tags:[['Hardwareguy','hardwareguy']]
+          },
+          {
+            img:'assets/photos/stjude-summit-2026/StJudeSummit2026Homer.JPG', place:'St. Jude Summit', when:'2026',
+            tags:[['Deepseahomer','deepseahomer']]
+          }
+          // ,{
+          //   img:'assets/photos/meetup-chicago.jpg', place:'Chicago', when:'this month',
+          //   tags:[['SomeStreamer','somestreamer'],['Another','another']]
+          // }
+        ];
+
+        var track = root.querySelector('#mbxMeetTrack');
+        var prev  = root.querySelector('.mbxmeet-arrow.prev');
+        var next  = root.querySelector('.mbxmeet-arrow.next');
+            var photos = [];
+
+    // ----- lightbox: click a photo to view it large over the dimmed page -----
+    var lbOpen = false;
+    var lb = document.createElement('div');
+    lb.className = 'mbxmeet-lightbox';
+    lb.setAttribute('role','dialog'); lb.setAttribute('aria-modal','true');
+    lb.innerHTML =
+      '<button class="mbxmeet-lb-close" aria-label="Close">&times;</button>' +
+      '<div class="mbxmeet-lb-inner">' +
+        '<img class="mbxmeet-lb-img" alt="">' +
+        '<div class="mbxmeet-lb-meta">' +
+          '<div class="mbxmeet-lb-place"></div>' +
+          '<div class="mbxmeet-lb-who"></div>' +
+        '</div>' +
+      '</div>';
+    root.appendChild(lb);
+    var lbImg = lb.querySelector('.mbxmeet-lb-img');
+    var lbPlace = lb.querySelector('.mbxmeet-lb-place');
+    var lbWho = lb.querySelector('.mbxmeet-lb-who');
+    function openLB(m){
+      lbImg.src = m.img; lbImg.alt = 'Mushbox family meetup in ' + m.place;
+      lbPlace.innerHTML = '<strong>'+m.place+'</strong><span>&middot; '+m.when+'</span>';
+      lbWho.innerHTML = (m.tags && m.tags.length)
+        ? 'In frame: ' + m.tags.map(function(t){ return '<a href="https://twitch.tv/'+t[1]+'" target="_blank" rel="noopener">@'+t[0]+'</a>'; }).join(' &middot; ')
+        : '';
+      lb.classList.add('open'); lbOpen = true;
+    }
+    function closeLB(){ lb.classList.remove('open'); lbOpen = false; }
+    lb.addEventListener('click', function(e){ if (e.target === lb) closeLB(); });
+    lb.querySelector('.mbxmeet-lb-close').addEventListener('click', closeLB);
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && lbOpen) closeLB(); });
+
+        // size a tile's width from its photo aspect ratio, keeping height fixed
+        function sizePhoto(ph){
+          var r = parseFloat(ph.dataset.ratio); if(!r) return;
+          ph.style.width = Math.round(ph.getBoundingClientRect().height * r) + 'px';
+        }
+        function atEnd(){ return track.scrollLeft + track.clientWidth >= track.scrollWidth - 4; }
+        function atStart(){ return track.scrollLeft <= 2; }
+        function update(){ prev.disabled = atStart(); next.disabled = atEnd(); }
+        function step(){
+          var t = track.querySelector('.mbxmeet-tile'); if(!t) return 260;
+          var gap = parseInt(getComputedStyle(track).gap) || 12;
+          return t.getBoundingClientRect().width + gap;
+        }
+
+        MEETS.forEach(function(m){
+          var who = (m.tags && m.tags.length)
+            ? m.tags.map(function(t){ return '<a href="https://twitch.tv/'+t[1]+'" target="_blank" rel="noopener">@'+t[0]+'</a>'; }).join(' &middot; ')
+            : '';
+          var fig = document.createElement('figure');
+          fig.className = 'mbxmeet-tile';
+          fig.innerHTML =
+            '<div class="mbxmeet-photo" data-place="'+m.place+'">' +
+              '<img src="'+m.img+'" alt="Mushbox family meetup in '+m.place+'" loading="lazy">' +
+              '<figcaption class="mbxmeet-cap"><strong>'+m.place+'</strong><span>&middot; '+m.when+'</span></figcaption>' +
+            '</div>' +
+            (who ? '<span class="mbxmeet-who">'+who+'</span>' : '');
+          track.appendChild(fig);
+
+          var ph  = fig.querySelector('.mbxmeet-photo');
+          var img = fig.querySelector('img');
+          photos.push(ph);
+      ph.addEventListener('click', function(){ openLB(m); });
+          img.addEventListener('load', function(){
+            if (img.naturalWidth && img.naturalHeight){
+              ph.dataset.ratio = img.naturalWidth / img.naturalHeight;  // vertical <1, horizontal >1
+              sizePhoto(ph);
+            }
+            update();
+          });
+          img.addEventListener('error', function(){ ph.classList.add('noimg'); update(); });
+        });
+
+        // Single photo? Center it, hide arrows, no autoplay.
+        if (MEETS.length < 2){
+          track.style.justifyContent = 'center';
+          prev.style.display = next.style.display = 'none';
+          window.addEventListener('resize', function(){ photos.forEach(sizePhoto); });
+          return;
+        }
+
+        next.addEventListener('click', function(){ track.scrollBy({left:step(), behavior:'smooth'}); });
+        prev.addEventListener('click', function(){ track.scrollBy({left:-step(), behavior:'smooth'}); });
+        track.addEventListener('scroll', update, {passive:true});
+        window.addEventListener('resize', function(){ photos.forEach(sizePhoto); update(); });
+        update();
+
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (AUTOPLAY && !reduce){
+          var paused = false;
+          setInterval(function(){
+            if (paused || lbOpen || document.hidden) return;
+            if (atEnd()) track.scrollTo({left:0, behavior:'smooth'});
+            else track.scrollBy({left:step(), behavior:'smooth'});
+          }, AUTOPLAY_MS);
+          root.addEventListener('mouseenter', function(){ paused = true; });
+          root.addEventListener('mouseleave', function(){ paused = false; });
+          root.addEventListener('touchstart', function(){ paused = true; }, {passive:true});
+        }
+      })();
+      </script>
+    </div>
 
     <span class="section-label">Guides</span>
 
