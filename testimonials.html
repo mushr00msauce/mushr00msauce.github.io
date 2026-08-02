@@ -547,9 +547,11 @@
       : "";
     const quoteHTML = t.quote ? `<blockquote>${t.quote}</blockquote>` : "";
 
-    const posterHTML = t.poster
-      ? `<img class="poster" src="${t.poster}" alt="${t.name} testimonial" loading="lazy">`
-      : `<div class="placeholder">${barsSVG().replace('class="bars"','class="bars animate"')}<span class="ph-name">${t.name}</span></div>`;
+    // Poster auto-derives from the video name (clip.mp4 → clip.jpg) unless you
+    // set one explicitly. No poster file yet? It falls back to the branded
+    // placeholder below — so this is safe whether or not you've made stills.
+    const posterSrc = t.poster || t.video.replace(/\.mp4$/i, ".jpg");
+    const posterHTML = `<img class="poster" src="${posterSrc}" alt="${t.name} testimonial" loading="lazy">`;
 
     card.innerHTML = `
       <div class="media">
@@ -570,6 +572,17 @@
     // Swap poster → real video only when the visitor presses play.
     const media = card.querySelector(".media");
     const playBtn = card.querySelector(".play");
+
+    // If the poster image isn't there, show the branded placeholder instead
+    // of a broken-image icon (play button stays put).
+    const posterEl = card.querySelector("img.poster");
+    posterEl.addEventListener("error", () => {
+      const ph = document.createElement("div");
+      ph.className = "placeholder";
+      ph.innerHTML = `${barsSVG().replace('class="bars"','class="bars animate"')}<span class="ph-name">${t.name}</span>`;
+      posterEl.replaceWith(ph);
+    });
+
     playBtn.addEventListener("click", () => {
       const v = document.createElement("video");
       v.src = t.video;
