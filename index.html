@@ -331,21 +331,202 @@
   </a>
 
   <div class="photos">
-    <a class="shot" href="https://www.twitch.tv/alldaynyc/clip/CoweringSeductivePoultryDerp-YWXrVydbnoyN-vfc" aria-label="Watch ALLDAYNYC's Mushbox debut clip">
-      <img src="https://static-cdn.jtvnw.net/twitch-video-assets/twitch-vap-video-assets-prod-us-west-2/711bd42f-53b2-4342-84fa-f7182de22630/landscape/thumb/thumb-0000000000-1920x1080.jpg" alt="ALLDAYNYC streaming live from New York on a Mushbox">
-      <span class="play"><svg viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></span>
-      <span class="tag">ALLDAYNYC's debut</span>
-    </a>
     <a class="shot" href="https://www.tiktok.com/@alldaynyc/video/7606533710644530463" aria-label="Watch the Mushbox TikTok by ALLDAYNYC">
       <img src="mushbox-tiktok.jpg" alt="A 3D-printed blue Mushbox plate and Mushroom Sauce sticker, from ALLDAYNYC's TikTok">
       <span class="play"><svg viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></span>
       <span class="tag">The build — TikTok</span>
     </a>
-    <a class="shot shot-wide" href="https://www.twitch.tv/aprylanonymous/clip/SparklingBlatantMangetoutFrankerZ-W30U-ZvuRURQUDJs" aria-label="Watch AprylAnonymous's Fox 5 New York clip, streamed on a Mushbox">
+    <a class="shot" href="https://www.twitch.tv/aprylanonymous/clip/SparklingBlatantMangetoutFrankerZ-W30U-ZvuRURQUDJs" aria-label="Watch AprylAnonymous's Fox 5 New York clip, streamed on a Mushbox">
       <img src="https://static-cdn.jtvnw.net/twitch-video-assets/twitch-vap-video-assets-prod-us-west-2/51fa2f27-2894-4e0e-bf94-ffd736f2dfdb/landscape/thumb/thumb-0000000000-1920x1080.jpg" alt="AprylAnonymous featured on Fox 5 New York, streaming live on a Mushbox">
       <span class="play"><svg viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></span>
       <span class="tag">Apryl on Fox 5 New York 📺</span>
     </a>
+  </div>
+
+  <div class="mbx-rail" id="mbxRail">
+    <style>
+      .mbx-rail{ width:100%; margin:18px 0 6px; }
+      .mbx-rail *{ box-sizing:border-box; }
+      .mbx-rail-head{
+        display:flex; align-items:center; justify-content:center; gap:8px;
+        margin-bottom:12px; font-size:12px; font-weight:700; letter-spacing:.03em;
+        color:var(--text-dim);
+      }
+      .mbx-rail-head a{ color:var(--sky); text-decoration:none; }
+      .mbx-rail-head a:hover{ text-decoration:underline; }
+
+      .mbx-viewport{ position:relative; }
+      .mbx-track{
+        display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory;
+        scroll-behavior:smooth; padding:2px; scrollbar-width:none; -ms-overflow-style:none;
+      }
+      .mbx-track::-webkit-scrollbar{ display:none; }
+
+      .mbx-slide{
+        flex:0 0 clamp(210px,44%,280px); scroll-snap-align:start;
+        position:relative; display:block; border-radius:14px; overflow:hidden;
+        border:1px solid var(--card-edge); aspect-ratio:16/9; background:var(--card);
+        text-decoration:none; cursor:pointer;
+        transition:border-color .15s ease, transform .2s ease;
+      }
+      .mbx-slide:hover{ border-color:var(--sky); transform:translateY(-2px); }
+      .mbx-slide img{ width:100%; height:100%; object-fit:cover; display:block; }
+      .mbx-slide video{ width:100%; height:100%; object-fit:cover; display:block; background:#000; }
+      .mbx-slide.noimg img{ display:none; }
+      .mbx-slide.noimg::before{
+        content:attr(data-name); position:absolute; inset:0; display:flex;
+        align-items:center; justify-content:center; text-align:center; padding:8px;
+        color:var(--text-dim); font-size:12px; font-weight:700;
+      }
+      .mbx-slide .play{
+        position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+        background:rgba(4,8,26,.25); transition:background .15s;
+      }
+      .mbx-slide:hover .play{ background:rgba(4,8,26,.05); }
+      .mbx-slide .play svg{ width:38px; height:38px; filter:drop-shadow(0 2px 8px rgba(0,0,0,.6)); }
+      .mbx-slide .tag{
+        position:absolute; left:8px; bottom:8px; max-width:calc(100% - 16px);
+        background:rgba(4,8,26,.75); color:var(--text); font-size:11px; font-weight:700;
+        padding:3px 8px; border-radius:999px;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      }
+
+      .mbx-more{
+        display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+        background:linear-gradient(135deg,var(--royal),#1550c8); border-color:transparent; color:#fff;
+      }
+      .mbx-more .arw{ font-size:1.5rem; line-height:1; }
+      .mbx-more .l{ font-size:.74rem; font-weight:700; }
+
+      .mbx-arrow{
+        position:absolute; top:50%; transform:translateY(-50%); z-index:3;
+        width:40px; height:40px; border-radius:50%; border:1px solid var(--card-edge);
+        background:rgba(14,27,66,.92); color:#fff; cursor:pointer;
+        display:flex; align-items:center; justify-content:center; transition:background .15s, opacity .15s;
+      }
+      .mbx-arrow:hover{ background:var(--royal); border-color:var(--royal); }
+      .mbx-arrow:disabled{ opacity:.22; cursor:default; }
+      .mbx-arrow.prev{ left:-6px; } .mbx-arrow.next{ right:-6px; }
+      .mbx-arrow svg{ width:18px; height:18px; }
+
+      @media (max-width:560px){
+        .mbx-slide{ flex-basis:80%; }
+        .mbx-arrow.prev{ left:2px; } .mbx-arrow.next{ right:2px; }
+      }
+      @media (prefers-reduced-motion:reduce){
+        .mbx-track{ scroll-behavior:auto; } .mbx-slide{ transition:none; }
+      }
+    </style>
+
+    <div class="mbx-rail-head">
+      Shout-outs from the family
+      <span aria-hidden="true">&middot;</span>
+      <a href="testimonials.html">See all 11 &rarr;</a>
+    </div>
+
+    <div class="mbx-viewport">
+      <button class="mbx-arrow prev" aria-label="Previous">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="mbx-track" id="mbxTrack"></div>
+      <button class="mbx-arrow next" aria-label="Next">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+
+    <script>
+    (function(){
+      var root = document.getElementById('mbxRail');
+      if (!root || root.dataset.init) return; root.dataset.init = '1';
+
+      var FULL = 'testimonials.html';  // "See all" + no-JS fallback target
+      var AUTOPLAY = true;             // rail auto-advance (stops once a clip plays)
+      var AUTOPLAY_MS = 3500;
+
+      // Each clip: poster jpg + name. The .mp4 is found automatically (same name).
+      var SLIDES = [
+        { name:'Aprylanonymous',      img:'assets/videos/aprylanonymousso.jpg' },
+        { name:'DianaTheDogGroomer',  img:'assets/videos/dianathedoggroomerso.jpg' },
+        { name:'NeverBeenHappierTV',  img:'assets/videos/neverbeenhappiertvso.jpg' },
+        { name:'UncleJPop',           img:'assets/videos/unclejpopso.jpg' },
+        { name:'SweatyPedals',        img:'assets/videos/sweatypedalsso.jpg' },
+        { name:'AllDayNYC',           img:'assets/videos/alldaynycmushboxso.jpg' },
+        { name:'EmmDeeFit',           img:'assets/videos/emmdeefitso.jpg' },
+        { name:'MissyAlcazarMusic',   img:'assets/videos/missyalcazarso.jpg' },
+        { name:'PotentialBliss',      img:'assets/videos/potentialblissso.jpg' },
+        { name:'TwitchCon IRL Panel', img:'assets/videos/twitchcon2026irlpanelshoutout.jpg' }
+      ];
+      var PLAY = '<span class="play"><svg viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></span>';
+
+      var track = root.querySelector('#mbxTrack');
+      var prev  = root.querySelector('.mbx-arrow.prev');
+      var next  = root.querySelector('.mbx-arrow.next');
+      var locked = false;  // stop rail auto-advance after first play
+
+      SLIDES.forEach(function(s){
+        var vid = s.vid || s.img.replace(/\.jpg$/i, '.mp4');
+        var a = document.createElement('a');
+        a.className = 'mbx-slide'; a.href = FULL; a.setAttribute('data-name', s.name);
+        a.setAttribute('aria-label', 'Play ' + s.name + "'s shout-out");
+        a.innerHTML =
+          '<img src="'+s.img+'" alt="" loading="lazy" onerror="this.parentElement.classList.add(\'noimg\')">' +
+          PLAY + '<span class="tag">'+s.name+'</span>';
+
+        a.addEventListener('click', function(e){
+          e.preventDefault();
+          if (a.dataset.playing) return;
+          a.dataset.playing = '1';
+          locked = true;  // don't auto-scroll away from a playing clip
+          // pause any other clip already playing
+          track.querySelectorAll('video').forEach(function(ov){ ov.pause(); });
+          var v = document.createElement('video');
+          v.src = vid; v.controls = true; v.autoplay = true; v.playsInline = true; v.preload = 'none';
+          v.addEventListener('error', function(){
+            console.warn('Mushbox: couldn\'t load', vid);
+            a.classList.add('noimg');
+            a.innerHTML = '';  // ::before shows the name
+          });
+          a.innerHTML = '';
+          a.appendChild(v);
+          v.play().catch(function(){});
+        });
+        track.appendChild(a);
+      });
+
+      var more = document.createElement('a');
+      more.className = 'mbx-slide mbx-more'; more.href = FULL;   // this one DOES navigate
+      more.innerHTML = '<span class="arw">&rarr;</span><span class="l">See all 11</span>';
+      track.appendChild(more);
+
+      function step(){
+        var s = track.querySelector('.mbx-slide'); if(!s) return 260;
+        var gap = parseInt(getComputedStyle(track).gap) || 12;
+        return s.getBoundingClientRect().width + gap;
+      }
+      var atEnd   = function(){ return track.scrollLeft + track.clientWidth >= track.scrollWidth - 4; };
+      var atStart = function(){ return track.scrollLeft <= 2; };
+      function update(){ prev.disabled = atStart(); next.disabled = atEnd(); }
+
+      next.addEventListener('click', function(){ track.scrollBy({left:step(), behavior:'smooth'}); });
+      prev.addEventListener('click', function(){ track.scrollBy({left:-step(), behavior:'smooth'}); });
+      track.addEventListener('scroll', update, {passive:true});
+      window.addEventListener('resize', update);
+      update();
+
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (AUTOPLAY && !reduce){
+        var paused = false;
+        setInterval(function(){
+          if (paused || locked || document.hidden) return;
+          if (atEnd()) track.scrollTo({left:0, behavior:'smooth'});
+          else track.scrollBy({left:step(), behavior:'smooth'});
+        }, AUTOPLAY_MS);
+        root.addEventListener('mouseenter', function(){ paused = true; });
+        root.addEventListener('mouseleave', function(){ paused = false; });
+        root.addEventListener('touchstart', function(){ paused = true; }, {passive:true});
+      }
+    })();
+    </script>
   </div>
 
   <div class="links">
