@@ -294,19 +294,29 @@
   .who {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 11px;
   }
-  .who .bars { height: 13px; flex: none; }
+  .who .bars { height: 15px; flex: none; }
+  .who-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;            /* lets text shrink/ellipsis instead of clipping */
+    gap: 1px;
+  }
   .who .name {
     font-weight: 600;
     font-size: 1.02rem;
     color: var(--white);
+    line-height: 1.25;
+    overflow-wrap: anywhere; /* very long single-word names wrap cleanly */
   }
   .who .handle {
     font-size: 0.86rem;
     color: var(--sky);
     text-decoration: none;
-    margin-left: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .who .handle:hover { text-decoration: underline; }
 
@@ -443,13 +453,6 @@
       quote: ""
     },
     {
-      name: "RefurberSteve",
-      handle: "refurbersteve",
-      video: "assets/videos/refurbersteveso.mp4",
-      poster: "",
-      quote: ""
-    },
-    {
       name: "UncleJPop",
       handle: "unclejpop",
       video: "assets/videos/unclejpopso.mp4",
@@ -467,13 +470,6 @@
       name: "AllDayNYC",
       handle: "alldaynyc",
       video: "assets/videos/alldaynycmushboxso.mp4",
-      poster: "",
-      quote: ""
-    },
-    {
-      name: "UluMaika",
-      handle: "ulumaika",
-      video: "assets/videos/ulumaikaso.mp4",
       poster: "",
       quote: ""
     },
@@ -563,8 +559,10 @@
       <div class="body">
         <div class="who">
           ${barsSVG()}
-          <span class="name">${t.name}</span>
-          ${handleHTML}
+          <div class="who-text">
+            <span class="name">${t.name}</span>
+            ${handleHTML}
+          </div>
         </div>
         ${quoteHTML}
       </div>`;
