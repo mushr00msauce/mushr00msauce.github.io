@@ -320,6 +320,21 @@
   }
   .who .handle:hover { text-decoration: underline; }
 
+  /* "In frame:" line for group / panel clips with multiple people */
+  .who .credits {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.45;
+    margin-top: 2px;
+  }
+  .who .credits a {
+    color: var(--sky);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .who .credits a:hover { text-decoration: underline; }
+  .who .credits .dot { color: var(--muted-dim); margin: 0 2px; }
+
   blockquote {
     font-size: 0.96rem;
     color: var(--muted);
@@ -503,8 +518,25 @@
     },
     {
       name: "TwitchCon IRL Panel",
-      handle: "",                    // group clip — no @handle, so no link shown
+      handle: "",                    // group clip — no single @handle
+      credits: ["alldaynyc", "dinomitetwins"],
       video: "assets/videos/twitchcon2026irlpanelshoutout.mp4",
+      poster: "",
+      quote: ""
+    },
+    {
+      name: "Fiendo IRL Panel",
+      handle: "",                    // group clip — no single @handle
+      credits: ["fiendocular", "doodybeard", "subbieirl"],
+      video: "assets/videos/fiendoIRLpanelso.mp4",
+      poster: "",
+      quote: ""
+    },
+    {
+      name: "Fiendo Beach",
+      handle: "",                    // group clip — no single @handle
+      credits: ["fiendocular", "potentialbliss", "actualeducation"],
+      video: "assets/videos/fiendobeachso.mp4",
       poster: "",
       quote: ""
     }
@@ -541,6 +573,12 @@
     const handleHTML = t.handle
       ? `<a class="handle" href="https://twitch.tv/${t.handle}" target="_blank" rel="noopener">@${t.handle}</a>`
       : "";
+    // Group / panel clips: list everyone in frame, each linked to their Twitch.
+    const creditsHTML = (t.credits && t.credits.length)
+      ? `<div class="credits">In frame: ` + t.credits.map(h =>
+          `<a href="https://twitch.tv/${h}" target="_blank" rel="noopener">@${h}</a>`
+        ).join(' <span class="dot">·</span> ') + `</div>`
+      : "";
     const quoteHTML = t.quote ? `<blockquote>${t.quote}</blockquote>` : "";
 
     // Poster auto-derives from the video name (clip.mp4 → clip.jpg) unless you
@@ -562,6 +600,7 @@
           <div class="who-text">
             <span class="name">${t.name}</span>
             ${handleHTML}
+            ${creditsHTML}
           </div>
         </div>
         ${quoteHTML}
