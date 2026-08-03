@@ -611,8 +611,9 @@
 
     <span class="section-label centered">Limited drop ☕ — Mushroom Sauce × Golden Day Coffee · Preorder now</span>
 
-    <a class="promo-tin" href="https://www.goldendaycoffee.com/store/p300/Mushr00msauce_TIN_-_Preorder_Only_-.html#/" target="_blank" rel="noopener" aria-label="Preorder the limited-edition Mushr00msauce coffee tin at Golden Day Coffee">
+    <a class="promo-tin" id="gdc-card" href="https://www.goldendaycoffee.com/store/p300/Mushr00msauce_TIN_-_Preorder_Only_-.html#/" target="_blank" rel="noopener" aria-label="Preorder the limited-edition Mushr00msauce coffee tin at Golden Day Coffee">
       <img src="goldenday-tin.jpg" alt="Limited-edition Mushroom Sauce custom coffee tin from Golden Day Coffee, circuit-board themed in Mushbox blue">
+      <span class="gdc-badge">LIVE · ROASTING</span>
     </a>
 
     <span class="section-label centered">Snack partner 🌻 — 10% off with code mushr00msauce</span>
@@ -807,6 +808,28 @@
         text-decoration:none;text-align:center;
       }
       .mbxself-banner.on{display:block}
+      .promo-tin.roasting{
+        border-color:#FF7A18;
+        box-shadow:0 0 22px 3px rgba(255,122,24,.55), inset 0 0 0 1px rgba(255,140,0,.4);
+        animation:gdcpulse 2.2s ease-in-out infinite;
+      }
+      @keyframes gdcpulse{
+        0%,100%{box-shadow:0 0 18px 2px rgba(255,122,24,.45), inset 0 0 0 1px rgba(255,140,0,.35)}
+        50%    {box-shadow:0 0 30px 5px rgba(255,122,24,.75), inset 0 0 0 1px rgba(255,140,0,.5)}
+      }
+      @media (prefers-reduced-motion: reduce){.promo-tin.roasting{animation:none}}
+      .promo-tin .gdc-badge{
+        display:none;position:absolute;top:10px;right:10px;z-index:2;
+        align-items:center;gap:5px;padding:2px 9px;border-radius:999px;
+        background:rgba(255,122,24,.16);border:1px solid rgba(255,122,24,.55);
+        color:#FF9A4D;font-size:10px;font-weight:800;letter-spacing:.08em;
+      }
+      .promo-tin.roasting .gdc-badge{display:inline-flex}
+      .promo-tin .gdc-badge::before{
+        content:"";width:6px;height:6px;border-radius:50%;background:#FF7A18;
+        animation:mbxblink 1.6s infinite;
+      }
+      @media (prefers-reduced-motion: reduce){.promo-tin .gdc-badge::before{animation:none}}
     </style>
 
     <a class="mbxself-banner" id="mbxself" href="https://twitch.tv/mushr00msauce" target="_blank" rel="noopener"></a>
@@ -1352,6 +1375,29 @@
   fetch(WORKER_URL).then(function(r){ return r.json(); }).then(function(data){
     var live = data.live || [];
     if (!live.length) return;
+
+    // ---- Golden Day: glow the tin when roadrunnergdc is live & roasting ----
+    (function(){
+      var card = document.getElementById("gdc-card");
+      if (!card) return;
+      // What counts as "roasting". Empty BOTH arrays to glow on ANY live stream.
+      var ROAST_CATS  = ["food & drink", "just chatting"];
+      var ROAST_WORDS = ["roast", "coffee"];
+      var gdc = null;
+      for (var i = 0; i < live.length; i++){
+        if (live[i].login === "roadrunnergdc"){ gdc = live[i]; break; }
+      }
+      if (!gdc) return;
+      var catHit  = !ROAST_CATS.length  || ROAST_CATS.map(norm).indexOf(norm(gdc.game)) > -1;
+      var wordHit = !ROAST_WORDS.length || ROAST_WORDS.some(function(w){
+        return (gdc.title || "").toLowerCase().indexOf(w) > -1;
+      });
+      if (catHit || wordHit){
+        card.href = "https://twitch.tv/roadrunnergdc";
+        card.classList.add("roasting");
+        card.setAttribute("aria-label", "roadrunnergdc is LIVE and roasting \u2014 watch on Twitch");
+      }
+    })();
 
     var grid = document.querySelector(".mbxfam-grid");
     var row  = document.getElementById("mbxlive");
