@@ -1515,6 +1515,8 @@
       var primary = ALT2MAIN[s.login] || s.login;
       var chip = grid.querySelector('[data-login="' + primary + '"]');
       if (chip && !chip.querySelector(".mbxlive-badge")) {
+        // link to whichever channel is actually live (main or alt)
+        chip.href = "https://twitch.tv/" + s.login;
         var b = document.createElement("span");
         b.className = "mbxlive-badge";
         b.textContent = "LIVE";
