@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mushbox — Live Map</title>
+<meta name="description" content="A live map of the Mushbox family — see where IRL streamers are broadcasting right now.">
+<meta property="og:title" content="Mushbox — Live Map">
+<meta property="og:description" content="See where the Mushbox family is streaming live right now.">
+<meta property="og:type" content="website">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --black:#060810; --navy:#0A1535; --royal:#1E6FFF; --sky:#4DB8FF; --white:#fff;
+    --edge:rgba(77,184,255,.28);
+    --panel:rgba(10,21,53,.82);
+    --dim:#7f92b8;
+    --font:"Space Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    --mono:"Space Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--black);color:var(--white);font-family:var(--font);}
+  #map{position:fixed;inset:0;background:var(--black);z-index:0;}
+
+  .leaflet-container{background:#05070e;font-family:var(--font);}
+  .leaflet-control-attribution{background:rgba(6,8,16,.7)!important;color:#5b6b8f!important;font-size:10px;}
+  .leaflet-control-attribution a{color:#7f92b8!important;}
+  .leaflet-bar a{background:var(--navy);color:#cfe0ff;border-color:rgba(77,184,255,.25);}
+  .leaflet-bar a:hover{background:var(--royal);color:#fff;}
+
+  .console{
+    position:fixed;z-index:1000;top:14px;left:14px;width:min(340px,calc(100vw - 28px));
+    background:var(--panel);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    border:1px solid var(--edge);border-radius:16px;padding:14px 15px 12px;
+    box-shadow:0 22px 50px -24px rgba(0,0,0,.85);
+  }
+  .console h1{
+    margin:0;font-size:13px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--white);display:flex;align-items:center;gap:9px;
+  }
+  .brandmark{color:var(--sky)}
+  .count{
+    margin:11px 0 2px;font-family:var(--mono);font-size:26px;font-weight:700;line-height:1;
+    letter-spacing:-.01em;display:flex;align-items:baseline;gap:9px;
+  }
+  .count .n{color:var(--white)}
+  .count.is-live .n{color:var(--sky)}
+  .count .lbl{font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+  .livedot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#39507f;flex:0 0 auto;align-self:center;}
+  .is-live .livedot{background:var(--sky);box-shadow:0 0 0 0 rgba(77,184,255,.7);animation:ping 1.8s ease-out infinite;}
+
+  .meta{margin-top:8px;font-family:var(--mono);font-size:10.5px;color:var(--dim);letter-spacing:.02em;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .meta button{font-family:var(--mono);font-size:10.5px;color:#cfe0ff;background:rgba(30,111,255,.16);
+    border:1px solid rgba(77,184,255,.3);border-radius:999px;padding:4px 10px;cursor:pointer;}
+  .meta button:hover{background:var(--royal);color:#fff;border-color:var(--royal)}
+
+  .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:11px;padding-top:11px;border-top:1px solid rgba(77,184,255,.14);font-size:11px;color:var(--dim)}
+  .legend i{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
+  .legend .lg-here{background:var(--sky);box-shadow:0 0 8px var(--sky)}
+  .legend .lg-home{background:var(--royal);box-shadow:0 0 8px rgba(30,111,255,.7)}
+  .legend .lg-off{background:#39507f}
+  .toggle{margin-top:10px;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--dim);cursor:pointer;user-select:none}
+  .toggle input{accent-color:var(--royal)}
+
+  .live-list{
+    position:fixed;z-index:1000;left:14px;bottom:14px;width:min(340px,calc(100vw - 28px));
+    max-height:38vh;overflow:auto;background:var(--panel);
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    border:1px solid var(--edge);border-radius:16px;padding:8px;
+    box-shadow:0 22px 50px -24px rgba(0,0,0,.85);
+  }
+  .live-list:empty{display:none}
+  .row{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:11px;cursor:pointer;
+    text-decoration:none;color:inherit;transition:background .14s;}
+  .row:hover,.row.hot{background:rgba(30,111,255,.16)}
+  .row .beacon-mini{position:relative;width:12px;height:12px;flex:0 0 auto}
+  .row .beacon-mini::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--sky);box-shadow:0 0 8px var(--sky)}
+  .row.home .beacon-mini::after{background:var(--royal);box-shadow:0 0 8px rgba(30,111,255,.7)}
+  .row .info{min-width:0;flex:1}
+  .row .nm{font-weight:700;font-size:13.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .sub{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--mono)}
+  .row .sub .pin{color:var(--sky)}
+  .row .vw{font-family:var(--mono);font-size:11px;color:var(--sky);flex:0 0 auto;text-align:right}
+  .row .vw small{display:block;color:var(--dim);font-size:9px;letter-spacing:.08em}
+
+  .unmapped{padding:8px 11px;font-size:11px;color:var(--dim);font-family:var(--mono);border-top:1px solid rgba(77,184,255,.14);margin-top:4px}
+  .unmapped b{color:#cfe0ff;font-weight:700}
+  .empty{padding:16px 12px;text-align:center;color:var(--dim);font-size:12.5px;line-height:1.5}
+
+  .beacon{position:relative;width:18px;height:18px}
+  .beacon .core{position:absolute;left:50%;top:50%;width:12px;height:12px;transform:translate(-50%,-50%);
+    border-radius:50%;background:radial-gradient(circle at 40% 35%,#bfe0ff,var(--sky) 60%,var(--royal));
+    box-shadow:0 0 10px 2px rgba(77,184,255,.9),0 0 22px 6px rgba(30,111,255,.55);z-index:2}
+  .beacon.home .core{background:radial-gradient(circle at 40% 35%,#9dc4ff,var(--royal) 60%,#0f3aa0)}
+  .beacon .ring{position:absolute;left:50%;top:50%;width:12px;height:12px;transform:translate(-50%,-50%);
+    border-radius:50%;border:2px solid rgba(77,184,255,.85);opacity:0;animation:beam 2.6s ease-out infinite}
+  .beacon.home .ring{border-color:rgba(30,111,255,.85)}
+  .beacon .ring.r2{animation-delay:1.3s}
+  .beacon .pin{position:absolute;left:50%;top:-13px;transform:translateX(-50%);font-size:12px;line-height:1;z-index:3;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
+  .off-dot{width:10px;height:10px;border-radius:50%;background:#39507f;
+    border:1px solid rgba(120,150,200,.5);box-shadow:0 0 5px rgba(20,40,80,.8)}
+
+  @keyframes beam{0%{opacity:.8;width:12px;height:12px}70%{opacity:0}100%{opacity:0;width:52px;height:52px}}
+  @keyframes ping{0%{box-shadow:0 0 0 0 rgba(77,184,255,.7)}70%{box-shadow:0 0 0 9px rgba(77,184,255,0)}100%{box-shadow:0 0 0 0 rgba(77,184,255,0)}}
+
+  .leaflet-popup-content-wrapper{background:var(--navy);color:#fff;border:1px solid var(--edge);border-radius:14px;box-shadow:0 18px 44px -18px rgba(0,0,0,.85)}
+  .leaflet-popup-tip{background:var(--navy);border:1px solid var(--edge)}
+  .leaflet-popup-content{margin:12px 14px;font-family:var(--font)}
+  .pop .pnm{font-weight:700;font-size:15px;margin:0 0 2px}
+  .pop .pcity{font-family:var(--mono);font-size:11px;color:var(--sky);letter-spacing:.04em;margin-bottom:2px}
+  .pop .psrc{font-size:10.5px;color:var(--dim);margin:0 0 8px;letter-spacing:.02em}
+  .pop .pcat{font-size:12px;color:#cfe0ff;margin:0 0 3px}
+  .pop .pvw{font-family:var(--mono);font-size:12px;color:var(--dim);margin:0 0 10px}
+  .pop a.watch{display:inline-block;background:var(--royal);color:#fff;text-decoration:none;font-weight:700;
+    font-size:12.5px;padding:7px 14px;border-radius:999px}
+  .pop a.watch:hover{background:var(--sky);color:#04122b}
+
+  @media (max-width:720px){
+    .console{top:10px;left:10px}
+    .live-list{left:10px;bottom:10px;max-height:32vh}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .beacon .ring{display:none}
+    .beacon .core{box-shadow:0 0 8px 2px rgba(77,184,255,.9)}
+    .livedot{animation:none}
+  }
+</style>
+</head>
+<body>
+
+<div id="map" role="application" aria-label="Live map of the Mushbox family"></div>
+
+<div class="console" id="console">
+  <h1><span class="brandmark">🍄</span> Mushbox · Live Map</h1>
+  <div class="count" id="count">
+    <span class="livedot"></span>
+    <span class="n" id="countN">—</span>
+    <span class="lbl" id="countLbl">checking…</span>
+  </div>
+  <div class="meta"><span id="updated">—</span><button id="refresh" type="button">Refresh</button></div>
+  <div class="legend">
+    <span><i class="lg-here"></i>Live here (from title)</span>
+    <span><i class="lg-home"></i>Live · home base</span>
+    <span><i class="lg-off"></i>Offline</span>
+  </div>
+  <label class="toggle"><input type="checkbox" id="showOff" checked> Show offline home bases</label>
+</div>
+
+<div class="live-list" id="liveList"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* =====================================================================
+     LOCATIONS  —  each family member's HOME BASE.
+     Key = lowercase Twitch login. Value = [lat, lng, "City, ST"].
+     A member shows on the map if they have a home base here OR the map
+     detects a place in their live title (see below). Add one line each.
+     (Paste me a list of "login, city" and I'll fill the coordinates.)
+     ===================================================================== */
+  var LOCATIONS = {
+    "aprylanonymous": [40.7128, -74.0060, "New York, NY"],
+    "alldaynyc":      [40.7580, -73.9855, "New York, NY"],
+    "barktok":        [34.0522, -118.2437, "Los Angeles, CA"],
+    "mushr00msauce":  [40.1164,  -88.2434, "Champaign, IL"],
+    "sbmel":          [40.0000,  -89.2000, "Illinois"],
+    "sweatypedals":   [46.3000,  -94.3000, "Minnesota"],
+    "maestroharrell": [34.0522, -118.2437, "Los Angeles, CA"], // confirm login
+    "ldsylvr":        [39.0000,  -75.5000, "Delaware"],         // "Lynda" — confirm login
+    "chefmaki":       [40.7306,  -73.9866, "New York, NY"],
+    "kelleycakes":    [40.7484,  -73.9857, "New York, NY"],     // "MY" assumed = NY, confirm
+    "deepseahomer":   [33.8353, -117.9145, "Anaheim, CA"],
+    "dianathedoggroomer":[37.5000, -78.9000, "Virginia"],       // "Diana" — confirm login
+    "edventureslive": [41.6000,  -72.7000, "Connecticut"],      // "Edventures" — confirm login
+    "emmdeefit":      [40.9000,  -77.8000, "Pennsylvania"],
+    "falconelite":    [31.5000,  -99.3000, "Texas"],
+    "jaynerio":       [32.7800,  -96.8000, "Dallas, TX"],
+    "hamandlizgaming":[41.0793,  -85.1394, "Fort Wayne, IN"],
+    "missyalcazarmusic":[34.0522,-118.2437, "Los Angeles, CA"], // "Miss" — confirm login
+    "neverbeenhappiertv":[44.3000,-85.4000, "Michigan"],        // "NBH" — confirm login
+    "ulumaika":       [34.0522, -118.2437, "Los Angeles, CA"],
+    "refurbersteve":  [40.0000,  -89.2000, "Illinois"],
+    "unclejpop":      [36.1700, -115.1400, "Las Vegas, NV"],
+    "sneakybeagle":   [39.0000,  -76.8000, "Maryland"],
+    "afrazexplores":  [40.7000,  -74.0100, "New York, NY"]      // "afraz" — confirm login
+    // ,"rensz":         [ , , "City, ST"]
+  };
+
+  /* When a streamer names a place in their TITLE, the pin moves there for
+     that session (great for travel / driving streams). Matching is done
+     against this built-in gazetteer — no API key, no rate limits.
+     Add entries freely: name is lowercase, matched as a whole word. */
+  var PLACES = [
+    // --- US cities ---
+    ["new york",40.71,-74.01,"New York, NY"],["brooklyn",40.68,-73.94,"Brooklyn, NY"],
+    ["manhattan",40.78,-73.97,"Manhattan, NY"],["buffalo",42.89,-78.88,"Buffalo, NY"],
+    ["los angeles",34.05,-118.24,"Los Angeles, CA"],["hollywood",34.09,-118.33,"Hollywood, CA"],
+    ["san diego",32.72,-117.16,"San Diego, CA"],["san francisco",37.77,-122.42,"San Francisco, CA"],
+    ["san jose",37.34,-121.89,"San Jose, CA"],["sacramento",38.58,-121.49,"Sacramento, CA"],
+    ["fresno",36.75,-119.77,"Fresno, CA"],["oakland",37.80,-122.27,"Oakland, CA"],
+    ["anaheim",33.8353,-117.9145,"Anaheim, CA"],
+    ["chicago",41.88,-87.63,"Chicago, IL"],["champaign",40.12,-88.24,"Champaign, IL"],
+    ["houston",29.76,-95.37,"Houston, TX"],["dallas",32.78,-96.80,"Dallas, TX"],
+    ["austin",30.27,-97.74,"Austin, TX"],["san antonio",29.42,-98.49,"San Antonio, TX"],
+    ["fort worth",32.76,-97.33,"Fort Worth, TX"],["el paso",31.76,-106.49,"El Paso, TX"],
+    ["phoenix",33.45,-112.07,"Phoenix, AZ"],["tucson",32.22,-110.97,"Tucson, AZ"],
+    ["philadelphia",39.95,-75.17,"Philadelphia, PA"],["pittsburgh",40.44,-79.996,"Pittsburgh, PA"],
+    ["jacksonville",30.33,-81.66,"Jacksonville, FL"],["miami",25.76,-80.19,"Miami, FL"],
+    ["miami beach",25.79,-80.13,"Miami Beach, FL"],["tampa",27.95,-82.46,"Tampa, FL"],
+    ["orlando",28.54,-81.38,"Orlando, FL"],["columbus",39.96,-83.00,"Columbus, OH"],
+    ["cleveland",41.50,-81.69,"Cleveland, OH"],["cincinnati",39.10,-84.51,"Cincinnati, OH"],
+    ["charlotte",35.23,-80.84,"Charlotte, NC"],["indianapolis",39.77,-86.16,"Indianapolis, IN"],
+    ["fort wayne",41.0793,-85.1394,"Fort Wayne, IN"],
+    ["seattle",47.61,-122.33,"Seattle, WA"],["denver",39.74,-104.99,"Denver, CO"],
+    ["washington",38.90,-77.04,"Washington, DC"],["boston",42.36,-71.06,"Boston, MA"],
+    ["nashville",36.16,-86.78,"Nashville, TN"],["memphis",35.15,-90.05,"Memphis, TN"],
+    ["las vegas",36.17,-115.14,"Las Vegas, NV"],["reno",39.53,-119.81,"Reno, NV"],
+    ["portland",45.52,-122.68,"Portland, OR"],["atlanta",33.75,-84.39,"Atlanta, GA"],
+    ["savannah",32.08,-81.09,"Savannah, GA"],["new orleans",29.95,-90.07,"New Orleans, LA"],
+    ["minneapolis",44.98,-93.27,"Minneapolis, MN"],["kansas city",39.10,-94.58,"Kansas City, MO"],
+    ["st louis",38.63,-90.20,"St. Louis, MO"],["detroit",42.33,-83.05,"Detroit, MI"],
+    ["baltimore",39.29,-76.61,"Baltimore, MD"],["milwaukee",43.04,-87.91,"Milwaukee, WI"],
+    ["salt lake city",40.76,-111.89,"Salt Lake City, UT"],["boise",43.62,-116.21,"Boise, ID"],
+    ["albuquerque",35.08,-106.65,"Albuquerque, NM"],["oklahoma city",35.47,-97.52,"Oklahoma City, OK"],
+    ["tulsa",36.15,-95.99,"Tulsa, OK"],["omaha",41.26,-95.93,"Omaha, NE"],
+    ["louisville",38.25,-85.76,"Louisville, KY"],["richmond",37.54,-77.44,"Richmond, VA"],
+    ["charleston",32.78,-79.93,"Charleston, SC"],["honolulu",21.31,-157.86,"Honolulu, HI"],
+    ["anchorage",61.22,-149.90,"Anchorage, AK"],["san juan",18.47,-66.11,"San Juan, PR"],
+    // --- nicknames / abbreviations ---
+    ["nyc",40.71,-74.01,"New York, NY"],["vegas",36.17,-115.14,"Las Vegas, NV"],
+    ["nola",29.95,-90.07,"New Orleans, LA"],["atx",30.27,-97.74,"Austin, TX"],
+    ["dtla",34.04,-118.25,"Los Angeles, CA"],["philly",39.95,-75.17,"Philadelphia, PA"],
+    ["sf",37.77,-122.42,"San Francisco, CA"],["socal",34.05,-118.24,"Southern California"],
+    // --- world ---
+    ["london",51.51,-0.13,"London, UK"],["paris",48.86,2.35,"Paris, FR"],
+    ["tokyo",35.68,139.69,"Tokyo, JP"],["osaka",34.69,135.50,"Osaka, JP"],
+    ["seoul",37.57,126.98,"Seoul, KR"],["toronto",43.65,-79.38,"Toronto, CA"],
+    ["montreal",45.50,-73.57,"Montreal, CA"],["vancouver",49.28,-123.12,"Vancouver, CA"],
+    ["mexico city",19.43,-99.13,"Mexico City, MX"],["cancun",21.16,-86.85,"Cancún, MX"],
+    ["sydney",-33.87,151.21,"Sydney, AU"],["melbourne",-37.81,144.96,"Melbourne, AU"],
+    ["berlin",52.52,13.40,"Berlin, DE"],["amsterdam",52.37,4.90,"Amsterdam, NL"],
+    ["barcelona",41.39,2.16,"Barcelona, ES"],["madrid",40.42,-3.70,"Madrid, ES"],
+    ["rome",41.90,12.50,"Rome, IT"],["dublin",53.35,-6.26,"Dublin, IE"],
+    ["lisbon",38.72,-9.14,"Lisbon, PT"],["reykjavik",64.15,-21.94,"Reykjavík, IS"],
+    ["dubai",25.20,55.27,"Dubai, AE"],["singapore",1.35,103.82,"Singapore"],
+    ["hong kong",22.32,114.17,"Hong Kong"],["bangkok",13.76,100.50,"Bangkok, TH"]
+  ];
+
+  /* US state centroids — used for "City, ST" titles when the city is unknown,
+     and for full state-name mentions. Approximate (state-level pin). */
+  var STATES = {
+    AL:[32.8,-86.8,"Alabama"],AK:[64.0,-152.0,"Alaska"],AZ:[34.3,-111.7,"Arizona"],
+    AR:[34.9,-92.4,"Arkansas"],CA:[37.2,-119.3,"California"],CO:[39.0,-105.5,"Colorado"],
+    CT:[41.6,-72.7,"Connecticut"],DE:[39.0,-75.5,"Delaware"],FL:[28.6,-82.4,"Florida"],
+    GA:[32.6,-83.4,"Georgia"],HI:[20.3,-156.4,"Hawaii"],ID:[44.4,-114.6,"Idaho"],
+    IL:[40.0,-89.2,"Illinois"],IN:[39.9,-86.3,"Indiana"],IA:[42.0,-93.5,"Iowa"],
+    KS:[38.5,-98.4,"Kansas"],KY:[37.5,-85.3,"Kentucky"],LA:[31.0,-92.0,"Louisiana"],
+    ME:[45.4,-69.2,"Maine"],MD:[39.0,-76.8,"Maryland"],MA:[42.3,-71.8,"Massachusetts"],
+    MI:[44.3,-85.4,"Michigan"],MN:[46.3,-94.3,"Minnesota"],MS:[32.7,-89.7,"Mississippi"],
+    MO:[38.4,-92.5,"Missouri"],MT:[47.0,-109.6,"Montana"],NE:[41.5,-99.8,"Nebraska"],
+    NV:[39.3,-116.6,"Nevada"],NH:[43.7,-71.6,"New Hampshire"],NJ:[40.1,-74.7,"New Jersey"],
+    NM:[34.4,-106.1,"New Mexico"],NY:[42.9,-75.5,"New York"],NC:[35.6,-79.4,"North Carolina"],
+    ND:[47.5,-100.5,"North Dakota"],OH:[40.3,-82.8,"Ohio"],OK:[35.6,-97.5,"Oklahoma"],
+    OR:[44.0,-120.5,"Oregon"],PA:[40.9,-77.8,"Pennsylvania"],RI:[41.7,-71.6,"Rhode Island"],
+    SC:[33.9,-80.9,"South Carolina"],SD:[44.4,-100.2,"South Dakota"],TN:[35.9,-86.4,"Tennessee"],
+    TX:[31.5,-99.3,"Texas"],UT:[39.3,-111.7,"Utah"],VT:[44.1,-72.7,"Vermont"],
+    VA:[37.5,-78.9,"Virginia"],WA:[47.4,-120.5,"Washington"],WV:[38.6,-80.6,"West Virginia"],
+    WI:[44.6,-89.9,"Wisconsin"],WY:[43.0,-107.6,"Wyoming"],DC:[38.9,-77.0,"Washington, DC"],
+    PR:[18.2,-66.5,"Puerto Rico"]
+  };
+
+  var WORKER = "https://mushbox-live.wkennedy74.workers.dev/";
+  var REFRESH_MS = 60000;
+
+  // Build lookups. Sort places longest-first so multi-word names win.
+  PLACES.sort(function(a,b){ return b[0].length - a[0].length; });
+  var CITY_INDEX = {};
+  PLACES.forEach(function(p){ if(!(p[0] in CITY_INDEX)) CITY_INDEX[p[0]] = p; });
+
+  function normKey(s){ return s.toLowerCase().replace(/\./g,'').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim(); }
+
+  // Returns {lat,lng,label} from a stream title, or null.
+  function detectFromTitle(title){
+    if(!title) return null;
+    var low = title.toLowerCase();
+
+    // 1) "City, ST" pattern
+    var m = low.match(/([a-z][a-z .'\-]{1,30}?),\s*([a-z]{2})\b/);
+    if(m){
+      var st = m[2].toUpperCase();
+      if(STATES[st]){
+        var ck = normKey(m[1]);
+        if(CITY_INDEX[ck]){ var c=CITY_INDEX[ck]; return {lat:c[1],lng:c[2],label:c[3]}; }
+        var city = m[1].trim().replace(/\b\w/g,function(x){return x.toUpperCase();});
+        return {lat:STATES[st][0],lng:STATES[st][1],label:city+", "+st};
+      }
+    }
+
+    // 2) gazetteer whole-word scan (longest names first)
+    var padded = ' ' + normKey(title) + ' ';
+    for(var i=0;i<PLACES.length;i++){
+      if(padded.indexOf(' '+PLACES[i][0]+' ') !== -1){
+        var p=PLACES[i]; return {lat:p[1],lng:p[2],label:p[3]};
+      }
+    }
+
+    // 3) full state-name mention
+    for(var code in STATES){
+      var s=STATES[code];
+      if(padded.indexOf(' '+s[2].toLowerCase()+' ') !== -1) return {lat:s[0],lng:s[1],label:s[2]};
+    }
+    return null;
+  }
+
+  /* ---- Map ---- */
+  var map = L.map('map', { zoomControl:false, attributionControl:true, worldCopyJump:true })
+             .setView([39.5, -98.35], 4);
+  L.control.zoom({ position:'bottomright' }).addTo(map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    subdomains:'abcd', maxZoom:19,
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  }).addTo(map);
+
+  var liveMarkers = {}, offMarkers = {};
+
+  function liveIcon(source){
+    var pin = source==='title' ? '<span class="pin">📍</span>' : '';
+    return L.divIcon({ className:'', iconSize:[18,18], iconAnchor:[9,9],
+      html:'<div class="beacon '+(source==='home'?'home':'')+'">'+pin+'<span class="ring"></span><span class="ring r2"></span><span class="core"></span></div>' });
+  }
+  function offIcon(){ return L.divIcon({ className:'', iconSize:[10,10], iconAnchor:[5,5], html:'<div class="off-dot"></div>' }); }
+
+  function fmtViewers(v){ v=+v||0; return v>=1000 ? (v/1000).toFixed(v>=10000?0:1)+'k' : String(v); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  function popupHTML(e){
+    var srcLine = e.source==='title'
+      ? '📍 Live from stream title'
+      : '🏠 Home base · location not in title';
+    return '<div class="pop">'
+      + '<p class="pnm">'+esc(e.name)+'</p>'
+      + '<div class="pcity">'+esc(e.label)+'</div>'
+      + '<p class="psrc">'+srcLine+'</p>'
+      + (e.cat ? '<p class="pcat">'+esc(e.cat)+'</p>' : '')
+      + '<p class="pvw">'+fmtViewers(e.viewers)+' watching</p>'
+      + '<a class="watch" href="https://twitch.tv/'+encodeURIComponent(e.login)+'" target="_blank" rel="noopener">Watch live ▸</a>'
+      + '</div>';
+  }
+
+  function renderOffline(show){
+    Object.keys(offMarkers).forEach(function(k){ map.removeLayer(offMarkers[k]); });
+    offMarkers = {};
+    if(!show) return;
+    Object.keys(LOCATIONS).forEach(function(login){
+      if(liveMarkers[login]) return; // don't double-draw someone who's live
+      var loc = LOCATIONS[login];
+      if(!loc || loc[0]==null || loc[1]==null) return;
+      var mk = L.marker([loc[0],loc[1]], { icon:offIcon(), keyboard:false, zIndexOffset:-500 });
+      mk.bindTooltip(login, {direction:'top', opacity:.9});
+      mk.addTo(map);
+      offMarkers[login] = mk;
+    });
+  }
+
+  function setCount(n){
+    document.getElementById('count').classList.toggle('is-live', n>0);
+    document.getElementById('countN').textContent = n;
+    document.getElementById('countLbl').textContent = 'live now';
+  }
+
+  function parseLive(data){
+    var arr = (data && (data.live || data.channels || data.streams)) || (Array.isArray(data)?data:[]);
+    if(!Array.isArray(arr)) arr = [];
+    return arr.map(function(e){
+      var login = (e.login || e.user_login || e.broadcaster_login || e.name || e.user_name || '').toString().toLowerCase();
+      return {
+        login: login,
+        name:  e.name || e.display_name || e.user_name || login,
+        cat:   e.game || e.category || e.game_name || '',
+        title: e.title || '',
+        viewers: e.viewers != null ? e.viewers : (e.viewer_count != null ? e.viewer_count : 0)
+      };
+    }).filter(function(e){ return e.login; });
+  }
+
+  function render(liveArr){
+    Object.keys(liveMarkers).forEach(function(k){ map.removeLayer(liveMarkers[k]); });
+    liveMarkers = {};
+
+    var list = document.getElementById('liveList');
+    list.innerHTML = '';
+    setCount(liveArr.length);
+
+    if(liveArr.length === 0){
+      renderOffline(document.getElementById('showOff').checked);
+      list.innerHTML = '<div class="empty">No Mushboxes are live right now.<br>The map lights up the moment someone goes live.</div>';
+      stamp();
+      return;
+    }
+
+    var placed = [], unmapped = [], bounds = [];
+
+    liveArr.forEach(function(e){
+      var det = detectFromTitle(e.title), loc;
+      if(det){ loc = {lat:det.lat,lng:det.lng,label:det.label,source:'title'}; }
+      else if(LOCATIONS[e.login]){ var h=LOCATIONS[e.login]; loc = {lat:h[0],lng:h[1],label:h[2],source:'home'}; }
+      else { unmapped.push(e); return; }
+
+      e.label = loc.label; e.source = loc.source;
+      var mk = L.marker([loc.lat,loc.lng], { icon:liveIcon(loc.source), zIndexOffset:1000, riseOnHover:true });
+      mk.bindPopup(popupHTML(e), {closeButton:true, offset:[0,-6]});
+      mk.addTo(map);
+      liveMarkers[e.login] = mk;
+      bounds.push([loc.lat,loc.lng]);
+      placed.push({e:e, mk:mk});
+    });
+
+    renderOffline(document.getElementById('showOff').checked);
+
+    placed.forEach(function(o){
+      var e=o.e, mk=o.mk;
+      var row = document.createElement('a');
+      row.className = 'row' + (e.source==='home'?' home':'');
+      row.href = 'https://twitch.tv/'+e.login; row.target='_blank'; row.rel='noopener';
+      var pin = e.source==='title' ? '<span class="pin">📍</span> ' : '';
+      row.innerHTML =
+        '<span class="beacon-mini"></span>'
+        + '<span class="info"><span class="nm">'+esc(e.name)+'</span>'
+        + '<span class="sub">'+pin+esc(e.label) + (e.cat ? ' · '+esc(e.cat) : '') +'</span></span>'
+        + '<span class="vw">'+fmtViewers(e.viewers)+'<small>WATCHING</small></span>';
+      row.addEventListener('mouseenter', function(){ mk.openPopup(); });
+      list.appendChild(row);
+      mk.on('popupopen', function(){ row.classList.add('hot'); });
+      mk.on('popupclose', function(){ row.classList.remove('hot'); });
+    });
+
+    if(unmapped.length){
+      var u = document.createElement('div'); u.className='unmapped';
+      u.innerHTML = '📍 Live, no location yet: ' + unmapped.map(function(e){return '<b>'+esc(e.name)+'</b>';}).join(', ')
+                  + ' — add a home base or they can put a city in their title.';
+      list.appendChild(u);
+    }
+
+    if(bounds.length) map.flyToBounds(bounds, { padding:[70,70], maxZoom:6, duration:.6 });
+    stamp();
+  }
+
+  function stamp(){
+    document.getElementById('updated').textContent =
+      'updated ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  }
+
+  function load(){
+    document.getElementById('updated').textContent = 'refreshing…';
+    fetch(WORKER, { cache:'no-store' })
+      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(function(data){ render(parseLive(data)); })
+      .catch(function(err){
+        console.error('[mushbox-map] fetch failed:', err);
+        document.getElementById('liveList').innerHTML =
+          '<div class="empty">Couldn\u2019t reach the live-status service.<br>It\u2019ll retry automatically.</div>';
+        document.getElementById('countLbl').textContent = 'offline';
+        document.getElementById('updated').textContent = 'retrying…';
+      });
+  }
+
+  document.getElementById('refresh').addEventListener('click', load);
+  document.getElementById('showOff').addEventListener('change', function(){ renderOffline(this.checked); });
+
+  renderOffline(true);
+  load();
+  setInterval(load, REFRESH_MS);
+})();
+</script>
+</body>
+</html>
