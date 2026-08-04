@@ -117,6 +117,7 @@
   .leaflet-popup-content{margin:12px 14px;font-family:var(--font)}
   .pop .pnm{font-weight:700;font-size:15px;margin:0 0 2px}
   .pop .pcity{font-family:var(--mono);font-size:11px;color:var(--sky);letter-spacing:.04em;margin-bottom:2px}
+  .pop .palt{font-size:11px;color:var(--sky);margin:0 0 6px;font-family:var(--mono)}
   .pop .psrc{font-size:10.5px;color:var(--dim);margin:0 0 8px;letter-spacing:.02em}
   .pop .pcat{font-size:12px;color:#cfe0ff;margin:0 0 3px}
   .pop .pvw{font-family:var(--mono);font-size:12px;color:var(--dim);margin:0 0 10px}
@@ -188,49 +189,67 @@
     "alldaynyc":           "New York, NY",
     "aprylanonymous":      "New York, NY",
     "barktok":             "Los Angeles, CA",
-    "bigbonelife":         "Florida",                          // Bigbonelife
+    "bigbonelife":         "Florida",
     "chefmaki":            "New York, NY",
     "deepseahomer":        "California",
     "dianathedoggroomer":  "Virginia",
-    "dtmdrewski":          "New Jersey",                          // DTMDrewski
-    "eatage":              "Iowa",                          // Eatage
+    "dtmdrewski":          "New Jersey",
+    "eatage":              "Iowa",
     "edventureslive":      "Connecticut",
     "emmdeefit":           "Pennsylvania",
     "falconelite":         "Texas",
-    "fi1es":               "New Jersey",                          // Fi1es
-    "gxufy":               "New York, NY",                          // Gxufy
+    "fi1es":               "New Jersey",
+    "gxufy":               "New York, NY",
     "hamandlizgaming":     "Fort Wayne, IN",
     "jaynerio":            "Texas",
     "jetlagjacko":         "United Kingdom",
-    "kardtrick":           "Kentucky",                          // KardTrick
-    "kaseysnowart":        "",                          // KaseySnowArt
-    "katana1988":          "Missouri",                          // Katana1988
+    "kardtrick":           "Kentucky",
+    "kaseysnowart":        "",
+    "katana1988":          "Missouri",
     "kelleycakes":         "Kentucky",
-    "kozybean":            "Wyoming",                          // Kozybean
-    "ldsylvr":             "Texas",                          // LDSylvr
+    "kozybean":            "Wyoming",
+    "ldsylvr":             "Texas",
     "lyndainfj":           "Delaware",
     "maestroharrell":      "California",
-    "miekii":              "New York",                          // Miekii
+    "miekii":              "New York",
     "missyalcazarmusic":   "California",
-    "morwenxo":            "Tampa, Florida",                          // MorwenXo
-    "mrtelesir":           "",                          // MrTelesir
+    "morwenxo":            "Tampa, Florida",
+    "mrtelesir":           "",
     "mushr00msauce":       "Indianapolis, IN",
     "neverbeenhappierttv": "Michigan",
-    "optimuskale":         "Florida",                          // OptimusKale
-    "papasmaxe":           "",                          // PapaSmaxe
-    "poisonhearrt":        "California",                          // PoisonHearrt
+    "optimuskale":         "Florida",
+    "papasmaxe":           "",
+    "poisonhearrt":        "California",
     "refurbersteve":       "Illinois",
-    "rensz":               "Minnesota",                          // Rensz
-    "rustyrhymez":         "",                          // RustyRhymez
+    "rensz":               "Minnesota",
+    "rustyrhymez":         "",
     "sbmel":               "Illinois",
-    "sftortlife":          "San Francisco",                          // SFTortLife
-    "shumba":              "St. Louis",                          // Shumba
+    "sftortlife":          "San Francisco",
+    "shumba":              "St. Louis",
     "sneakybeagle":        "Maryland",
     "sweatypedals":        "Minnesota",
     "ulumaika":            "Los Angeles, CA",
     "unclejpop":           "Las Vegas, NV",
-    "woodrowjenkins":      "Florida",                          // WoodrowJenkins
+    "woodrowjenkins":      "Florida",
   };
+
+  /* SECOND / ALT CHANNELS.  List a person's other logins so either channel
+     going live counts as the SAME person — one pin, one spot in the count,
+     linked to whichever channel is actually live.
+        "primarylogin": ["altlogin", ...]
+     IMPORTANT: also add each alt login to your Worker's CHANNELS list, or
+     live-status never sees it. */
+  var ALIASES = {
+    "aprylanonymous": ["aprylactuallyanonymous"],
+    "barktok":        ["marcafterbark"]
+  };
+  var ALT2MAIN = {};
+  Object.keys(ALIASES).forEach(function(main){
+    (ALIASES[main]||[]).forEach(function(alt){
+      alt = (alt||"").toString().toLowerCase().trim();
+      if(alt) ALT2MAIN[alt] = main;
+    });
+  });
 
   /* When a streamer names a place in their TITLE, the pin moves there for
      that session (great for travel / driving streams). Matching is done
@@ -279,6 +298,7 @@
     ["sf",37.77,-122.42,"San Francisco, CA"],["socal",34.05,-118.24,"Southern California"],
     // --- world ---
     ["london",51.51,-0.13,"London, UK"],["paris",48.86,2.35,"Paris, FR"],
+    ["united kingdom",54.0,-2.5,"United Kingdom"],["england",52.5,-1.5,"England"],["scotland",56.5,-4.2,"Scotland"],["wales",52.3,-3.8,"Wales"],["ireland",53.4,-8.0,"Ireland"],
     ["tokyo",35.68,139.69,"Tokyo, JP"],["osaka",34.69,135.50,"Osaka, JP"],
     ["seoul",37.57,126.98,"Seoul, KR"],["toronto",43.65,-79.38,"Toronto, CA"],
     ["montreal",45.50,-73.57,"Montreal, CA"],["vancouver",49.28,-123.12,"Vancouver, CA"],
@@ -399,8 +419,11 @@
     var srcLine = e.source==='title'
       ? '📍 Live from stream title'
       : '🏠 Home base · location not in title';
+    var altLine = (e.person && e.login && e.login !== e.person)
+      ? '<p class="palt">on @'+esc(e.login)+' (2nd channel)</p>' : '';
     return '<div class="pop">'
       + '<p class="pnm">'+esc(e.name)+'</p>'
+      + altLine
       + '<div class="pcity">'+esc(e.label)+'</div>'
       + '<p class="psrc">'+srcLine+'</p>'
       + (e.cat ? '<p class="pcat">'+esc(e.cat)+'</p>' : '')
@@ -444,15 +467,30 @@
     }).filter(function(e){ return e.login; });
   }
 
+  // Merge alt channels into one "person": keep the higher-viewer channel as
+  // the active one, but treat both as the same primary login.
+  function collapseLive(liveArr){
+    var by = {};
+    liveArr.forEach(function(e){
+      var person = ALT2MAIN[e.login] || e.login;
+      var cur = by[person];
+      if(!cur || (+e.viewers||0) > (+cur.viewers||0)){
+        by[person] = { person:person, login:e.login, name:e.name, cat:e.cat, title:e.title, viewers:e.viewers };
+      }
+    });
+    return Object.keys(by).map(function(k){ return by[k]; });
+  }
+
   function render(liveArr){
     Object.keys(liveMarkers).forEach(function(k){ map.removeLayer(liveMarkers[k]); });
     liveMarkers = {};
 
     var list = document.getElementById('liveList');
     list.innerHTML = '';
-    setCount(liveArr.length);
+    var people = collapseLive(liveArr);
+    setCount(people.length);
 
-    if(liveArr.length === 0){
+    if(people.length === 0){
       renderOffline(document.getElementById('showOff').checked);
       list.innerHTML = '<div class="empty">No Mushboxes are live right now.<br>The map lights up the moment someone goes live.</div>';
       stamp();
@@ -461,17 +499,17 @@
 
     var placed = [], unmapped = [], bounds = [];
 
-    liveArr.forEach(function(e){
+    people.forEach(function(e){
       var det = detectFromTitle(e.title), loc;
       if(det){ loc = {lat:det.lat,lng:det.lng,label:det.label,source:'title'}; }
-      else if(HOMES[e.login]){ var h=HOMES[e.login]; loc = {lat:h[0],lng:h[1],label:h[2],source:'home'}; }
+      else if(HOMES[e.person]){ var h=HOMES[e.person]; loc = {lat:h[0],lng:h[1],label:h[2],source:'home'}; }
       else { unmapped.push(e); return; }
 
       e.label = loc.label; e.source = loc.source;
       var mk = L.marker([loc.lat,loc.lng], { icon:liveIcon(loc.source), zIndexOffset:1000, riseOnHover:true });
       mk.bindPopup(popupHTML(e), {closeButton:true, offset:[0,-6]});
       mk.addTo(map);
-      liveMarkers[e.login] = mk;
+      liveMarkers[e.person] = mk;
       bounds.push([loc.lat,loc.lng]);
       placed.push({e:e, mk:mk});
     });
