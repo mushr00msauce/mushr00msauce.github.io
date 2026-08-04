@@ -739,7 +739,7 @@
     </div>
 
 
-    <span class="section-label centered">The Mushbox Family — 44 strong</span>
+    <span class="section-label centered">The Mushbox Family — 45 strong</span>
 
     <style>
       .mbxfam-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:10px}
@@ -830,6 +830,7 @@
       <a class="mbxfam-chip" data-login="gxufy" href="https://twitch.tv/gxufy" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Gxufy</a>
       <a class="mbxfam-chip" data-login="hamandlizgaming" href="https://twitch.tv/hamandlizgaming" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Hamandlizgaming</a>
       <a class="mbxfam-chip" data-login="jaynerio" href="https://twitch.tv/jaynerio" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>JayneRio</a>
+      <a class="mbxfam-chip" data-login="jetlagjacko" data-platform="kick" href="https://kick.com/jetlagjacko" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>JetLagJacko</a>
       <a class="mbxfam-chip" data-login="kardtrick" href="https://twitch.tv/kardtrick" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>KardTrick</a>
       <a class="mbxfam-chip" data-login="kaseysnowart" href="https://twitch.tv/kaseysnowart" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>KaseySnowArt</a>
       <a class="mbxfam-chip" data-login="katana1988" href="https://twitch.tv/katana1988" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Katana1988</a>
@@ -863,9 +864,9 @@
     <!-- ===== Live map teaser ===== -->
     <div class="mbxmap">
       <style>
-        .mbxmap{ width:100%; max-width:720px; margin:22px auto 6px; align-self:center; }
+        .mbxmap{ width:100%; align-self:stretch; margin:22px 0 6px; }
         .mbxmap-card{
-          width:100%;
+          width:100%; max-width:720px; margin-left:auto; margin-right:auto;
           display:flex; align-items:stretch; gap:18px;
           background:var(--card); border:1px solid var(--card-edge); border-radius:18px;
           padding:16px; text-decoration:none; color:inherit;
@@ -958,7 +959,7 @@
         </div>
         <div class="mbxmap-body">
           <span class="mbxmap-eyebrow">Live map</span>
-          <span class="mbxmap-title">44 Mushboxes,<br>one live map</span>
+          <span class="mbxmap-title">45 Mushboxes,<br>one live map</span>
           <span class="mbxmap-sub" id="mbxMapSub">See who&rsquo;s streaming right now &mdash; anywhere in the world.</span>
           <span class="mbxmap-cta">See who&rsquo;s live
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -973,7 +974,13 @@
             bt=document.getElementById('mbxMapBadgeTxt'),
             sub=document.getElementById('mbxMapSub');
         fetch(W,{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
-          var arr=(d&&(d.live||d.channels||d.streams))||[]; var n=Array.isArray(arr)?arr.length:0;
+          var arr=(d&&(d.live||d.channels||d.streams))||[];
+          var A={ "aprylactuallyanonymous":"aprylanonymous", "marcafterbark":"barktok" };
+          var seen={}, n=0;
+          (Array.isArray(arr)?arr:[]).forEach(function(e){
+            var lg=((e.login||e.name||'')+'').toLowerCase(); var p=A[lg]||lg;
+            if(p && !seen[p]){ seen[p]=1; n++; }
+          });
           if(n>0){
             badge.classList.add('live'); bt.textContent=n+' Live';
             sub.innerHTML=n+(n===1?' Mushbox is':' Mushboxes are')+' streaming live right now &mdash; see where.';
@@ -1485,6 +1492,10 @@
     var self = document.getElementById("mbxself");
     var embeds = 0;
 
+    // alt/second channels map to the same person (keep chips + count deduped)
+    var ALT2MAIN = { "aprylactuallyanonymous":"aprylanonymous", "marcafterbark":"barktok" };
+    var embedded = {};
+
     live.forEach(function(s){
       // "I'm live" banner for the builder himself
       if (s.login === "mushr00msauce") {
@@ -1499,8 +1510,9 @@
         return;
       }
 
-      // badge + float the chip to the front of the wall
-      var chip = grid.querySelector('[data-login="' + s.login + '"]');
+      // badge + float the chip to the front of the wall (alt lights the main chip)
+      var primary = ALT2MAIN[s.login] || s.login;
+      var chip = grid.querySelector('[data-login="' + primary + '"]');
       if (chip && !chip.querySelector(".mbxlive-badge")) {
         var b = document.createElement("span");
         b.className = "mbxlive-badge";
@@ -1510,7 +1522,8 @@
       }
 
       // embed players for the top streams (already sorted by viewers)
-      if (embeds < MAX_EMBEDS && isIRL(s)) {
+      if (embeds < MAX_EMBEDS && isIRL(s) && !embedded[primary]) {
+        embedded[primary] = 1;
         embeds++;
         var wrap = document.createElement("div");
         var tile = document.createElement("div");
@@ -1546,9 +1559,14 @@
     document.querySelectorAll(".section-label").forEach(function(el){
       if (el.textContent.indexOf("Mushbox Family") !== -1) label = el;
     });
-    var famLive = live.filter(function(s){ return s.login !== "mushr00msauce"; }).length;
+    var seenFam = {}, famLive = 0;
+    live.forEach(function(s){
+      var p = ALT2MAIN[s.login] || s.login;
+      if (p === "mushr00msauce" || seenFam[p]) return;
+      seenFam[p] = 1; famLive++;
+    });
     if (label && famLive > 0) {
-      label.textContent = "The Mushbox Family \u2014 44 strong \u00B7 " + famLive + " live now";
+      label.textContent = "The Mushbox Family \u2014 45 strong \u00B7 " + famLive + " live now";
     }
   }).catch(function(){ /* worker unreachable: page works fine without it */ });
 })();
