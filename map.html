@@ -85,6 +85,8 @@
   .row .beacon-mini{position:relative;width:12px;height:12px;flex:0 0 auto}
   .row .beacon-mini::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--sky);box-shadow:0 0 8px var(--sky)}
   .row.home .beacon-mini::after{background:var(--royal);box-shadow:0 0 8px rgba(30,111,255,.7)}
+  .row.dim{opacity:.62}
+  .row.dim .beacon-mini::after{background:#5a7095;box-shadow:none}
   .row .info{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px}
   .row .nm{font-weight:700;font-size:13.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .row .sub{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--mono)}
@@ -106,6 +108,10 @@
   .beacon.home .ring{border-color:rgba(30,111,255,.85)}
   .beacon .ring.r2{animation-delay:1.3s}
   .beacon .pin{position:absolute;left:50%;top:-13px;transform:translateX(-50%);font-size:12px;line-height:1;z-index:3;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
+  /* dim tier: live but not IRL and no title location — muted, no glow, no rings */
+  .beacon.dim{opacity:.6}
+  .beacon.dim .core{width:9px;height:9px;background:radial-gradient(circle at 40% 35%,#8aa0c4,#5a7095 60%,#3a4d70);
+    box-shadow:0 0 4px 1px rgba(90,112,149,.5)}
   .off-dot{width:10px;height:10px;border-radius:50%;background:#39507f;
     border:1px solid rgba(120,150,200,.5);box-shadow:0 0 5px rgba(20,40,80,.8)}
 
@@ -277,7 +283,14 @@
     ["charlotte",35.23,-80.84,"Charlotte, NC"],["indianapolis",39.77,-86.16,"Indianapolis, IN"],
     ["fort wayne",41.0793,-85.1394,"Fort Wayne, IN"],
     ["seattle",47.61,-122.33,"Seattle, WA"],["denver",39.74,-104.99,"Denver, CO"],
-    ["washington",38.90,-77.04,"Washington, DC"],["boston",42.36,-71.06,"Boston, MA"],
+    ["washington dc",38.90,-77.04,"Washington, DC"],["boston",42.36,-71.06,"Boston, MA"],
+    // --- NYC neighborhoods (beat bare city names via longest-first sort) ---
+    ["washington heights",40.8417,-73.9394,"Washington Heights, NY"],
+    ["inwood",40.8677,-73.9212,"Inwood, NY"],["harlem",40.8116,-73.9465,"Harlem, NY"],
+    ["east harlem",40.7957,-73.9389,"East Harlem, NY"],["soho",40.7233,-74.0020,"SoHo, NY"],
+    ["williamsburg",40.7081,-73.9571,"Williamsburg, NY"],["astoria",40.7644,-73.9235,"Astoria, NY"],
+    ["queens",40.7282,-73.7949,"Queens, NY"],["the bronx",40.8448,-73.8648,"The Bronx, NY"],
+    ["bronx",40.8448,-73.8648,"The Bronx, NY"],["lower east side",40.7180,-73.9857,"Lower East Side, NY"],
     ["nashville",36.16,-86.78,"Nashville, TN"],["memphis",35.15,-90.05,"Memphis, TN"],
     ["las vegas",36.17,-115.14,"Las Vegas, NV"],["reno",39.53,-119.81,"Reno, NV"],
     ["portland",45.52,-122.68,"Portland, OR"],["atlanta",33.75,-84.39,"Atlanta, GA"],
@@ -294,6 +307,7 @@
     // --- nicknames / abbreviations ---
     ["nyc",40.71,-74.01,"New York, NY"],["vegas",36.17,-115.14,"Las Vegas, NV"],
     ["nola",29.95,-90.07,"New Orleans, LA"],["atx",30.27,-97.74,"Austin, TX"],
+    ["dc",38.90,-77.04,"Washington, DC"],
     ["dtla",34.04,-118.25,"Los Angeles, CA"],["philly",39.95,-75.17,"Philadelphia, PA"],
     ["sf",37.77,-122.42,"San Francisco, CA"],["socal",34.05,-118.24,"Southern California"],
     // --- world ---
@@ -337,6 +351,17 @@
 
   var WORKER = "https://mushbox-live.wkennedy74.workers.dev/";
   var REFRESH_MS = 60000;
+
+  /* IRL category gate — mirrors the family wall's isIRL() so the two never drift.
+     A pin glows if the category is IRL OR the title resolves to a real location. */
+  var IRL_CATEGORIES = [
+    "just chatting","irl","travel & outdoors","special events","food & drink",
+    "sports","fitness & health","animals, aquariums, and zoos","makers & crafting",
+    "talk shows & podcasts","pools, hot tubs, and beach streams"
+  ];
+  function normCat(s){ return (s||"").toLowerCase().replace(/&/g,"and").replace(/[^a-z0-9]+/g," ").trim(); }
+  var IRL_SET = IRL_CATEGORIES.map(normCat);
+  function isIRL(cat){ return IRL_SET.indexOf(normCat(cat)) > -1; }
 
   // Build lookups. Sort places longest-first so multi-word names win.
   PLACES.sort(function(a,b){ return b[0].length - a[0].length; });
@@ -429,11 +454,14 @@
 
   var liveMarkers = {}, offMarkers = {};
 
-  function liveIcon(source, off){
+  function liveIcon(source, off, dim){
     off = off || [0,0];
     var pin = source==='title' ? '<span class="pin">📍</span>' : '';
+    var cls = 'beacon' + (source==='home'?' home':'') + (dim?' dim':'');
+    // dim pins carry no animated rings — muted, no glow
+    var rings = dim ? '' : '<span class="ring"></span><span class="ring r2"></span>';
     return L.divIcon({ className:'', iconSize:[18,18], iconAnchor:[9 - off[0], 9 - off[1]],
-      html:'<div class="beacon '+(source==='home'?'home':'')+'">'+pin+'<span class="ring"></span><span class="ring r2"></span><span class="core"></span></div>' });
+      html:'<div class="'+cls+'">'+pin+rings+'<span class="core"></span></div>' });
   }
   function offIcon(off){ off = off || [0,0]; return L.divIcon({ className:'', iconSize:[10,10], iconAnchor:[5 - off[0], 5 - off[1]], html:'<div class="off-dot"></div>' }); }
 
@@ -533,6 +561,8 @@
       else if(HOMES[e.person]){ var h=HOMES[e.person]; loc = {lat:h[0],lng:h[1],label:h[2],source:'home'}; }
       else { unmapped.push(e); return; }
       e.label = loc.label; e.source = loc.source;
+      // Glow if the category is IRL OR the title pinned a real location; otherwise dim.
+      e.dim = !(isIRL(e.cat) || loc.source === 'title');
       items.push({ e:e, loc:loc });
     });
 
@@ -554,7 +584,7 @@
 
     items.forEach(function(it){
       var e = it.e, loc = it.loc, off = it.off;
-      var mk = L.marker([loc.lat,loc.lng], { icon:liveIcon(loc.source, off), zIndexOffset:1000, riseOnHover:true });
+      var mk = L.marker([loc.lat,loc.lng], { icon:liveIcon(loc.source, off, e.dim), zIndexOffset:(e.dim?400:1000), riseOnHover:true });
       mk.bindPopup(popupHTML(e), {closeButton:true, offset:[off[0], off[1]-6]});
       mk.addTo(map);
       liveMarkers[e.person] = mk;
@@ -567,7 +597,7 @@
     placed.forEach(function(o){
       var e=o.e, mk=o.mk;
       var row = document.createElement('a');
-      row.className = 'row' + (e.source==='home'?' home':'');
+      row.className = 'row' + (e.source==='home'?' home':'') + (e.dim?' dim':'');
       row.href = 'https://twitch.tv/'+e.login; row.target='_blank'; row.rel='noopener';
       var pin = e.source==='title' ? '<span class="pin">📍</span> ' : '';
       row.innerHTML =
