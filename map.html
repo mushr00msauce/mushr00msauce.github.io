@@ -393,31 +393,28 @@
     if(r) HOMES[login] = r;
   });
 
-  // Co-located people (e.g. everyone in "Texas") share one coordinate and would
-  // stack into a single dot. Fan each group out into a small ring around the
-  // shared point so every dot is visible — applied here so offline home dots
-  // AND live beacons use the same spread. Deterministic (sorted), so stable.
-  (function spreadHomes(){
+  // Screen-pixel ring offset for member i of n (constant on screen at any zoom).
+  function ringPx(i, n){
+    if(n < 2) return [0, 0];
+    var R = 13 + 1.6 * Math.min(n, 12);
+    var ang = (i / n) * 2*Math.PI - Math.PI/2;
+    return [ R * Math.cos(ang), R * Math.sin(ang) ];
+  }
+
+  // Co-located people (e.g. everyone in "Texas") share one coordinate. Give each
+  // a fixed pixel slot in a little ring so their dots never stack — and keep the
+  // real coordinate, so offsetting is done in screen space and stays tight at
+  // every zoom level. A person's slot is stable whether they're offline or live.
+  var HOME_OFFSET = {};
+  (function(){
     var groups = {};
     Object.keys(HOMES).forEach(function(login){
       var h = HOMES[login], key = h[0].toFixed(3)+','+h[1].toFixed(3);
       (groups[key] = groups[key] || []).push(login);
     });
     Object.keys(groups).forEach(function(key){
-      var members = groups[key].sort();
-      var n = members.length;
-      if(n < 2) return;
-      var c = HOMES[members[0]], cLat = c[0], cLng = c[1];
-      var R = 0.6 + 0.06 * Math.min(n, 10);          // ring radius in degrees
-      var lngScale = 1 / Math.cos(cLat * Math.PI/180); // keep the ring circular on screen
-      members.forEach(function(login, i){
-        var ang = (i / n) * 2*Math.PI - Math.PI/2;
-        HOMES[login] = [
-          cLat + R * Math.sin(ang),
-          cLng + R * Math.cos(ang) * lngScale,
-          HOMES[login][2]
-        ];
-      });
+      var m = groups[key].sort(), n = m.length;
+      m.forEach(function(login, i){ HOME_OFFSET[login] = ringPx(i, n); });
     });
   })();
 
@@ -432,12 +429,13 @@
 
   var liveMarkers = {}, offMarkers = {};
 
-  function liveIcon(source){
+  function liveIcon(source, off){
+    off = off || [0,0];
     var pin = source==='title' ? '<span class="pin">📍</span>' : '';
-    return L.divIcon({ className:'', iconSize:[18,18], iconAnchor:[9,9],
+    return L.divIcon({ className:'', iconSize:[18,18], iconAnchor:[9 - off[0], 9 - off[1]],
       html:'<div class="beacon '+(source==='home'?'home':'')+'">'+pin+'<span class="ring"></span><span class="ring r2"></span><span class="core"></span></div>' });
   }
-  function offIcon(){ return L.divIcon({ className:'', iconSize:[10,10], iconAnchor:[5,5], html:'<div class="off-dot"></div>' }); }
+  function offIcon(off){ off = off || [0,0]; return L.divIcon({ className:'', iconSize:[10,10], iconAnchor:[5 - off[0], 5 - off[1]], html:'<div class="off-dot"></div>' }); }
 
   function fmtViewers(v){ v=+v||0; return v>=1000 ? (v/1000).toFixed(v>=10000?0:1)+'k' : String(v); }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
@@ -467,7 +465,7 @@
     Object.keys(HOMES).forEach(function(login){
       if(liveMarkers[login]) return; // don't double-draw someone who's live
       var loc = HOMES[login];
-      var mk = L.marker([loc[0],loc[1]], { icon:offIcon(), keyboard:false, zIndexOffset:-500 });
+      var mk = L.marker([loc[0],loc[1]], { icon:offIcon(HOME_OFFSET[login]), keyboard:false, zIndexOffset:-500 });
       mk.bindTooltip(login, {direction:'top', opacity:.9});
       mk.addTo(map);
       offMarkers[login] = mk;
@@ -509,29 +507,6 @@
     return Object.keys(by).map(function(k){ return by[k]; });
   }
 
-  // Fan out live people who resolve to the same exact point so none stack
-  // (e.g. several streamers all titling "NYC" at once). Same ring as home bases.
-  function spreadLive(items){
-    var groups = {};
-    items.forEach(function(it){
-      var key = it.loc.lat.toFixed(3)+','+it.loc.lng.toFixed(3);
-      (groups[key] = groups[key] || []).push(it);
-    });
-    Object.keys(groups).forEach(function(key){
-      var g = groups[key], n = g.length;
-      if(n < 2) return;
-      g.sort(function(a,b){ return a.e.person < b.e.person ? -1 : 1; });
-      var cLat = g[0].loc.lat, cLng = g[0].loc.lng;
-      var R = 0.6 + 0.06 * Math.min(n, 10);
-      var lngScale = 1 / Math.cos(cLat * Math.PI/180);
-      g.forEach(function(it, i){
-        var ang = (i / n) * 2*Math.PI - Math.PI/2;
-        it.loc.lat = cLat + R * Math.sin(ang);
-        it.loc.lng = cLng + R * Math.cos(ang) * lngScale;
-      });
-    });
-  }
-
   function render(liveArr){
     Object.keys(liveMarkers).forEach(function(k){ map.removeLayer(liveMarkers[k]); });
     liveMarkers = {};
@@ -561,13 +536,26 @@
       items.push({ e:e, loc:loc });
     });
 
-    // fan out any live people sharing the exact same point
-    spreadLive(items);
+    // fixed pixel slot for home-based dots (stable); ring title collisions live
+    var tgroups = {};
+    items.forEach(function(it){
+      if(it.loc.source === 'title'){
+        var key = it.loc.lat.toFixed(3)+','+it.loc.lng.toFixed(3);
+        (tgroups[key] = tgroups[key] || []).push(it);
+      }
+    });
+    Object.keys(tgroups).forEach(function(key){
+      var g = tgroups[key].sort(function(a,b){ return a.e.person < b.e.person ? -1 : 1; });
+      g.forEach(function(it, i){ it.off = ringPx(i, g.length); });
+    });
+    items.forEach(function(it){
+      if(!it.off) it.off = (it.loc.source === 'home') ? (HOME_OFFSET[it.e.person] || [0,0]) : [0,0];
+    });
 
     items.forEach(function(it){
-      var e = it.e, loc = it.loc;
-      var mk = L.marker([loc.lat,loc.lng], { icon:liveIcon(loc.source), zIndexOffset:1000, riseOnHover:true });
-      mk.bindPopup(popupHTML(e), {closeButton:true, offset:[0,-6]});
+      var e = it.e, loc = it.loc, off = it.off;
+      var mk = L.marker([loc.lat,loc.lng], { icon:liveIcon(loc.source, off), zIndexOffset:1000, riseOnHover:true });
+      mk.bindPopup(popupHTML(e), {closeButton:true, offset:[off[0], off[1]-6]});
       mk.addTo(map);
       liveMarkers[e.person] = mk;
       bounds.push([loc.lat,loc.lng]);
