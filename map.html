@@ -214,7 +214,7 @@
     "miekii":              "New York",
     "missyalcazarmusic":   "California",
     "morwenxo":            "Tampa, Florida",
-    "mrtelesir":           "Wisconsin",
+    "mrtelesir":           "",
     "mushr00msauce":       "Indianapolis, IN",
     "neverbeenhappierttv": "Michigan",
     "optimuskale":         "Florida",
@@ -393,6 +393,34 @@
     if(r) HOMES[login] = r;
   });
 
+  // Co-located people (e.g. everyone in "Texas") share one coordinate and would
+  // stack into a single dot. Fan each group out into a small ring around the
+  // shared point so every dot is visible — applied here so offline home dots
+  // AND live beacons use the same spread. Deterministic (sorted), so stable.
+  (function spreadHomes(){
+    var groups = {};
+    Object.keys(HOMES).forEach(function(login){
+      var h = HOMES[login], key = h[0].toFixed(3)+','+h[1].toFixed(3);
+      (groups[key] = groups[key] || []).push(login);
+    });
+    Object.keys(groups).forEach(function(key){
+      var members = groups[key].sort();
+      var n = members.length;
+      if(n < 2) return;
+      var c = HOMES[members[0]], cLat = c[0], cLng = c[1];
+      var R = 0.6 + 0.06 * Math.min(n, 10);          // ring radius in degrees
+      var lngScale = 1 / Math.cos(cLat * Math.PI/180); // keep the ring circular on screen
+      members.forEach(function(login, i){
+        var ang = (i / n) * 2*Math.PI - Math.PI/2;
+        HOMES[login] = [
+          cLat + R * Math.sin(ang),
+          cLng + R * Math.cos(ang) * lngScale,
+          HOMES[login][2]
+        ];
+      });
+    });
+  })();
+
   /* ---- Map ---- */
   var map = L.map('map', { zoomControl:false, attributionControl:true, worldCopyJump:true })
              .setView([39.5, -98.35], 4);
@@ -481,6 +509,29 @@
     return Object.keys(by).map(function(k){ return by[k]; });
   }
 
+  // Fan out live people who resolve to the same exact point so none stack
+  // (e.g. several streamers all titling "NYC" at once). Same ring as home bases.
+  function spreadLive(items){
+    var groups = {};
+    items.forEach(function(it){
+      var key = it.loc.lat.toFixed(3)+','+it.loc.lng.toFixed(3);
+      (groups[key] = groups[key] || []).push(it);
+    });
+    Object.keys(groups).forEach(function(key){
+      var g = groups[key], n = g.length;
+      if(n < 2) return;
+      g.sort(function(a,b){ return a.e.person < b.e.person ? -1 : 1; });
+      var cLat = g[0].loc.lat, cLng = g[0].loc.lng;
+      var R = 0.6 + 0.06 * Math.min(n, 10);
+      var lngScale = 1 / Math.cos(cLat * Math.PI/180);
+      g.forEach(function(it, i){
+        var ang = (i / n) * 2*Math.PI - Math.PI/2;
+        it.loc.lat = cLat + R * Math.sin(ang);
+        it.loc.lng = cLng + R * Math.cos(ang) * lngScale;
+      });
+    });
+  }
+
   function render(liveArr){
     Object.keys(liveMarkers).forEach(function(k){ map.removeLayer(liveMarkers[k]); });
     liveMarkers = {};
@@ -499,13 +550,22 @@
 
     var placed = [], unmapped = [], bounds = [];
 
+    // resolve each live person's location (title overrides home)
+    var items = [];
     people.forEach(function(e){
       var det = detectFromTitle(e.title), loc;
       if(det){ loc = {lat:det.lat,lng:det.lng,label:det.label,source:'title'}; }
       else if(HOMES[e.person]){ var h=HOMES[e.person]; loc = {lat:h[0],lng:h[1],label:h[2],source:'home'}; }
       else { unmapped.push(e); return; }
-
       e.label = loc.label; e.source = loc.source;
+      items.push({ e:e, loc:loc });
+    });
+
+    // fan out any live people sharing the exact same point
+    spreadLive(items);
+
+    items.forEach(function(it){
+      var e = it.e, loc = it.loc;
       var mk = L.marker([loc.lat,loc.lng], { icon:liveIcon(loc.source), zIndexOffset:1000, riseOnHover:true });
       mk.bindPopup(popupHTML(e), {closeButton:true, offset:[0,-6]});
       mk.addTo(map);
