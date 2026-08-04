@@ -231,6 +231,32 @@
   }
   .promo-tin img{width:100%;height:auto;display:block}
   a.promo-tin:hover{border-color:var(--sky)}
+
+  /* ---------- Golden Day tin: live "roasting" glow ---------- */
+  .promo-tin.roasting{
+    border-color:#FF7A1A;
+    box-shadow:0 0 0 1px rgba(255,122,26,.55),
+               0 10px 40px -6px rgba(255,122,26,.55);
+    animation:mbxroast 2.4s ease-in-out infinite;
+  }
+  .promo-tin.roasting::after{
+    content:"\25CF LIVE \00B7 ROASTING";
+    position:absolute;top:20%;left:34%;
+    transform:translate(-50%,-50%);z-index:2;
+    display:inline-flex;align-items:center;
+    padding:5px 12px;border-radius:999px;
+    background:rgba(6,13,36,.85);border:1px solid #FF7A1A;
+    color:#FF9A3D;font-size:clamp(10px,2.4vw,12px);
+    font-weight:800;letter-spacing:.08em;white-space:nowrap;
+    box-shadow:0 2px 14px rgba(255,122,26,.55);
+  }
+  @keyframes mbxroast{
+    0%,100%{box-shadow:0 0 0 1px rgba(255,122,26,.45),0 10px 34px -8px rgba(255,122,26,.45);}
+    50%{box-shadow:0 0 0 1px rgba(255,122,26,.7),0 12px 46px -4px rgba(255,122,26,.7);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .promo-tin.roasting{animation:none;}
+  }
   footer{
     margin-top:44px;
     color:var(--text-dim);font-size:13px;text-align:center;
@@ -1482,6 +1508,9 @@
   var IRL_SET = IRL_CATEGORIES.map(norm);
   function isIRL(s){ return IRL_SET.indexOf(norm(s.game)) > -1; }
 
+  // strip a category to bare letters/digits: "Food & Drink" -> "fooddrink"
+  function bare(s){ return (s||"").toLowerCase().replace(/[^a-z0-9]+/g,""); }
+
   if (WORKER_URL.indexOf("http") !== 0) return;  // not configured yet
 
   fetch(WORKER_URL).then(function(r){ return r.json(); }).then(function(data){
@@ -1507,6 +1536,19 @@
           logo.classList.add("on");
           logo.setAttribute("aria-label", "Mushr00msauce is LIVE \u2014 watch on Twitch");
           logo.title = s.title;
+        }
+        return;
+      }
+
+      // Golden Day Coffee partner: glow the tin ONLY when he's roasting (Food & Drink)
+      if (s.login === "roadrunnergdc") {
+        if (bare(s.game) === "fooddrink") {
+          var tin = document.querySelector('.promo-tin[href*="goldendaycoffee.com"]');
+          if (tin) {
+            tin.classList.add("roasting");
+            tin.href = "https://twitch.tv/roadrunnergdc";
+            tin.setAttribute("aria-label", "RoadrunnerGDC is LIVE roasting \u2014 watch on Twitch");
+          }
         }
         return;
       }
