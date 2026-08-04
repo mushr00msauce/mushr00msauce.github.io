@@ -177,39 +177,58 @@
               (In Google Maps, right-click the spot → click the lat, lng to copy.)
 
      • ADD a person: add a new line.   MOVE: change the value.   REMOVE: delete the line.
-     • COMMAS: every line ends with a comma EXCEPT the last one in the list.
-              When you add to the bottom, put a comma on the line above it.
+     • COMMAS: end every line with a comma. (A comma on the last line is fine too,
+              so you never have to worry about it.)
 
      A person also appears automatically wherever they name a place in their
      live TITLE (see PLACES below) — that overrides the home base for that stream.
      ===================================================================== */
   var LOCATIONS = {
-    "aprylanonymous": [40.7128, -74.0060, "New York, NY"],
-    "alldaynyc":      [40.7580, -73.9855, "New York, NY"],
-    "barktok":        [34.0522, -118.2437, "Los Angeles, CA"],
-    "mushr00msauce":  [39.7684, -86.1581, "Indianapolis, IN"],
-    "sbmel":          [40.0000,  -89.2000, "Illinois"],
-    "sweatypedals":   [46.3000,  -94.3000, "Minnesota"],
-    "maestroharrell": [34.0522, -118.2437, "Los Angeles, CA"],
-    "lyndainfj":      [39.0000,  -75.5000, "Delaware"],         // "Lynda"
-    "chefmaki":       [40.7306,  -73.9866, "New York, NY"],
-    "kelleycakes":    [40.7484,  -73.9857, "New York, NY"],     // "MY" assumed = NY, confirm
-    "deepseahomer":   [33.8353, -117.9145, "Anaheim, CA"],
-    "dianathedoggroomer":[37.5000, -78.9000, "Virginia"],       // "Diana" — confirm login
-    "edventureslive": [41.6000,  -72.7000, "Connecticut"],      // "Edventures" — confirm login
-    "emmdeefit":      [40.9000,  -77.8000, "Pennsylvania"],
-    "falconelite":    [31.5000,  -99.3000, "Texas"],
-    "jaynerio":       [32.7800,  -96.8000, "Dallas, TX"],
-    "hamandlizgaming":[41.0793,  -85.1394, "Fort Wayne, IN"],
-    "missyalcazarmusic":[34.0522,-118.2437, "Los Angeles, CA"], // "Miss" — confirm login
-    "neverbeenhappiertv":[44.3000,-85.4000, "Michigan"],        // "NBH" — confirm login
-    "ulumaika":       [34.0522, -118.2437, "Los Angeles, CA"],
-    "refurbersteve":  [40.0000,  -89.2000, "Illinois"],
-    "unclejpop":      [36.1700, -115.1400, "Las Vegas, NV"],
-    "sneakybeagle":   [39.0000,  -76.8000, "Maryland"],
-    "afrazexplores":  [40.7000,  -74.0100, "New York, NY"]
-        "katana1988": ["St. Louis"]// "afraz" — confirm login
-    // ,"rensz":         [ , , "City, ST"]
+    "afrazexplores":       [40.7000, -74.0100, "New York, NY"],
+    "alldaynyc":           [40.7580, -73.9855, "New York, NY"],
+    "aprylanonymous":      [40.7128, -74.0060, "New York, NY"],
+    "barktok":             [34.0522, -118.2437, "Los Angeles, CA"],
+    "bigbonelife":         "",                          // Bigbonelife
+    "chefmaki":            [40.7306, -73.9866, "New York, NY"],
+    "deepseahomer":        [33.8353, -117.9145, "Anaheim, CA"],
+    "dianathedoggroomer":  [37.5000, -78.9000, "Virginia"],
+    "dtmdrewski":          "",                          // DTMDrewski
+    "eatage":              "",                          // Eatage
+    "edventureslive":      [41.6000, -72.7000, "Connecticut"],
+    "emmdeefit":           [40.9000, -77.8000, "Pennsylvania"],
+    "falconelite":         [31.5000, -99.3000, "Texas"],
+    "fi1es":               "",                          // Fi1es
+    "gxufy":               "",                          // Gxufy
+    "hamandlizgaming":     [41.0793, -85.1394, "Fort Wayne, IN"],
+    "jaynerio":            [32.7800, -96.8000, "Dallas, TX"],
+    "kardtrick":           "",                          // KardTrick
+    "kaseysnowart":        "",                          // KaseySnowArt
+    "katana1988":          "",                          // Katana1988
+    "kelleycakes":         [40.7484, -73.9857, "New York, NY"],
+    "kozybean":            "",                          // Kozybean
+    "ldsylvr":             "",                          // LDSylvr
+    "lyndainfj":           [39.0000, -75.5000, "Delaware"],
+    "maestroharrell":      [34.0522, -118.2437, "Los Angeles, CA"],
+    "miekii":              "",                          // Miekii
+    "missyalcazarmusic":   [34.0522, -118.2437, "Los Angeles, CA"],
+    "morwenxo":            "",                          // MorwenXo
+    "mrtelesir":           "",                          // MrTelesir
+    "mushr00msauce":       [39.7684, -86.1581, "Indianapolis, IN"],
+    "neverbeenhappierttv": [44.3000, -85.4000, "Michigan"],
+    "optimuskale":         "",                          // OptimusKale
+    "papasmaxe":           "",                          // PapaSmaxe
+    "poisonhearrt":        "",                          // PoisonHearrt
+    "refurbersteve":       [40.0000, -89.2000, "Illinois"],
+    "rensz":               "",                          // Rensz
+    "rustyrhymez":         "",                          // RustyRhymez
+    "sbmel":               [40.0000, -89.2000, "Illinois"],
+    "sftortlife":          "",                          // SFTortLife
+    "shumba":              "",                          // Shumba
+    "sneakybeagle":        [39.0000, -76.8000, "Maryland"],
+    "sweatypedals":        [46.3000, -94.3000, "Minnesota"],
+    "ulumaika":            [34.0522, -118.2437, "Los Angeles, CA"],
+    "unclejpop":           [36.1700, -115.1400, "Las Vegas, NV"],
+    "woodrowjenkins":      "",                          // WoodrowJenkins
   };
 
   /* When a streamer names a place in their TITLE, the pin moves there for
