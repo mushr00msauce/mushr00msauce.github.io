@@ -1575,9 +1575,11 @@
         return;
       }
 
-      // Golden Day Coffee partner: glow the round logo ONLY when he's roasting (Food & Drink)
+      // Golden Day Coffee partner: glow the round logo when he's roasting.
+      // He roasts across several categories, so gate on his known roasting set.
       if (s.login === "roadrunnergdc") {
-        if (bare(s.game) === "fooddrink") {
+        var ROAST_CATS = ["fooddrink","coworkingstudying","justchatting","makerscrafting","irl"];
+        if (ROAST_CATS.indexOf(bare(s.game)) > -1) {
           var wrap = document.getElementById("gdcWrap");
           if (wrap) wrap.classList.add("roasting");  // logo glows + becomes a Twitch link; tile still links to tin
         }
