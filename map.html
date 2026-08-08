@@ -171,6 +171,15 @@
     .beacon.irl .core{box-shadow:0 0 8px 2px rgba(255,59,78,.95)}
     .livedot{animation:none}
   }
+
+  /* EMBED MODE — thumbnail preview for the family-wall LIVE MAP card.
+     Hide the chrome, keep just the dark map + live dots. Attribution stays
+     (tile-provider terms) but is nudged smaller and quieter. */
+  html.embed, html.embed body{background:transparent}
+  html.embed .console,
+  html.embed .live-list,
+  html.embed .leaflet-control-zoom{display:none!important}
+  html.embed .leaflet-control-attribution{font-size:8px;opacity:.5;padding:0 3px}
 </style>
 </head>
 <body>
@@ -199,6 +208,12 @@
 <script>
 (function(){
   "use strict";
+
+  // EMBED MODE — append ?embed=1 to the URL (used by the family-wall thumbnail).
+  // Strips the overlays, locks a clean US overview, and disables interaction so
+  // the map reads as a live preview image that links through to the full page.
+  var EMBED = /[?&]embed=1(?:&|$)/.test(location.search);
+  if(EMBED){ document.documentElement.classList.add('embed'); }
 
   /* =====================================================================
      LOCATIONS  —  each family member's HOME BASE.  ← EDIT THIS TABLE.
@@ -491,6 +506,15 @@
     attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
   }).addTo(map);
 
+  if(EMBED){
+    // Fit the continental US and freeze it — a stable preview at any thumbnail size.
+    map.fitBounds([[24.4,-125],[49.4,-66.5]], { padding:[6,6] });
+    map.dragging.disable(); map.scrollWheelZoom.disable(); map.doubleClickZoom.disable();
+    map.boxZoom.disable(); map.keyboard.disable();
+    if(map.touchZoom) map.touchZoom.disable();
+    if(map.tap) map.tap.disable();
+  }
+
   var liveMarkers = {}, offMarkers = {};
 
   function liveIcon(source, off, irl){
@@ -706,7 +730,7 @@
       list.appendChild(u);
     }
 
-    if(bounds.length) map.flyToBounds(bounds, { padding:[70,70], maxZoom:6, duration:.6 });
+    if(!EMBED && bounds.length) map.flyToBounds(bounds, { padding:[70,70], maxZoom:6, duration:.6 });
     stamp();
   }
 

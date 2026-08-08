@@ -939,18 +939,24 @@
         }
         .mbxmap-card:hover{ border-color:var(--sky); transform:translateY(-2px); box-shadow:0 20px 46px -20px rgba(30,111,255,.6); }
         .mbxmap-thumb{
-          position:relative; flex:0 0 46%; max-width:320px;
+          position:relative; flex:0 0 46%; max-width:320px; aspect-ratio:16/10;
           border-radius:12px; overflow:hidden; border:1px solid var(--card-edge); background:var(--navy-deep);
         }
         .mbxmap-thumb svg{ display:block; width:100%; height:auto; }
+        /* live preview: the real map in embed mode, non-interactive so the whole
+           card still links through to the full page */
+        .mbxmap-frame{
+          position:absolute; inset:0; width:100%; height:100%; border:0; z-index:1;
+          pointer-events:none; background:var(--navy-deep);
+        }
         .mbxmap-badge{
-          position:absolute; top:9px; left:9px; display:inline-flex; align-items:center; gap:6px;
+          position:absolute; top:9px; left:9px; z-index:2; display:inline-flex; align-items:center; gap:6px;
           padding:4px 9px; border-radius:999px; background:rgba(6,13,36,.72);
           border:1px solid rgba(77,184,255,.35); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
           font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#cfe0ff;
         }
         .mbxmap-badge .d{ width:7px; height:7px; border-radius:50%; background:#39507f; }
-        .mbxmap-badge.live .d{ background:var(--sky); box-shadow:0 0 8px var(--sky); animation:mpblink 1.6s ease-in-out infinite; }
+        .mbxmap-badge.live .d{ background:#ff3b4e; box-shadow:0 0 0 0 rgba(255,59,78,.7); animation:mppulse 1.6s ease-out infinite; }
         .mbxmap-body{ display:flex; flex-direction:column; justify-content:center; gap:7px; min-width:0; }
         .mbxmap-eyebrow{ font-size:11px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:var(--sky); }
         .mbxmap-title{ font-size:20px; font-weight:800; line-height:1.14; color:var(--white); }
@@ -972,6 +978,7 @@
         .mbxmap .arc{ fill:none; stroke:rgba(77,184,255,.35); stroke-width:1.2; stroke-dasharray:3 4; }
         @keyframes mpring{ 0%{opacity:.85; transform:scale(.4);} 70%{opacity:0; transform:scale(2.5);} 100%{opacity:0; transform:scale(2.5);} }
         @keyframes mpblink{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+        @keyframes mppulse{ 0%{box-shadow:0 0 0 0 rgba(255,59,78,.7);} 70%{box-shadow:0 0 0 7px rgba(255,59,78,0);} 100%{box-shadow:0 0 0 0 rgba(255,59,78,0);} }
 
         @media (max-width:560px){
           .mbxmap-card{ flex-direction:column; }
@@ -979,47 +986,15 @@
           .mbxmap-title{ font-size:18px; }
         }
         @media (prefers-reduced-motion:reduce){
-          .mbxmap .ring{ display:none; } .mbxmap-badge.live .d{ animation:none; }
+          .mbxmap .ring{ display:none; } .mbxmap-badge.live .d{ animation:none; box-shadow:0 0 6px rgba(255,59,78,.9); }
         }
       </style>
 
       <a class="mbxmap-card" href="map.html" aria-label="Open the Mushbox live map">
         <div class="mbxmap-thumb">
           <span class="mbxmap-badge" id="mbxMapBadge"><span class="d"></span><span id="mbxMapBadgeTxt">Map</span></span>
-          <svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Stylized map with live beacons">
-            <defs>
-              <radialGradient id="mbxmapbg" cx="62%" cy="42%" r="75%">
-                <stop offset="0%" stop-color="#12224e"/>
-                <stop offset="100%" stop-color="#060D24"/>
-              </radialGradient>
-              <radialGradient id="mbxmapglow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="#4DB8FF" stop-opacity=".28"/>
-                <stop offset="100%" stop-color="#4DB8FF" stop-opacity="0"/>
-              </radialGradient>
-            </defs>
-            <rect x="0" y="0" width="320" height="200" fill="url(#mbxmapbg)"/>
-            <!-- faint map grid -->
-            <g class="grid">
-              <line x1="0" y1="50" x2="320" y2="50"/><line x1="0" y1="100" x2="320" y2="100"/><line x1="0" y1="150" x2="320" y2="150"/>
-              <line x1="64" y1="0" x2="64" y2="200"/><line x1="128" y1="0" x2="128" y2="200"/><line x1="192" y1="0" x2="192" y2="200"/><line x1="256" y1="0" x2="256" y2="200"/>
-            </g>
-            <!-- glow behind the east-coast cluster -->
-            <circle cx="256" cy="86" r="60" fill="url(#mbxmapglow)"/>
-            <!-- bonded-connection arc -->
-            <path class="arc" d="M54 118 Q160 20 256 86"/>
-            <!-- static beacons -->
-            <g><circle class="halo" cx="60" cy="130" r="6"/><circle class="core" cx="60" cy="130" r="2.6"/></g>
-            <g><circle class="halo" cx="118" cy="104" r="6"/><circle class="core" cx="118" cy="104" r="2.6"/></g>
-            <g><circle class="halo" cx="140" cy="150" r="6"/><circle class="core" cx="140" cy="150" r="2.6"/></g>
-            <g><circle class="halo" cx="182" cy="106" r="6"/><circle class="core" cx="182" cy="106" r="2.6"/></g>
-            <g><circle class="halo" cx="238" cy="150" r="6"/><circle class="core" cx="238" cy="150" r="2.6"/></g>
-            <g><circle class="halo" cx="264" cy="92" r="6"/><circle class="core" cx="264" cy="92" r="2.6"/></g>
-            <g><circle class="halo" cx="250" cy="96" r="6"/><circle class="core" cx="250" cy="96" r="2.6"/></g>
-            <!-- pulsing beacons -->
-            <g class="b1"><circle class="ring" cx="54" cy="118" r="4"/><circle class="halo" cx="54" cy="118" r="7"/><circle class="core" cx="54" cy="118" r="3"/></g>
-            <g class="b2"><circle class="ring" cx="172" cy="96" r="4"/><circle class="halo" cx="172" cy="96" r="7"/><circle class="core" cx="172" cy="96" r="3"/></g>
-            <g class="b3"><circle class="ring" cx="256" cy="84" r="4"/><circle class="halo" cx="256" cy="84" r="7"/><circle class="core" cx="256" cy="84" r="3"/></g>
-          </svg>
+          <iframe class="mbxmap-frame" src="map.html?embed=1" title="Live map preview"
+                  tabindex="-1" aria-hidden="true" loading="lazy" scrolling="no"></iframe>
         </div>
         <div class="mbxmap-body">
           <span class="mbxmap-eyebrow">Live map</span>
