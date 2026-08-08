@@ -502,6 +502,8 @@
       var AUTOPLAY_MS = 3500;
 
       // Each clip: poster jpg + name. The .mp4 is found automatically (same name).
+      // ORDER: oldest at top, newest at the BOTTOM. Add new clips to the end.
+      // The rail renders this reversed, so the newest clip shows first.
       var SLIDES = [
         { name:'Aprylanonymous',      img:'assets/videos/aprylanonymousso.jpg' },
         { name:'DianaTheDogGroomer',  img:'assets/videos/dianathedoggroomerso.jpg' },
@@ -524,7 +526,7 @@
       var next  = root.querySelector('.mbx-arrow.next');
       var locked = false;  // stop rail auto-advance after first play
 
-      SLIDES.forEach(function(s){
+      SLIDES.slice().reverse().forEach(function(s){
         var vid = s.vid || s.img.replace(/\.jpg$/i, '.mp4');
         var a = document.createElement('a');
         a.className = 'mbx-slide'; a.href = FULL; a.setAttribute('data-name', s.name);
