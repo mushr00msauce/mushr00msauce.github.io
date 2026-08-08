@@ -115,7 +115,23 @@
   .beacon.irl .ring{border-color:rgba(255,90,106,.9)}
   .beacon .pin{position:absolute;left:50%;top:-13px;transform:translateX(-50%);font-size:12px;line-height:1;z-index:3;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
   .off-dot{width:10px;height:10px;border-radius:50%;background:#39507f;
-    border:1px solid rgba(120,150,200,.5);box-shadow:0 0 5px rgba(20,40,80,.8)}
+    border:1px solid rgba(120,150,200,.5);box-shadow:0 0 5px rgba(20,40,80,.8);
+    transition:background .14s,box-shadow .14s,transform .14s}
+  /* bigger transparent tap/hover target around the small dot */
+  .off-hit{width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .off-hit:hover .off-dot{background:#5a78b4;border-color:rgba(160,190,235,.85);
+    box-shadow:0 0 9px rgba(70,120,215,.95);transform:scale(1.15)}
+
+  /* offline hover card: avatar + name */
+  .leaflet-tooltip.offtip{background:var(--navy);border:1px solid var(--edge);border-radius:13px;
+    box-shadow:0 16px 38px -18px rgba(0,0,0,.9);padding:9px 10px 8px;color:#fff}
+  .leaflet-tooltip-top.offtip::before{border-top-color:var(--navy)}
+  .offtip .otwrap{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:78px;max-width:120px}
+  .offtip .ava{width:54px;height:54px;border-radius:50%;object-fit:cover;display:block;
+    border:2px solid var(--edge);background:#0c1533}
+  .offtip .onm{font-family:var(--mono);font-size:11.5px;color:#cfe0ff;letter-spacing:.02em;
+    max-width:118px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+  .offtip .ost{font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
 
   @keyframes beam{0%{opacity:.8;width:12px;height:12px}70%{opacity:0}100%{opacity:0;width:52px;height:52px}}
   @keyframes ping{0%{box-shadow:0 0 0 0 rgba(77,184,255,.7)}70%{box-shadow:0 0 0 9px rgba(77,184,255,0)}100%{box-shadow:0 0 0 0 rgba(77,184,255,0)}}
@@ -468,7 +484,21 @@
     return L.divIcon({ className:'', iconSize:[18,18], iconAnchor:[9 - off[0], 9 - off[1]],
       html:'<div class="'+cls+'">'+pin+rings+'<span class="core"></span></div>' });
   }
-  function offIcon(off){ off = off || [0,0]; return L.divIcon({ className:'', iconSize:[10,10], iconAnchor:[5 - off[0], 5 - off[1]], html:'<div class="off-dot"></div>' }); }
+  function offIcon(off){ off = off || [0,0]; return L.divIcon({ className:'', iconSize:[22,22], iconAnchor:[11 - off[0], 11 - off[1]], html:'<div class="off-hit"><div class="off-dot"></div></div>' }); }
+
+  // Hover card for an offline home dot: Twitch avatar (via unavatar.io, which
+  // resolves twitch.tv/<login> to their profile pic and supplies its own
+  // fallback) + login. If the image fails, it removes itself so only the name
+  // shows — no broken-image icon, no empty gap.
+  function offTip(login){
+    var url = 'https://unavatar.io/twitch/' + encodeURIComponent(login);
+    return '<div class="otwrap">'
+      + '<img class="ava" src="' + url + '" alt="" '
+      +   'onerror="this.remove()">'
+      + '<span class="onm">' + esc(login) + '</span>'
+      + '<span class="ost">offline</span>'
+      + '</div>';
+  }
 
   function fmtViewers(v){ v=+v||0; return v>=1000 ? (v/1000).toFixed(v>=10000?0:1)+'k' : String(v); }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
@@ -498,8 +528,9 @@
     Object.keys(HOMES).forEach(function(login){
       if(liveMarkers[login]) return; // don't double-draw someone who's live
       var loc = HOMES[login];
-      var mk = L.marker([loc[0],loc[1]], { icon:offIcon(HOME_OFFSET[login]), keyboard:false, zIndexOffset:-500 });
-      mk.bindTooltip(login, {direction:'top', opacity:.9});
+      var mk = L.marker([loc[0],loc[1]], { icon:offIcon(HOME_OFFSET[login]), keyboard:false, zIndexOffset:-500, riseOnHover:true });
+      mk.bindTooltip(offTip(login), {direction:'top', className:'offtip', opacity:1, offset:[0,-7]});
+      mk.on('click', (function(lg){ return function(){ window.open('https://twitch.tv/'+lg, '_blank', 'noopener'); }; })(login));
       mk.addTo(map);
       offMarkers[login] = mk;
     });
