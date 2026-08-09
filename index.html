@@ -213,7 +213,7 @@
     border-style:dashed;
   }
   .photos .shot-wide{grid-column:1 / -1;width:50%;margin:0 auto}
-  @media (min-width:900px){.links a.link-center{grid-column:1 / -1;width:calc(50% - 7px);margin:0 auto}}
+  @media (min-width:900px){.links a.link-center{grid-column:1 / -1;width:min(100%, 620px);margin:0 auto}}
   @media (max-width:899px){.photos .shot-wide{width:100%}}
   .gallery{
     display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
@@ -1406,9 +1406,9 @@
       </script>
     </div>
 
-    <span class="section-label">Guides</span>
+    <span class="section-label centered">Guides</span>
 
-    <a class="link" href="/tech-tips.html">
+    <a class="link link-center" href="/tech-tips.html">
       <span class="ico">
         <svg viewBox="0 0 24 24" fill="none" stroke="#4DB8FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       </span>
