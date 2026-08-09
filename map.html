@@ -22,6 +22,7 @@
   :root{
     --black:#060810; --navy:#0A1535; --royal:#1E6FFF; --sky:#4DB8FF; --white:#fff;
     --red:#ff3b4e; --red-soft:#ff5a6a;
+    --twitch:#9146FF; --twitch-soft:#a970ff; --kick:#53FC18; --kick-soft:#78ff45;
     --edge:rgba(77,184,255,.28);
     --panel:rgba(10,21,53,.82);
     --dim:#7f92b8;
@@ -69,7 +70,8 @@
 
   .legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:11px;padding-top:11px;border-top:1px solid rgba(77,184,255,.14);font-size:11px;color:var(--dim)}
   .legend i{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
-  .legend .lg-irl{background:var(--red);box-shadow:0 0 8px var(--red)}
+  .legend .lg-tw{background:var(--twitch);box-shadow:0 0 8px var(--twitch)}
+  .legend .lg-kick{background:var(--kick);box-shadow:0 0 8px var(--kick)}
   .legend .lg-live{background:var(--sky);box-shadow:0 0 8px var(--sky)}
   .legend .lg-off{background:#39507f}
   .legend .lg-pin{color:var(--dim)}
@@ -89,7 +91,8 @@
   .row:hover,.row.hot{background:rgba(30,111,255,.16)}
   .row .beacon-mini{position:relative;width:12px;height:12px;flex:0 0 auto}
   .row .beacon-mini::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--sky);box-shadow:0 0 8px var(--sky)}
-  .row.irl .beacon-mini::after{background:var(--red);box-shadow:0 0 8px var(--red)}
+  .row.irl .beacon-mini::after{background:var(--twitch);box-shadow:0 0 8px var(--twitch)}
+  .row.irl.kick .beacon-mini::after{background:var(--kick);box-shadow:0 0 8px var(--kick)}
   .row .info{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px}
   .row .nm{font-weight:700;font-size:13.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .row .sub{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--mono)}
@@ -110,9 +113,12 @@
     border-radius:50%;border:2px solid rgba(77,184,255,.85);opacity:0;animation:beam 2.6s ease-out infinite}
   .beacon .ring.r2{animation-delay:1.3s}
   /* IRL tier = RED = live in an IRL category (a Mushbox stream) */
-  .beacon.irl .core{background:radial-gradient(circle at 40% 35%,#ffd6db,var(--red) 60%,#c81028);
-    box-shadow:0 0 11px 2px rgba(255,59,78,.95),0 0 24px 7px rgba(255,40,64,.5)}
-  .beacon.irl .ring{border-color:rgba(255,90,106,.9)}
+  .beacon.irl .core{background:radial-gradient(circle at 40% 35%,#e4d4ff,var(--twitch) 60%,#5a1fb0);
+    box-shadow:0 0 11px 2px rgba(145,70,255,.95),0 0 24px 7px rgba(120,50,230,.5)}
+  .beacon.irl .ring{border-color:rgba(169,112,255,.9)}
+  .beacon.irl.kick .core{background:radial-gradient(circle at 40% 35%,#dcffd0,var(--kick) 60%,#2fae00);
+    box-shadow:0 0 11px 2px rgba(83,252,24,.95),0 0 24px 7px rgba(60,220,10,.5)}
+  .beacon.irl.kick .ring{border-color:rgba(120,255,69,.9)}
   .beacon .pin{position:absolute;left:50%;top:-13px;transform:translateX(-50%);font-size:12px;line-height:1;z-index:3;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
   .off-dot{width:10px;height:10px;border-radius:50%;background:#39507f;
     border:1px solid rgba(120,150,200,.5);box-shadow:0 0 5px rgba(20,40,80,.8);
@@ -134,9 +140,11 @@
   .offtip .ost{font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
   /* live hover cards tint the avatar ring + sublabel to match the dot */
   .offtip .ava.live{border-color:var(--sky)}
-  .offtip .ava.irl{border-color:var(--red-soft)}
+  .offtip .ava.irl{border-color:var(--twitch-soft)}
+  .offtip .ava.irl.kick{border-color:var(--kick-soft)}
   .offtip .ost.live{color:var(--sky)}
-  .offtip .ost.irl{color:var(--red-soft)}
+  .offtip .ost.irl{color:var(--twitch-soft)}
+  .offtip .ost.irl.kick{color:var(--kick-soft)}
 
   @keyframes beam{0%{opacity:.8;width:12px;height:12px}70%{opacity:0}100%{opacity:0;width:52px;height:52px}}
   @keyframes ping{0%{box-shadow:0 0 0 0 rgba(77,184,255,.7)}70%{box-shadow:0 0 0 9px rgba(77,184,255,0)}100%{box-shadow:0 0 0 0 rgba(77,184,255,0)}}
@@ -149,7 +157,8 @@
   .pop .pava{width:46px;height:46px;border-radius:50%;object-fit:cover;flex:0 0 auto;display:block;
     border:2px solid var(--edge);background:#0c1533}
   .pop .pava.live{border-color:var(--sky)}
-  .pop .pava.irl{border-color:var(--red-soft)}
+  .pop .pava.irl{border-color:var(--twitch-soft)}
+  .pop .pava.irl.kick{border-color:var(--kick-soft)}
   .pop .pnm{font-weight:700;font-size:15px;margin:0 0 2px}
   .pop .phead .pnm{margin:0}
   .pop .pcity{font-family:var(--mono);font-size:11px;color:var(--sky);letter-spacing:.04em;margin-bottom:2px}
@@ -168,7 +177,8 @@
   @media (prefers-reduced-motion:reduce){
     .beacon .ring{display:none}
     .beacon .core{box-shadow:0 0 8px 2px rgba(77,184,255,.9)}
-    .beacon.irl .core{box-shadow:0 0 8px 2px rgba(255,59,78,.95)}
+    .beacon.irl .core{box-shadow:0 0 8px 2px rgba(145,70,255,.95)}
+    .beacon.irl.kick .core{box-shadow:0 0 8px 2px rgba(83,252,24,.95)}
     .livedot{animation:none}
   }
 
@@ -213,7 +223,8 @@
   </div>
   <div class="meta"><span id="updated">—</span><button id="refresh" type="button">Refresh</button></div>
   <div class="legend">
-    <span><i class="lg-irl"></i>Live · IRL</span>
+    <span><i class="lg-tw"></i>IRL · Twitch</span>
+    <span><i class="lg-kick"></i>IRL · Kick</span>
     <span><i class="lg-live"></i>Live</span>
     <span><i class="lg-off"></i>Offline</span>
     <span class="lg-pin">📍 from stream title</span>
@@ -273,6 +284,7 @@
     "gxufy":               "New York, NY",
     "hamandlizgaming":     "Fort Wayne, IN",
     "jaynerio":            "Texas",
+    "jdcharisma":          "",
     "jetlagjacko":         "United Kingdom",
     "jtengland":           "San Diego, CA",
     "kardtrick":           "Kentucky",
@@ -556,10 +568,18 @@
 
   var liveMarkers = {}, offMarkers = {};
 
-  function liveIcon(source, off, irl){
+  // Kick family logins — watch links point at kick.com, never twitch.tv,
+  // even for offline dots where platform isn't in the live feed.
+  var KICK_LOGINS = { "jetlagjacko":1 };
+  function watchURL(login, platform){
+    var isKick = platform==='kick' || KICK_LOGINS[(login||'').toString().toLowerCase()];
+    return (isKick ? 'https://kick.com/' : 'https://twitch.tv/') + encodeURIComponent(login);
+  }
+
+  function liveIcon(source, off, irl, platform){
     off = off || [0,0];
     var pin = source==='title' ? '<span class="pin">📍</span>' : '';
-    var cls = 'beacon' + (irl?' irl':'');   // red when IRL category, blue otherwise
+    var cls = 'beacon' + (irl?' irl':'') + ((irl && platform==='kick')?' kick':'');   // IRL: purple=Twitch, green=Kick; blue = just-live
     var rings = '<span class="ring"></span><span class="ring r2"></span>';
     return L.divIcon({ className:'', iconSize:[18,18], iconAnchor:[9 - off[0], 9 - off[1]],
       html:'<div class="'+cls+'">'+pin+rings+'<span class="core"></span></div>' });
@@ -593,7 +613,7 @@
       : '🏠 Home base · location not in title';
     var altLine = (e.person && e.login && e.login !== e.person)
       ? '<p class="palt">on @'+esc(e.login)+' (2nd channel)</p>' : '';
-    var ring = e.irl ? 'irl' : 'live';
+    var ring = e.irl ? (e.platform==='kick'?'irl kick':'irl') : 'live';
     var aurl = AVATARS[e.login] || AVATARS[e.person] || '';
     var ava  = aurl
       ? '<img class="pava '+ring+'" src="'+esc(aurl)+'" alt="" onerror="this.remove()">'
@@ -609,7 +629,7 @@
       + '<p class="psrc">'+srcLine+'</p>'
       + (e.cat ? '<p class="pcat">'+esc(e.cat)+'</p>' : '')
       + '<p class="pvw">'+fmtViewers(e.viewers)+' watching</p>'
-      + '<a class="watch" href="https://twitch.tv/'+encodeURIComponent(e.login)+'" target="_blank" rel="noopener">Watch live ▸</a>'
+      + '<a class="watch" href="'+watchURL(e.login, e.platform)+'" target="_blank" rel="noopener">Watch live ▸</a>'
       + '</div>';
   }
 
@@ -617,7 +637,7 @@
   // red (IRL) or blue (just-live) to match the beacon. Click still opens
   // the full popup (which now carries the avatar too).
   function liveTip(e){
-    var ring = e.irl ? 'irl' : 'live';
+    var ring = e.irl ? (e.platform==='kick'?'irl kick':'irl') : 'live';
     var aurl = AVATARS[e.login] || AVATARS[e.person] || '';
     var disp = e.name || NAMES[e.login] || e.login;
     var img  = aurl
@@ -640,7 +660,7 @@
       var mk = L.marker([loc[0],loc[1]], { icon:offIcon(HOME_OFFSET[login]), keyboard:false, zIndexOffset:-500, riseOnHover:true });
       mk.bindTooltip((function(lg){ return function(){ return offTip(lg); }; })(login),
         {direction:'top', className:'offtip', opacity:1, offset:[0,-7]});
-      mk.on('click', (function(lg){ return function(){ window.open('https://twitch.tv/'+lg, '_blank', 'noopener'); }; })(login));
+      mk.on('click', (function(lg){ return function(){ window.open(watchURL(lg), '_blank', 'noopener'); }; })(login));
       mk.addTo(map);
       offMarkers[login] = mk;
     });
@@ -659,6 +679,7 @@
       var login = (e.login || e.user_login || e.broadcaster_login || e.name || e.user_name || '').toString().toLowerCase();
       return {
         login: login,
+        platform: (e.platform || 'twitch'),
         name:  e.name || e.display_name || e.user_name || login,
         cat:   e.game || e.category || e.game_name || '',
         title: e.title || '',
@@ -675,7 +696,7 @@
       var person = ALT2MAIN[e.login] || e.login;
       var cur = by[person];
       if(!cur || (+e.viewers||0) > (+cur.viewers||0)){
-        by[person] = { person:person, login:e.login, name:e.name, cat:e.cat, title:e.title, viewers:e.viewers };
+        by[person] = { person:person, login:e.login, name:e.name, cat:e.cat, title:e.title, viewers:e.viewers, platform:e.platform };
       }
     });
     return Object.keys(by).map(function(k){ return by[k]; });
@@ -730,7 +751,7 @@
 
     items.forEach(function(it){
       var e = it.e, loc = it.loc, off = it.off;
-      var mk = L.marker([loc.lat,loc.lng], { icon:liveIcon(loc.source, off, e.irl), zIndexOffset:(e.irl?1000:600), riseOnHover:true });
+      var mk = L.marker([loc.lat,loc.lng], { icon:liveIcon(loc.source, off, e.irl, e.platform), zIndexOffset:(e.irl?1000:600), riseOnHover:true });
       // Function content so both the popup and the hover card read AVATARS at
       // open time — the pic appears the instant the roster fetch lands.
       mk.bindPopup((function(ev){ return function(){ return popupHTML(ev); }; })(e),
@@ -749,7 +770,7 @@
       var e=o.e, mk=o.mk;
       var row = document.createElement('a');
       row.className = 'row' + (e.irl?' irl':'');
-      row.href = 'https://twitch.tv/'+e.login; row.target='_blank'; row.rel='noopener';
+      row.href = watchURL(e.login, e.platform); row.target='_blank'; row.rel='noopener';
       var pin = e.source==='title' ? '<span class="pin">📍</span> ' : '';
       row.innerHTML =
         '<span class="beacon-mini"></span>'
