@@ -23,6 +23,7 @@
     --black:#060810; --navy:#0A1535; --royal:#1E6FFF; --sky:#4DB8FF; --white:#fff;
     --red:#ff3b4e; --red-soft:#ff5a6a;
     --twitch:#9146FF; --twitch-soft:#a970ff; --kick:#53FC18; --kick-soft:#78ff45;
+    --amber:#F5A623; --amber-soft:#ffbf4d;
     --edge:rgba(77,184,255,.28);
     --panel:rgba(10,21,53,.82);
     --dim:#7f92b8;
@@ -73,6 +74,7 @@
   .legend .lg-tw{background:var(--twitch);box-shadow:0 0 8px var(--twitch)}
   .legend .lg-kick{background:var(--kick);box-shadow:0 0 8px var(--kick)}
   .legend .lg-live{background:var(--sky);box-shadow:0 0 8px var(--sky)}
+  .legend .lg-amber{background:var(--amber);box-shadow:0 0 8px var(--amber)}
   .legend .lg-off{background:#39507f}
   .legend .lg-pin{color:var(--dim)}
   .toggle{margin-top:10px;display:flex;align-items:center;gap:8px;font-size:11px;color:var(--dim);cursor:pointer;user-select:none}
@@ -93,6 +95,7 @@
   .row .beacon-mini::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--sky);box-shadow:0 0 8px var(--sky)}
   .row.irl .beacon-mini::after{background:var(--twitch);box-shadow:0 0 8px var(--twitch)}
   .row.irl.kick .beacon-mini::after{background:var(--kick);box-shadow:0 0 8px var(--kick)}
+  .row.warming .beacon-mini::after{background:var(--amber);box-shadow:0 0 8px var(--amber)}
   .row .info{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px}
   .row .nm{font-weight:700;font-size:13.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .row .sub{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--mono)}
@@ -119,6 +122,11 @@
   .beacon.irl.kick .core{background:radial-gradient(circle at 40% 35%,#dcffd0,var(--kick) 60%,#2fae00);
     box-shadow:0 0 11px 2px rgba(83,252,24,.95),0 0 24px 7px rgba(60,220,10,.5)}
   .beacon.irl.kick .ring{border-color:rgba(120,255,69,.9)}
+  /* WARMING = AMBER = encoder connected/transmitting but not yet showing
+     live on Twitch/Kick (bonding, testing, about to go live). */
+  .beacon.warming .core{background:radial-gradient(circle at 40% 35%,#fff0d0,var(--amber) 60%,#b97400);
+    box-shadow:0 0 11px 2px rgba(245,166,35,.95),0 0 24px 7px rgba(245,166,35,.5)}
+  .beacon.warming .ring{border-color:rgba(255,191,77,.9)}
   .beacon .pin{position:absolute;left:50%;top:-13px;transform:translateX(-50%);font-size:12px;line-height:1;z-index:3;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
   .off-dot{width:10px;height:10px;border-radius:50%;background:#39507f;
     border:1px solid rgba(120,150,200,.5);box-shadow:0 0 5px rgba(20,40,80,.8);
@@ -142,9 +150,11 @@
   .offtip .ava.live{border-color:var(--sky)}
   .offtip .ava.irl{border-color:var(--twitch-soft)}
   .offtip .ava.irl.kick{border-color:var(--kick-soft)}
+  .offtip .ava.warming{border-color:var(--amber-soft)}
   .offtip .ost.live{color:var(--sky)}
   .offtip .ost.irl{color:var(--twitch-soft)}
   .offtip .ost.irl.kick{color:var(--kick-soft)}
+  .offtip .ost.warming{color:var(--amber-soft)}
 
   @keyframes beam{0%{opacity:.8;width:12px;height:12px}70%{opacity:0}100%{opacity:0;width:52px;height:52px}}
   @keyframes ping{0%{box-shadow:0 0 0 0 rgba(77,184,255,.7)}70%{box-shadow:0 0 0 9px rgba(77,184,255,0)}100%{box-shadow:0 0 0 0 rgba(77,184,255,0)}}
@@ -159,6 +169,8 @@
   .pop .pava.live{border-color:var(--sky)}
   .pop .pava.irl{border-color:var(--twitch-soft)}
   .pop .pava.irl.kick{border-color:var(--kick-soft)}
+  .pop .pava.warming{border-color:var(--amber-soft)}
+  .pop .pconfirmed{font-size:11px;color:var(--amber-soft);margin:0 0 6px;font-family:var(--mono)}
   .pop .pnm{font-weight:700;font-size:15px;margin:0 0 2px}
   .pop .phead .pnm{margin:0}
   .pop .pcity{font-family:var(--mono);font-size:11px;color:var(--sky);letter-spacing:.04em;margin-bottom:2px}
@@ -226,6 +238,7 @@
     <span><i class="lg-tw"></i>IRL · Twitch</span>
     <span><i class="lg-kick"></i>IRL · Kick</span>
     <span><i class="lg-live"></i>Live</span>
+    <span><i class="lg-amber"></i>Encoder connecting</span>
     <span><i class="lg-off"></i>Offline</span>
     <span class="lg-pin">📍 from stream title</span>
   </div>
@@ -576,10 +589,10 @@
     return (isKick ? 'https://kick.com/' : 'https://twitch.tv/') + encodeURIComponent(login);
   }
 
-  function liveIcon(source, off, irl, platform){
+  function liveIcon(source, off, irl, platform, warming){
     off = off || [0,0];
     var pin = source==='title' ? '<span class="pin">📍</span>' : '';
-    var cls = 'beacon' + (irl?' irl':'') + ((irl && platform==='kick')?' kick':'');   // IRL: purple=Twitch, green=Kick; blue = just-live
+    var cls = 'beacon' + (warming?' warming':(irl?' irl':'')) + ((!warming && irl && platform==='kick')?' kick':'');   // amber=warming; IRL: purple=Twitch, green=Kick; blue = just-live
     var rings = '<span class="ring"></span><span class="ring r2"></span>';
     return L.divIcon({ className:'', iconSize:[18,18], iconAnchor:[9 - off[0], 9 - off[1]],
       html:'<div class="'+cls+'">'+pin+rings+'<span class="core"></span></div>' });
@@ -608,16 +621,25 @@
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
   function popupHTML(e){
-    var srcLine = e.source==='title'
-      ? '📍 Live from stream title'
-      : '🏠 Home base · location not in title';
+    var srcLine = e.warming
+      ? '🔌 Encoder connected · not yet live on platform'
+      : (e.source==='title'
+        ? '📍 Live from stream title'
+        : '🏠 Home base · location not in title');
     var altLine = (e.person && e.login && e.login !== e.person)
       ? '<p class="palt">on @'+esc(e.login)+' (2nd channel)</p>' : '';
-    var ring = e.irl ? (e.platform==='kick'?'irl kick':'irl') : 'live';
+    var ring = e.warming ? 'warming' : (e.irl ? (e.platform==='kick'?'irl kick':'irl') : 'live');
     var aurl = AVATARS[e.login] || AVATARS[e.person] || '';
     var ava  = aurl
       ? '<img class="pava '+ring+'" src="'+esc(aurl)+'" alt="" onerror="this.remove()">'
       : '';
+    // Confirmed badge: shown when a genuinely-live entry's encoder has also
+    // been checked and is transmitting — proof it's a real broadcast, not a
+    // stuck platform flag. Not shown for the warming state itself (redundant).
+    var confirmedLine = (e.encoderConfirmed && !e.warming)
+      ? '<p class="pconfirmed">✓ Encoder confirmed transmitting</p>' : '';
+    var viewersLine = e.warming ? '' : ('<p class="pvw">'+fmtViewers(e.viewers)+' watching</p>');
+    var watchLabel = e.warming ? 'View channel ▸' : 'Watch live ▸';
     return '<div class="pop">'
       + '<div class="phead">' + ava
       +   '<div class="ptext">'
@@ -627,9 +649,10 @@
       + '</div>'
       + altLine
       + '<p class="psrc">'+srcLine+'</p>'
+      + confirmedLine
       + (e.cat ? '<p class="pcat">'+esc(e.cat)+'</p>' : '')
-      + '<p class="pvw">'+fmtViewers(e.viewers)+' watching</p>'
-      + '<a class="watch" href="'+watchURL(e.login, e.platform)+'" target="_blank" rel="noopener">Watch live ▸</a>'
+      + viewersLine
+      + '<a class="watch" href="'+watchURL(e.login, e.platform)+'" target="_blank" rel="noopener">'+watchLabel+'</a>'
       + '</div>';
   }
 
@@ -637,16 +660,17 @@
   // red (IRL) or blue (just-live) to match the beacon. Click still opens
   // the full popup (which now carries the avatar too).
   function liveTip(e){
-    var ring = e.irl ? (e.platform==='kick'?'irl kick':'irl') : 'live';
+    var ring = e.warming ? 'warming' : (e.irl ? (e.platform==='kick'?'irl kick':'irl') : 'live');
     var aurl = AVATARS[e.login] || AVATARS[e.person] || '';
     var disp = e.name || NAMES[e.login] || e.login;
     var img  = aurl
       ? '<img class="ava '+ring+'" src="'+esc(aurl)+'" alt="" onerror="this.remove()">'
       : '';
+    var label = e.warming ? 'warming up' : (e.irl?'live · irl':'live');
     return '<div class="otwrap">'
       + img
       + '<span class="onm">' + esc(disp) + '</span>'
-      + '<span class="ost '+ring+'">' + (e.irl?'live · irl':'live') + '</span>'
+      + '<span class="ost '+ring+'">' + label + '</span>'
       + '</div>';
   }
 
@@ -683,7 +707,8 @@
         name:  e.name || e.display_name || e.user_name || login,
         cat:   e.game || e.category || e.game_name || '',
         title: e.title || '',
-        viewers: e.viewers != null ? e.viewers : (e.viewer_count != null ? e.viewer_count : 0)
+        viewers: e.viewers != null ? e.viewers : (e.viewer_count != null ? e.viewer_count : 0),
+        encoderConfirmed: !!e.encoderConfirmed
       };
     }).filter(function(e){ return e.login; });
   }
@@ -696,7 +721,7 @@
       var person = ALT2MAIN[e.login] || e.login;
       var cur = by[person];
       if(!cur || (+e.viewers||0) > (+cur.viewers||0)){
-        by[person] = { person:person, login:e.login, name:e.name, cat:e.cat, title:e.title, viewers:e.viewers, platform:e.platform };
+        by[person] = { person:person, login:e.login, name:e.name, cat:e.cat, title:e.title, viewers:e.viewers, platform:e.platform, encoderConfirmed:e.encoderConfirmed };
       }
     });
     return Object.keys(by).map(function(k){ return by[k]; });
@@ -728,8 +753,11 @@
       else if(HOMES[e.person]){ var h=HOMES[e.person]; loc = {lat:h[0],lng:h[1],label:h[2],source:'home'}; }
       else { unmapped.push(e); return; }
       e.label = loc.label; e.source = loc.source;
-      // RED if live in an IRL category (a Mushbox stream); BLUE otherwise ("just live").
-      e.irl = isIRL(e.cat);
+      // AMBER if the encoder is connected but no platform has confirmed live yet
+      // (bonding/testing, or a brief lag before Twitch/Kick catches up).
+      // Otherwise: RED/GREEN if live in an IRL category; BLUE if just live.
+      e.warming = (e.platform === 'encoder');
+      e.irl = e.warming ? false : isIRL(e.cat);
       items.push({ e:e, loc:loc });
     });
 
@@ -751,7 +779,7 @@
 
     items.forEach(function(it){
       var e = it.e, loc = it.loc, off = it.off;
-      var mk = L.marker([loc.lat,loc.lng], { icon:liveIcon(loc.source, off, e.irl, e.platform), zIndexOffset:(e.irl?1000:600), riseOnHover:true });
+      var mk = L.marker([loc.lat,loc.lng], { icon:liveIcon(loc.source, off, e.irl, e.platform, e.warming), zIndexOffset:(e.irl?1000:(e.warming?800:600)), riseOnHover:true });
       // Function content so both the popup and the hover card read AVATARS at
       // open time — the pic appears the instant the roster fetch lands.
       mk.bindPopup((function(ev){ return function(){ return popupHTML(ev); }; })(e),
@@ -769,7 +797,7 @@
     placed.forEach(function(o){
       var e=o.e, mk=o.mk;
       var row = document.createElement('a');
-      row.className = 'row' + (e.irl?' irl':'');
+      row.className = 'row' + (e.irl?' irl':'') + (e.warming?' warming':'');
       row.href = watchURL(e.login, e.platform); row.target='_blank'; row.rel='noopener';
       var pin = e.source==='title' ? '<span class="pin">📍</span> ' : '';
       row.innerHTML =
