@@ -130,10 +130,13 @@
     box-shadow:0 0 11px 2px rgba(245,166,35,.95),0 0 24px 7px rgba(245,166,35,.5)}
   .beacon.warming .ring{border-color:rgba(255,191,77,.9)}
   .beacon .pin{position:absolute;left:50%;top:-13px;transform:translateX(-50%);font-size:12px;line-height:1;z-index:3;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
-  /* CONFIRMED badge: small amber dot on an IRL beacon whose encoder is
-     independently verified transmitting — hardware + platform both agree. */
-  .beacon .badge{position:absolute;right:-1px;bottom:-1px;width:8px;height:8px;border-radius:50%;
-    background:var(--amber);border:1.5px solid var(--navy);box-shadow:0 0 5px rgba(245,166,35,.9);z-index:4}
+  /* CONFIRMED badge: small amber dot centered inside an IRL beacon's core
+     when its encoder is independently verified transmitting — hardware
+     and platform both agree. Sits inside the purple/green core rather
+     than at a corner, so the platform color stays the primary read. */
+  .beacon .badge{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:6px;height:6px;border-radius:50%;background:var(--amber);
+    border:1px solid var(--navy);box-shadow:0 0 4px rgba(245,166,35,.9);z-index:4}
   .off-dot{width:10px;height:10px;border-radius:50%;background:#39507f;
     border:1px solid rgba(120,150,200,.5);box-shadow:0 0 5px rgba(20,40,80,.8);
     transition:background .14s,box-shadow .14s,transform .14s}
