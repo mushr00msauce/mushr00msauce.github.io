@@ -246,7 +246,7 @@
     <span><i class="lg-tw"></i>IRL · Twitch</span>
     <span><i class="lg-kick"></i>IRL · Kick</span>
     <span><i class="lg-live"></i>Live</span>
-    <span><i class="lg-amber"></i>Encoder connecting</span>
+    <span><i class="lg-amber"></i>Mushbox Online</span>
     <span><i class="lg-off"></i>Offline</span>
     <span class="lg-pin">📍 from stream title</span>
   </div>
@@ -601,7 +601,7 @@
     off = off || [0,0];
     var pin = source==='title' ? '<span class="pin">📍</span>' : '';
     var cls = 'beacon' + (warming?' warming':(irl?' irl':'')) + ((!warming && irl && platform==='kick')?' kick':'');   // amber=warming; IRL: purple=Twitch, green=Kick; blue = just-live
-    var badge = confirmed ? '<span class="badge" title="Encoder confirmed transmitting"></span>' : '';
+    var badge = confirmed ? '<span class="badge" title="Mushbox confirmed online"></span>' : '';
     var rings = '<span class="ring"></span><span class="ring r2"></span>';
     return L.divIcon({ className:'', iconSize:[18,18], iconAnchor:[9 - off[0], 9 - off[1]],
       html:'<div class="'+cls+'">'+pin+rings+'<span class="core"></span>'+badge+'</div>' });
@@ -631,7 +631,7 @@
 
   function popupHTML(e){
     var srcLine = e.warming
-      ? '🔌 Encoder connected · not yet live on platform'
+      ? '🔌 Mushbox Online · not yet live on platform'
       : (e.source==='title'
         ? '📍 Live from stream title'
         : '🏠 Home base · location not in title');
@@ -646,7 +646,7 @@
     // been checked and is transmitting — proof it's a real broadcast, not a
     // stuck platform flag. Not shown for the warming state itself (redundant).
     var confirmedLine = (e.encoderConfirmed && !e.warming)
-      ? '<p class="pconfirmed">✓ Encoder confirmed transmitting</p>' : '';
+      ? '<p class="pconfirmed">✓ Mushbox confirmed online</p>' : '';
     var viewersLine = e.warming ? '' : ('<p class="pvw">'+fmtViewers(e.viewers)+' watching</p>');
     var watchLabel = e.warming ? 'View channel ▸' : 'Watch live ▸';
     return '<div class="pop">'
@@ -675,7 +675,7 @@
     var img  = aurl
       ? '<img class="ava '+ring+'" src="'+esc(aurl)+'" alt="" onerror="this.remove()">'
       : '';
-    var label = e.warming ? 'warming up' : (e.irl?'live · irl':'live');
+    var label = e.warming ? 'mushbox online' : (e.irl?'live · irl':'live');
     return '<div class="otwrap">'
       + img
       + '<span class="onm">' + esc(disp) + '</span>'
