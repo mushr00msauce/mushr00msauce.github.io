@@ -64,6 +64,18 @@
   .livedot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#39507f;flex:0 0 auto;align-self:center;}
   .is-live .livedot{background:var(--sky);box-shadow:0 0 0 0 rgba(77,184,255,.7);animation:ping 1.8s ease-out infinite;}
 
+  /* Second counter: Mushboxes actively transmitting (encoder-confirmed),
+     separate from "Live Now" (family members live on any platform). */
+  .mcount{
+    margin:2px 0 2px;font-family:var(--mono);font-size:18px;font-weight:700;line-height:1;
+    letter-spacing:-.01em;display:flex;align-items:baseline;gap:9px;
+  }
+  .mcount .n{color:var(--white)}
+  .mcount.is-live .n{color:var(--amber)}
+  .mcount .lbl{font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+  .mushroomdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#39507f;flex:0 0 auto;align-self:center;}
+  .mcount.is-live .mushroomdot{background:var(--amber);box-shadow:0 0 0 0 rgba(245,166,35,.7);animation:pingAmber 1.8s ease-out infinite;}
+
   .meta{margin-top:8px;font-family:var(--mono);font-size:10.5px;color:var(--dim);letter-spacing:.02em;display:flex;justify-content:space-between;align-items:center;gap:8px;}
   .meta button{font-family:var(--mono);font-size:10.5px;color:#cfe0ff;background:rgba(30,111,255,.16);
     border:1px solid rgba(77,184,255,.3);border-radius:999px;padding:4px 10px;cursor:pointer;}
@@ -168,6 +180,7 @@
 
   @keyframes beam{0%{opacity:.8;width:12px;height:12px}70%{opacity:0}100%{opacity:0;width:52px;height:52px}}
   @keyframes ping{0%{box-shadow:0 0 0 0 rgba(77,184,255,.7)}70%{box-shadow:0 0 0 9px rgba(77,184,255,0)}100%{box-shadow:0 0 0 0 rgba(77,184,255,0)}}
+  @keyframes pingAmber{0%{box-shadow:0 0 0 0 rgba(245,166,35,.7)}70%{box-shadow:0 0 0 9px rgba(245,166,35,0)}100%{box-shadow:0 0 0 0 rgba(245,166,35,0)}}
 
   .leaflet-popup-content-wrapper{background:var(--navy);color:#fff;border:1px solid var(--edge);border-radius:14px;box-shadow:0 18px 44px -18px rgba(0,0,0,.85)}
   .leaflet-popup-tip{background:var(--navy);border:1px solid var(--edge)}
@@ -203,6 +216,7 @@
     .beacon.irl .core{box-shadow:0 0 8px 2px rgba(145,70,255,.95)}
     .beacon.irl.kick .core{box-shadow:0 0 8px 2px rgba(83,252,24,.95)}
     .livedot{animation:none}
+    .mushroomdot{animation:none}
   }
 
   /* Back to the family wall — top-right, clear of the console (top-left),
@@ -243,6 +257,11 @@
     <span class="livedot"></span>
     <span class="n" id="countN">—</span>
     <span class="lbl" id="countLbl">checking…</span>
+  </div>
+  <div class="mcount" id="mcount">
+    <span class="mushroomdot"></span>
+    <span class="n" id="mcountN">—</span>
+    <span class="lbl">mushboxes live</span>
   </div>
   <div class="meta"><span id="updated">—</span><button id="refresh" type="button">Refresh</button></div>
   <div class="legend">
@@ -708,6 +727,16 @@
     document.getElementById('countLbl').textContent = 'live now';
   }
 
+  // Counts anyone whose physical Mushbox encoder is confirmed
+  // transmitting right now — either the amber "warming" state (encoder
+  // on, platform hasn't caught up yet) or a live entry with
+  // encoderConfirmed true. Independent of location resolution, so this
+  // stays accurate even for entries that end up unmapped.
+  function setMushboxCount(n){
+    document.getElementById('mcount').classList.toggle('is-live', n>0);
+    document.getElementById('mcountN').textContent = n;
+  }
+
   function parseLive(data){
     var arr = (data && (data.live || data.channels || data.streams)) || (Array.isArray(data)?data:[]);
     if(!Array.isArray(arr)) arr = [];
@@ -748,6 +777,16 @@
     var people = collapseLive(liveArr);
     setCount(people.length);
 
+    // A person's Mushbox counts as "live" here if the encoder is
+    // confirmed transmitting — either the warming state (platform:
+    // 'encoder', hasn't shown live on Twitch/Kick yet) or a live entry
+    // with encoderConfirmed true. Computed here, before location
+    // resolution, so unmapped entries are still counted correctly.
+    var mushboxLiveCount = people.filter(function(e){
+      return e.platform === 'encoder' || !!e.encoderConfirmed;
+    }).length;
+    setMushboxCount(mushboxLiveCount);
+
     if(people.length === 0){
       renderOffline(document.getElementById('showOff').checked);
       list.innerHTML = '<div class="empty">No Mushboxes are live right now.<br>The map lights up the moment someone goes live.</div>';
@@ -775,6 +814,23 @@
       e.confirmed = e.irl && !!e.encoderConfirmed;
       items.push({ e:e, loc:loc });
     });
+
+    // Sidebar/list priority: Live Mushboxes (encoder-confirmed) first,
+    // then IRL (live in an IRL category but not encoder-confirmed),
+    // then everyone else live on any other category. Ties broken by
+    // viewer count, highest first — same ordering the API already uses.
+    function priorityTier(e){
+      if(e.warming || e.confirmed) return 0; // Live Mushboxes
+      if(e.irl) return 1;                    // IRL, not confirmed
+      return 2;                              // just live
+    }
+    function byPriority(a, b){
+      var ta = priorityTier(a.e), tb = priorityTier(b.e);
+      if(ta !== tb) return ta - tb;
+      return (+b.e.viewers||0) - (+a.e.viewers||0);
+    }
+    items.sort(byPriority);
+    unmapped.sort(function(a,b){ return byPriority({e:a}, {e:b}); });
 
     // fixed pixel slot for home-based dots (stable); ring title collisions live
     var tgroups = {};
