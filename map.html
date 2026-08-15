@@ -95,6 +95,8 @@
   .row .beacon-mini::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--sky);box-shadow:0 0 8px var(--sky)}
   .row.irl .beacon-mini::after{background:var(--twitch);box-shadow:0 0 8px var(--twitch)}
   .row.irl.kick .beacon-mini::after{background:var(--kick);box-shadow:0 0 8px var(--kick)}
+  .row.irl.confirmed .beacon-mini::after{box-shadow:0 0 8px var(--twitch),0 0 0 2px var(--amber)}
+  .row.irl.kick.confirmed .beacon-mini::after{box-shadow:0 0 8px var(--kick),0 0 0 2px var(--amber)}
   .row.warming .beacon-mini::after{background:var(--amber);box-shadow:0 0 8px var(--amber)}
   .row .info{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px}
   .row .nm{font-weight:700;font-size:13.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -128,6 +130,10 @@
     box-shadow:0 0 11px 2px rgba(245,166,35,.95),0 0 24px 7px rgba(245,166,35,.5)}
   .beacon.warming .ring{border-color:rgba(255,191,77,.9)}
   .beacon .pin{position:absolute;left:50%;top:-13px;transform:translateX(-50%);font-size:12px;line-height:1;z-index:3;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
+  /* CONFIRMED badge: small amber dot on an IRL beacon whose encoder is
+     independently verified transmitting — hardware + platform both agree. */
+  .beacon .badge{position:absolute;right:-1px;bottom:-1px;width:8px;height:8px;border-radius:50%;
+    background:var(--amber);border:1.5px solid var(--navy);box-shadow:0 0 5px rgba(245,166,35,.9);z-index:4}
   .off-dot{width:10px;height:10px;border-radius:50%;background:#39507f;
     border:1px solid rgba(120,150,200,.5);box-shadow:0 0 5px rgba(20,40,80,.8);
     transition:background .14s,box-shadow .14s,transform .14s}
@@ -150,6 +156,7 @@
   .offtip .ava.live{border-color:var(--sky)}
   .offtip .ava.irl{border-color:var(--twitch-soft)}
   .offtip .ava.irl.kick{border-color:var(--kick-soft)}
+  .offtip .ava.irl.confirmed{box-shadow:0 0 0 2px var(--amber)}
   .offtip .ava.warming{border-color:var(--amber-soft)}
   .offtip .ost.live{color:var(--sky)}
   .offtip .ost.irl{color:var(--twitch-soft)}
@@ -169,6 +176,7 @@
   .pop .pava.live{border-color:var(--sky)}
   .pop .pava.irl{border-color:var(--twitch-soft)}
   .pop .pava.irl.kick{border-color:var(--kick-soft)}
+  .pop .pava.irl.confirmed{box-shadow:0 0 0 2px var(--amber)}
   .pop .pava.warming{border-color:var(--amber-soft)}
   .pop .pconfirmed{font-size:11px;color:var(--amber-soft);margin:0 0 6px;font-family:var(--mono)}
   .pop .pnm{font-weight:700;font-size:15px;margin:0 0 2px}
@@ -589,13 +597,14 @@
     return (isKick ? 'https://kick.com/' : 'https://twitch.tv/') + encodeURIComponent(login);
   }
 
-  function liveIcon(source, off, irl, platform, warming){
+  function liveIcon(source, off, irl, platform, warming, confirmed){
     off = off || [0,0];
     var pin = source==='title' ? '<span class="pin">📍</span>' : '';
     var cls = 'beacon' + (warming?' warming':(irl?' irl':'')) + ((!warming && irl && platform==='kick')?' kick':'');   // amber=warming; IRL: purple=Twitch, green=Kick; blue = just-live
+    var badge = confirmed ? '<span class="badge" title="Encoder confirmed transmitting"></span>' : '';
     var rings = '<span class="ring"></span><span class="ring r2"></span>';
     return L.divIcon({ className:'', iconSize:[18,18], iconAnchor:[9 - off[0], 9 - off[1]],
-      html:'<div class="'+cls+'">'+pin+rings+'<span class="core"></span></div>' });
+      html:'<div class="'+cls+'">'+pin+rings+'<span class="core"></span>'+badge+'</div>' });
   }
   function offIcon(off){ off = off || [0,0]; return L.divIcon({ className:'', iconSize:[22,22], iconAnchor:[11 - off[0], 11 - off[1]], html:'<div class="off-hit"><div class="off-dot"></div></div>' }); }
 
@@ -628,7 +637,7 @@
         : '🏠 Home base · location not in title');
     var altLine = (e.person && e.login && e.login !== e.person)
       ? '<p class="palt">on @'+esc(e.login)+' (2nd channel)</p>' : '';
-    var ring = e.warming ? 'warming' : (e.irl ? (e.platform==='kick'?'irl kick':'irl') : 'live');
+    var ring = e.warming ? 'warming' : (e.irl ? (e.platform==='kick'?'irl kick':'irl') + (e.confirmed?' confirmed':'') : 'live');
     var aurl = AVATARS[e.login] || AVATARS[e.person] || '';
     var ava  = aurl
       ? '<img class="pava '+ring+'" src="'+esc(aurl)+'" alt="" onerror="this.remove()">'
@@ -660,7 +669,7 @@
   // red (IRL) or blue (just-live) to match the beacon. Click still opens
   // the full popup (which now carries the avatar too).
   function liveTip(e){
-    var ring = e.warming ? 'warming' : (e.irl ? (e.platform==='kick'?'irl kick':'irl') : 'live');
+    var ring = e.warming ? 'warming' : (e.irl ? (e.platform==='kick'?'irl kick':'irl') + (e.confirmed?' confirmed':'') : 'live');
     var aurl = AVATARS[e.login] || AVATARS[e.person] || '';
     var disp = e.name || NAMES[e.login] || e.login;
     var img  = aurl
@@ -758,6 +767,9 @@
       // Otherwise: RED/GREEN if live in an IRL category; BLUE if just live.
       e.warming = (e.platform === 'encoder');
       e.irl = e.warming ? false : isIRL(e.cat);
+      // CONFIRMED: an IRL-live entry whose encoder is also independently
+      // verified transmitting — hardware and platform both agree.
+      e.confirmed = e.irl && !!e.encoderConfirmed;
       items.push({ e:e, loc:loc });
     });
 
@@ -779,7 +791,7 @@
 
     items.forEach(function(it){
       var e = it.e, loc = it.loc, off = it.off;
-      var mk = L.marker([loc.lat,loc.lng], { icon:liveIcon(loc.source, off, e.irl, e.platform, e.warming), zIndexOffset:(e.irl?1000:(e.warming?800:600)), riseOnHover:true });
+      var mk = L.marker([loc.lat,loc.lng], { icon:liveIcon(loc.source, off, e.irl, e.platform, e.warming, e.confirmed), zIndexOffset:(e.irl?1000:(e.warming?800:600)), riseOnHover:true });
       // Function content so both the popup and the hover card read AVATARS at
       // open time — the pic appears the instant the roster fetch lands.
       mk.bindPopup((function(ev){ return function(){ return popupHTML(ev); }; })(e),
@@ -797,7 +809,7 @@
     placed.forEach(function(o){
       var e=o.e, mk=o.mk;
       var row = document.createElement('a');
-      row.className = 'row' + (e.irl?' irl':'') + (e.warming?' warming':'');
+      row.className = 'row' + (e.irl?' irl':'') + (e.warming?' warming':'') + (e.confirmed?' confirmed':'');
       row.href = watchURL(e.login, e.platform); row.target='_blank'; row.rel='noopener';
       var pin = e.source==='title' ? '<span class="pin">📍</span> ' : '';
       row.innerHTML =
