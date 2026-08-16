@@ -64,6 +64,17 @@
   .stat.mushbox.is-live .n{color:var(--amber)}
   .stat .lbl{font-family:var(--font);font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
   .statdivider{width:1px;height:24px;background:rgba(77,184,255,.16);flex:0 0 auto;}
+
+  /* Aggregate viewer count: total across everyone currently live. */
+  .totalviewers{margin:1px 0 0;font-family:var(--font);font-size:11px;color:var(--dim);letter-spacing:.02em}
+  .totalviewers b{color:var(--white);font-family:var(--mono);font-weight:700;font-size:12px}
+
+  /* Activity feed: last few "just went live" events, newest first. */
+  .activityfeed{margin:6px 0 0;font-family:var(--font);font-size:11px;line-height:1.7;max-height:64px;overflow-y:auto}
+  .activityfeed .actrow{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--dim)}
+  .activityfeed .actrow b{color:var(--sky);font-weight:600}
+  .activityfeed .actrow .actago{color:var(--dim);opacity:.75}
+  .activityfeed:empty{display:none}
   .livedot,.mushroomdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#39507f;flex:0 0 auto;align-self:center;}
   .stat.is-live .livedot{background:var(--sky);box-shadow:0 0 0 0 rgba(77,184,255,.7);animation:ping 1.8s ease-out infinite;}
   .stat.mushbox.is-live .mushroomdot{background:var(--amber);box-shadow:0 0 0 0 rgba(245,166,35,.7);animation:pingAmber 1.8s ease-out infinite;}
@@ -236,6 +247,11 @@
   html.embed .leaflet-control-zoom{display:none!important}
   html.embed .leaflet-control-attribution{font-size:8px;opacity:.5;padding:0 3px}
 </style>
+  <!-- Cloudflare Web Analytics — same token already live on index.html,
+       so this page reports into the same dashboard entry as the rest
+       of themushbox.com instead of fragmenting into a separate one. -->
+  <script type='module' defer src='https://static.cloudflareinsights.com/beacon.min.js'
+    data-cf-beacon='{"token": "95572a93d4ee4bf1bc6ef531dccab9af"}'></script>
 </head>
 <body>
 
@@ -259,6 +275,8 @@
     </div>
   </div>
   <div class="meta"><span id="updated">—</span><button id="refresh" type="button">Refresh</button></div>
+  <div class="totalviewers" id="totalViewers"></div>
+  <div class="activityfeed" id="activityFeed"></div>
   <div class="legend">
     <span><i class="lg-tw"></i>IRL · Twitch</span>
     <span><i class="lg-kick"></i>IRL · Kick</span>
@@ -489,6 +507,7 @@
 
   var WORKER = "https://mushbox-live.wkennedy74.workers.dev/";
   var AVATARS_URL = WORKER.replace(/\/+$/, "") + "/avatars";
+  var ACTIVITY_URL = WORKER.replace(/\/+$/, "") + "/activity";
   var REFRESH_MS = 60000;
   // Profile pics + display names for the whole roster, fetched once from the
   // Worker's /avatars route (cached daily server-side). Populated on load;
@@ -605,6 +624,7 @@
   }
 
   var liveMarkers = {}, offMarkers = {};
+  var didInitialFocus = false; // deep-link (#focus=login) only auto-pans once, on first load
 
   // Kick family logins — watch links point at kick.com, never twitch.tv,
   // even for offline dots where platform isn't in the live feed.
@@ -732,6 +752,42 @@
     document.getElementById('mcountN').textContent = n;
   }
 
+  function setTotalViewers(n){
+    var el = document.getElementById('totalViewers');
+    el.innerHTML = n > 0
+      ? '<b>' + fmtViewers(n) + '</b> total watching'
+      : '';
+  }
+
+  // "12m ago" / "3h ago" style relative time, for the activity feed.
+  function relTime(iso){
+    var then = new Date(iso).getTime();
+    if(isNaN(then)) return '';
+    var diffSec = Math.max(0, Math.floor((Date.now() - then) / 1000));
+    if(diffSec < 60) return 'just now';
+    var min = Math.floor(diffSec / 60);
+    if(min < 60) return min + 'm ago';
+    var hr = Math.floor(min / 60);
+    if(hr < 24) return hr + 'h ago';
+    return Math.floor(hr / 24) + 'd ago';
+  }
+
+  function renderActivity(events){
+    var el = document.getElementById('activityFeed');
+    if(!events || !events.length){ el.innerHTML = ''; return; }
+    el.innerHTML = events.slice(0, 5).map(function(ev){
+      return '<div class="actrow">🔴 <b>' + esc(ev.name || ev.login) + '</b> went live · '
+        + '<span class="actago">' + relTime(ev.at) + '</span></div>';
+    }).join('');
+  }
+
+  function loadActivity(){
+    fetch(ACTIVITY_URL, { cache:'no-store' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){ if(d) renderActivity(d.activity || []); })
+      .catch(function(){ /* activity feed is a nice-to-have; fail quietly */ });
+  }
+
   function parseLive(data){
     var arr = (data && (data.live || data.channels || data.streams)) || (Array.isArray(data)?data:[]);
     if(!Array.isArray(arr)) arr = [];
@@ -781,6 +837,9 @@
       return e.platform === 'encoder' || !!e.encoderConfirmed;
     }).length;
     setMushboxCount(mushboxLiveCount);
+
+    var totalViewers = people.reduce(function(sum, e){ return sum + (+e.viewers || 0); }, 0);
+    setTotalViewers(totalViewers);
 
     if(people.length === 0){
       renderOffline(document.getElementById('showOff').checked);
@@ -852,11 +911,38 @@
         {closeButton:true, offset:[off[0], off[1]-6]});
       mk.bindTooltip((function(ev){ return function(){ return liveTip(ev); }; })(e),
         {direction:'top', className:'offtip', opacity:1, offset:[off[0], off[1]-9]});
+      // Deep-linkable: clicking a pin updates the URL hash so this exact
+      // view can be shared (e.g. #focus=barktok). replaceState avoids
+      // adding a browser-history entry per click.
+      mk.on('click', (function(login){
+        return function(){
+          try { history.replaceState(null, '', '#focus=' + encodeURIComponent(login)); }
+          catch(err){ /* older browsers: not critical, just skip */ }
+        };
+      })(e.login));
       mk.addTo(map);
       liveMarkers[e.person] = mk;
       bounds.push([loc.lat,loc.lng]);
       placed.push({e:e, mk:mk});
     });
+
+    // Deep link: #focus=login pans to and opens that person's pin, once,
+    // on first load only — doesn't fight a user who's since panned away
+    // or clicked a different pin (which updates the hash itself).
+    if(!didInitialFocus){
+      didInitialFocus = true;
+      var hashMatch = /^#focus=([^&]+)/.exec(location.hash);
+      if(hashMatch){
+        var wantedLogin = decodeURIComponent(hashMatch[1]);
+        var found = placed.filter(function(o){
+          return o.e.login === wantedLogin || o.e.person === wantedLogin;
+        })[0];
+        if(found){
+          map.setView(found.mk.getLatLng(), Math.max(map.getZoom(), 10));
+          found.mk.openPopup();
+        }
+      }
+    }
 
     renderOffline(document.getElementById('showOff').checked);
 
@@ -923,7 +1009,9 @@
   renderOffline(true);
   load();
   loadAvatars();
+  loadActivity();
   setInterval(load, REFRESH_MS);
+  setInterval(loadActivity, REFRESH_MS);
 })();
 </script>
 </body>
