@@ -634,6 +634,36 @@
     return (isKick ? 'https://kick.com/' : 'https://twitch.tv/') + encodeURIComponent(login);
   }
 
+  // Click-out tracking: fires a fire-and-forget beacon to the Worker
+  // whenever someone clicks through to watch a stream, so it never
+  // blocks or delays the actual navigation. `source` identifies which
+  // UI element was clicked: 'popup' | 'sidebar' | 'offline-pin'.
+  // Requires a POST /click route on the mushbox-live Worker that
+  // accepts this JSON body and logs/stores it — add that server-side.
+  function trackClick(login, platform, source){
+    try{
+      var payload = JSON.stringify({
+        login: login || '', platform: platform || '', source: source || '', ts: Date.now()
+      });
+      var url = WORKER.replace(/\/+$/, '') + '/click';
+      if(navigator.sendBeacon){
+        navigator.sendBeacon(url, new Blob([payload], {type:'application/json'}));
+      } else {
+        fetch(url, { method:'POST', body:payload, headers:{'Content-Type':'application/json'}, keepalive:true })
+          .catch(function(){});
+      }
+    } catch(err){ /* tracking must never break navigation */ }
+  }
+
+  // Event delegation for the popup's .watch link: its HTML is injected
+  // via innerHTML by Leaflet, so a direct addEventListener wouldn't
+  // survive re-renders. One document-level listener handles every
+  // popup instance instead.
+  document.addEventListener('click', function(ev){
+    var t = ev.target.closest && ev.target.closest('a.watch');
+    if(t) trackClick(t.getAttribute('data-login'), t.getAttribute('data-platform'), 'popup');
+  });
+
   function liveIcon(source, off, irl, platform, warming, confirmed){
     off = off || [0,0];
     var pin = source==='title' ? '<span class="pin">📍</span>' : '';
@@ -698,7 +728,7 @@
       + confirmedLine
       + (e.cat ? '<p class="pcat">'+esc(e.cat)+'</p>' : '')
       + viewersLine
-      + '<a class="watch" href="'+watchURL(e.login, e.platform)+'" target="_blank" rel="noopener">'+watchLabel+'</a>'
+      + '<a class="watch" data-login="'+esc(e.login)+'" data-platform="'+esc(e.platform||'')+'" href="'+watchURL(e.login, e.platform)+'" target="_blank" rel="noopener">'+watchLabel+'</a>'
       + '</div>';
   }
 
@@ -730,7 +760,13 @@
       var mk = L.marker([loc[0],loc[1]], { icon:offIcon(HOME_OFFSET[login]), keyboard:false, zIndexOffset:-500, riseOnHover:true });
       mk.bindTooltip((function(lg){ return function(){ return offTip(lg); }; })(login),
         {direction:'top', className:'offtip', opacity:1, offset:[0,-7]});
-      mk.on('click', (function(lg){ return function(){ window.open(watchURL(lg), '_blank', 'noopener'); }; })(login));
+      mk.on('click', (function(lg){
+        return function(){
+          var plat = KICK_LOGINS[(lg||'').toString().toLowerCase()] ? 'kick' : 'twitch';
+          trackClick(lg, plat, 'offline-pin');
+          window.open(watchURL(lg), '_blank', 'noopener');
+        };
+      })(login));
       mk.addTo(map);
       offMarkers[login] = mk;
     });
@@ -958,6 +994,7 @@
         + '<span class="sub">'+pin+esc(e.label) + (e.cat ? ' · '+esc(e.cat) : '') +'</span></span>'
         + '<span class="vw">'+fmtViewers(e.viewers)+'<small>WATCHING</small></span>';
       row.addEventListener('mouseenter', function(){ mk.openPopup(); });
+      row.addEventListener('click', function(){ trackClick(e.login, e.platform, 'sidebar'); });
       list.appendChild(row);
       mk.on('popupopen', function(){ row.classList.add('hot'); this.closeTooltip(); });
       mk.on('popupclose', function(){ row.classList.remove('hot'); });
