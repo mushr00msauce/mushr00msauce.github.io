@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mushbox — Click Stats</title>
+<meta name="robots" content="noindex, nofollow">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --black:#060810; --navy:#0A1535; --royal:#1E6FFF; --sky:#4DB8FF; --white:#fff;
+    --edge:rgba(77,184,255,.28);
+    --panel:rgba(10,21,53,.82);
+    --dim:#7f92b8;
+    --text-primary:#fff; --text-secondary:#cfe0ff; --text-muted:#7f92b8;
+    /* Sequential ramp (magnitude) — dataviz skill default blue ramp, dark steps.
+       Used for the top-streamers bar chart (single series = no legend needed). */
+    --seq-1:#256abf;
+    /* Categorical triad (identity: popup / sidebar / offline-pin) — the
+       dataviz skill's documented default slots 1–3, the only three of its
+       eight that clear every CVD/contrast check *together* (all-pairs) on
+       this page's navy surface. Validated via validate_palette.js against
+       surface #0A1535 — do not swap these for other brand hex values
+       without re-running the validator; several Mushbox brand colors
+       (sky blue, amber, twitch purple) were tried and failed either the
+       dark lightness band or CVD separation on this surface. */
+    --cat-popup:#3987e5;
+    --cat-sidebar:#d95926;
+    --cat-offline:#199e70;
+    --font:"Space Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    --mono:"Space Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--black);color:var(--white);font-family:var(--font);}
+  body{
+    background:
+      radial-gradient(1200px 700px at 15% -10%, rgba(30,111,255,.14), transparent 60%),
+      radial-gradient(900px 600px at 100% 0%, rgba(77,184,255,.08), transparent 55%),
+      var(--black);
+    min-height:100vh;
+  }
+
+  /* ---------- password gate ---------- */
+  .gate{
+    position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;
+    background:var(--black);padding:20px;
+  }
+  .gate.hidden{display:none}
+  .gatecard{
+    width:min(340px,100%);background:var(--panel);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    border:1px solid var(--edge);border-radius:18px;padding:26px 24px;box-shadow:0 30px 70px -30px rgba(0,0,0,.9);
+    text-align:center;
+  }
+  .gatecard h1{margin:0 0 6px;font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:var(--white)}
+  .gatecard p{margin:0 0 18px;font-size:12px;color:var(--dim);line-height:1.5}
+  .gatecard input{
+    width:100%;font-family:var(--mono);font-size:14px;color:var(--white);background:rgba(255,255,255,.04);
+    border:1px solid var(--edge);border-radius:10px;padding:11px 12px;outline:none;text-align:center;
+    letter-spacing:.06em;
+  }
+  .gatecard input:focus{border-color:var(--sky)}
+  .gatecard button{
+    margin-top:12px;width:100%;font-family:var(--font);font-weight:700;font-size:13px;color:#04122b;
+    background:var(--sky);border:none;border-radius:10px;padding:11px 12px;cursor:pointer;
+  }
+  .gatecard button:hover{background:var(--white)}
+  .gatecard button:disabled{opacity:.55;cursor:default}
+  .gateerr{margin-top:12px;font-family:var(--mono);font-size:11.5px;color:#ff5a6a;min-height:14px}
+
+  /* ---------- dashboard shell ---------- */
+  .wrap{max-width:920px;margin:0 auto;padding:28px 18px 60px;display:none}
+  .wrap.show{display:block}
+
+  .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+  .topbar h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em}
+  .topbar .sub{margin-top:4px;font-family:var(--mono);font-size:11.5px;color:var(--dim);letter-spacing:.02em}
+  .topbar .actions{display:flex;align-items:center;gap:10px}
+  .updated{font-family:var(--mono);font-size:10.5px;color:var(--dim)}
+  .refreshbtn{
+    font-family:var(--mono);font-size:11px;color:#cfe0ff;background:rgba(30,111,255,.16);
+    border:1px solid rgba(77,184,255,.3);border-radius:999px;padding:6px 13px;cursor:pointer;
+  }
+  .refreshbtn:hover{background:var(--royal);color:#fff;border-color:var(--royal)}
+  .refreshbtn:disabled{opacity:.5;cursor:default}
+
+  /* ---------- stat tiles ---------- */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:22px}
+  .tile{
+    background:var(--panel);border:1px solid var(--edge);border-radius:16px;padding:16px 18px;
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  }
+  .tile .lbl{font-family:var(--font);font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--text-muted)}
+  .tile .val{margin-top:7px;font-family:var(--font);font-weight:700;font-size:28px;letter-spacing:-.01em;color:var(--text-primary)}
+  .tile .val small{font-family:var(--mono);font-weight:400;font-size:13px;color:var(--text-muted);margin-left:2px}
+  .tile .cap{margin-top:3px;font-family:var(--mono);font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:var(--panel);border:1px solid var(--edge);border-radius:18px;padding:20px 20px 8px;
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);margin-bottom:18px;
+  }
+  .card h2{margin:0 0 3px;font-size:13px;font-weight:700;letter-spacing:.04em}
+  .card .desc{margin:0 0 16px;font-family:var(--mono);font-size:11px;color:var(--text-muted)}
+  .empty{padding:20px 4px 24px;text-align:center;color:var(--dim);font-size:12.5px}
+
+  /* ---------- horizontal bar chart (shared: top streamers + sources) ---------- */
+  .barlist{display:flex;flex-direction:column;gap:2px;padding-bottom:14px}
+  .barrow{
+    display:grid;grid-template-columns:112px 1fr 52px;align-items:center;gap:10px;
+    padding:5px 4px;border-radius:8px;cursor:default;position:relative;
+  }
+  .barrow:hover,.barrow:focus-visible{background:rgba(77,184,255,.08);outline:none}
+  .barrow .rname{
+    font-family:var(--mono);font-size:11.5px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .bartrack{position:relative;height:16px;background:rgba(127,146,184,.14);border-radius:4px;overflow:hidden}
+  .barfill{
+    position:absolute;left:0;top:0;bottom:0;border-radius:0 4px 4px 0;min-width:2px;
+    transition:width .5s cubic-bezier(.2,.7,.2,1);
+  }
+  .barfill.seq{background:linear-gradient(90deg,var(--seq-1),var(--sky))}
+  .barfill.cat-popup{background:var(--cat-popup)}
+  .barfill.cat-sidebar{background:var(--cat-sidebar)}
+  .barfill.cat-offline{background:var(--cat-offline)}
+  .rval{
+    font-family:var(--mono);font-size:11.5px;color:var(--text-primary);text-align:right;
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* legend for the source-breakdown chart (2+ series → legend required) */
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:0 0 14px;font-family:var(--mono);font-size:11px;color:var(--text-secondary)}
+  .legend .lg-item{display:flex;align-items:center;gap:6px}
+  .legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+  /* Unscoped (not ".legend i") so the same swatch classes also work on the
+     small <i> inside a .srcbadge in the recent-activity table below. */
+  .lg-popup{background:var(--cat-popup)}
+  .lg-sidebar{background:var(--cat-sidebar)}
+  .lg-offline{background:var(--cat-offline)}
+
+  /* shared hover/focus tooltip */
+  .tooltip{
+    position:fixed;z-index:1200;pointer-events:none;background:var(--navy);border:1px solid var(--edge);
+    border-radius:10px;padding:7px 10px;font-family:var(--mono);font-size:11px;color:var(--text-secondary);
+    box-shadow:0 14px 34px -16px rgba(0,0,0,.9);opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;
+    max-width:220px;
+  }
+  .tooltip.show{opacity:1;transform:translateY(0)}
+  .tooltip b{color:var(--white);font-size:12.5px}
+
+  /* ---------- recent activity table ---------- */
+  .table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;margin-bottom:10px}
+  .table th{
+    text-align:left;font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--text-muted);padding:0 8px 8px;border-bottom:1px solid rgba(77,184,255,.14);
+  }
+  .table td{padding:8px 8px;border-bottom:1px solid rgba(77,184,255,.08);color:var(--text-secondary);vertical-align:middle}
+  .table tr:last-child td{border-bottom:none}
+  .table .nm{color:var(--white);font-weight:700;font-family:var(--font);font-size:12.5px}
+  .srcbadge{
+    display:inline-flex;align-items:center;gap:5px;font-size:10.5px;letter-spacing:.03em;
+    padding:2px 8px;border-radius:999px;border:1px solid var(--edge);color:var(--text-secondary);
+  }
+  .srcbadge i{width:7px;height:7px;border-radius:2px;display:inline-block}
+  .platbadge{font-size:10.5px;color:var(--text-muted)}
+  .ago{color:var(--text-muted);text-align:right;white-space:nowrap}
+
+  @media (max-width:560px){
+    .barrow{grid-template-columns:84px 1fr 44px}
+    .table th:nth-child(2),.table td:nth-child(2){display:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <div class="gatecard">
+    <h1>Mushbox Stats</h1>
+    <p>Member-only. Enter the stats password to view click-through data from the live map.</p>
+    <input id="gatepw" type="password" autocomplete="off" placeholder="Password" autofocus>
+    <button id="gatebtn">Unlock</button>
+    <div class="gateerr" id="gateerr"></div>
+  </div>
+</div>
+
+<div class="wrap" id="wrap">
+  <div class="topbar">
+    <div>
+      <h1>Click Stats</h1>
+      <div class="sub">Outbound clicks from the Mushbox live map</div>
+    </div>
+    <div class="actions">
+      <span class="updated" id="updated"></span>
+      <button class="refreshbtn" id="refreshBtn">Refresh</button>
+    </div>
+  </div>
+
+  <div class="tiles" id="tiles"></div>
+
+  <div class="card">
+    <h2>Top streamers by clicks</h2>
+    <p class="desc">All-time click-throughs, most-clicked first</p>
+    <div id="topStreamers"></div>
+  </div>
+
+  <div class="card">
+    <h2>Clicks by source</h2>
+    <p class="desc">Which part of the map people click through from</p>
+    <div class="legend">
+      <span class="lg-item"><i class="lg-popup"></i> Popup watch link</span>
+      <span class="lg-item"><i class="lg-sidebar"></i> Sidebar row</span>
+      <span class="lg-item"><i class="lg-offline"></i> Offline pin</span>
+    </div>
+    <div id="bySource"></div>
+  </div>
+
+  <div class="card">
+    <h2>Recent activity</h2>
+    <p class="desc">Last click-throughs, newest first — full record, nothing gated behind the charts above</p>
+    <div id="recentWrap"></div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+  var WORKER = "https://mushbox-live.wkennedy74.workers.dev/";
+  var PW_KEY = "mushbox_stats_pw"; // sessionStorage — cleared when the tab closes
+
+  var SOURCE_META = {
+    "popup":       { label: "Popup watch link", cls: "cat-popup",   badge: "lg-popup"   },
+    "sidebar":     { label: "Sidebar row",       cls: "cat-sidebar", badge: "lg-sidebar" },
+    "offline-pin": { label: "Offline pin",       cls: "cat-offline", badge: "lg-offline" }
+  };
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function fmtNum(n){ n=+n||0; return n>=1000 ? (n/1000).toFixed(n>=10000?0:1)+'k' : String(n); }
+
+  function timeAgo(iso){
+    var then = new Date(iso).getTime();
+    if(isNaN(then)) return '';
+    var secs = Math.max(0, Math.round((Date.now() - then)/1000));
+    if(secs < 60) return secs + 's ago';
+    var mins = Math.round(secs/60);
+    if(mins < 60) return mins + 'm ago';
+    var hrs = Math.round(mins/60);
+    if(hrs < 24) return hrs + 'h ago';
+    var days = Math.round(hrs/24);
+    return days + 'd ago';
+  }
+
+  // ---- shared hover/focus tooltip (bars are the hit target; same info on keyboard focus) ----
+  var tipEl = document.getElementById('tooltip');
+  function showTip(el, html){
+    tipEl.innerHTML = html;
+    var r = el.getBoundingClientRect();
+    var x = Math.min(r.left, window.innerWidth - 230);
+    var y = Math.max(8, r.top - 8 - tipEl.offsetHeight);
+    if (y < 8) y = r.bottom + 8; // flip below if there's no room above
+    tipEl.style.left = x + 'px';
+    tipEl.style.top = y + 'px';
+    tipEl.classList.add('show');
+  }
+  function hideTip(){ tipEl.classList.remove('show'); }
+
+  function wireTooltip(el, html){
+    el.addEventListener('pointerenter', function(){ showTip(el, html); });
+    el.addEventListener('pointermove',  function(){ showTip(el, html); });
+    el.addEventListener('pointerleave', hideTip);
+    el.addEventListener('focus', function(){ showTip(el, html); });
+    el.addEventListener('blur', hideTip);
+  }
+
+  // ---- bar row builder: label | track+fill | value, with tooltip + focus ----
+  function barRow(name, value, max, fillClass, tipHtml){
+    var row = document.createElement('div');
+    row.className = 'barrow';
+    row.tabIndex = 0;
+    var pct = max > 0 ? Math.max((value/max)*100, value>0?2:0) : 0;
+    row.innerHTML =
+      '<span class="rname">'+esc(name)+'</span>' +
+      '<span class="bartrack"><span class="barfill '+fillClass+'" style="width:'+pct+'%"></span></span>' +
+      '<span class="rval">'+fmtNum(value)+'</span>';
+    wireTooltip(row, tipHtml);
+    return row;
+  }
+
+  function render(data){
+    var counts = data.counts || {};
+    var recent = data.recent || [];
+
+    // ---- stat tiles ----
+    var logins = Object.keys(counts);
+    var totalClicks = logins.reduce(function(s,l){ return s + (+counts[l]||0); }, 0);
+    var topLogin = null, topCount = -1;
+    logins.forEach(function(l){ if((+counts[l]||0) > topCount){ topCount = +counts[l]||0; topLogin = l; } });
+
+    var tiles = document.getElementById('tiles');
+    tiles.innerHTML = '';
+    var tileDefs = [
+      { lbl:'Total clicks', val: fmtNum(totalClicks), cap: 'all recorded click-throughs' },
+      { lbl:'Streamers clicked', val: fmtNum(logins.length), cap: 'unique logins with at least one click' },
+      { lbl:'Most clicked', val: topLogin ? fmtNum(topCount) : '—', cap: topLogin ? '@'+topLogin : 'no clicks yet' }
+    ];
+    tileDefs.forEach(function(t){
+      var el = document.createElement('div');
+      el.className = 'tile';
+      el.innerHTML = '<div class="lbl">'+esc(t.lbl)+'</div><div class="val">'+t.val+'</div><div class="cap">'+esc(t.cap)+'</div>';
+      tiles.appendChild(el);
+    });
+
+    // ---- top streamers bar chart (sequential — single hue, no legend needed) ----
+    var top = logins
+      .map(function(l){ return { login:l, n:+counts[l]||0 }; })
+      .filter(function(e){ return e.n > 0; })
+      .sort(function(a,b){ return b.n - a.n; })
+      .slice(0, 10);
+
+    var topEl = document.getElementById('topStreamers');
+    topEl.innerHTML = '';
+    if(!top.length){
+      topEl.innerHTML = '<div class="empty">No clicks recorded yet.</div>';
+    } else {
+      var maxTop = top[0].n;
+      var list = document.createElement('div'); list.className = 'barlist';
+      top.forEach(function(e){
+        list.appendChild(barRow('@'+e.login, e.n, maxTop, 'seq',
+          '<b>'+esc(e.n)+'</b> click'+(e.n===1?'':'s')+' &middot; @'+esc(e.login)));
+      });
+      topEl.appendChild(list);
+    }
+
+    // ---- clicks by source (categorical triad, legend already shown above) ----
+    var bySourceCounts = { popup:0, sidebar:0, 'offline-pin':0 };
+    recent.forEach(function(e){
+      var s = (e.source||'').toLowerCase();
+      if(bySourceCounts.hasOwnProperty(s)) bySourceCounts[s]++;
+    });
+    var srcEl = document.getElementById('bySource');
+    srcEl.innerHTML = '';
+    var srcTotal = bySourceCounts.popup + bySourceCounts.sidebar + bySourceCounts['offline-pin'];
+    if(!srcTotal){
+      srcEl.innerHTML = '<div class="empty">No clicks recorded yet.</div>';
+    } else {
+      var maxSrc = Math.max(bySourceCounts.popup, bySourceCounts.sidebar, bySourceCounts['offline-pin']);
+      var slist = document.createElement('div'); slist.className = 'barlist';
+      ['popup','sidebar','offline-pin'].forEach(function(key){
+        var meta = SOURCE_META[key];
+        var n = bySourceCounts[key];
+        slist.appendChild(barRow(meta.label, n, maxSrc, meta.cls,
+          '<b>'+esc(n)+'</b> of last '+esc(recent.length)+' &middot; '+esc(meta.label)));
+      });
+      srcEl.appendChild(slist);
+      var note = document.createElement('p');
+      note.className = 'desc';
+      note.style.margin = '10px 0 4px';
+      note.textContent = 'Based on the last ' + recent.length + ' recorded click' + (recent.length===1?'':'s') + ' (source isn’t tracked in the all-time per-login counters).';
+      srcEl.appendChild(note);
+    }
+
+    // ---- recent activity table (full record — nothing above is gated) ----
+    var recWrap = document.getElementById('recentWrap');
+    recWrap.innerHTML = '';
+    if(!recent.length){
+      recWrap.innerHTML = '<div class="empty">No clicks recorded yet.</div>';
+    } else {
+      var table = document.createElement('table');
+      table.className = 'table';
+      var rows = recent.slice(0, 50).map(function(e){
+        var meta = SOURCE_META[(e.source||'').toLowerCase()] || { label: e.source||'—', badge:'' };
+        return '<tr>' +
+          '<td class="nm">@'+esc(e.login)+'</td>' +
+          '<td class="platbadge">'+esc(e.platform||'—')+'</td>' +
+          '<td><span class="srcbadge">'+(meta.badge?'<i class="'+meta.badge+'"></i>':'')+esc(meta.label)+'</span></td>' +
+          '<td class="ago">'+esc(timeAgo(e.at))+'</td>' +
+        '</tr>';
+      }).join('');
+      table.innerHTML =
+        '<thead><tr><th>Streamer</th><th>Platform</th><th>Source</th><th style="text-align:right">When</th></tr></thead>' +
+        '<tbody>'+rows+'</tbody>';
+      recWrap.appendChild(table);
+    }
+
+    document.getElementById('updated').textContent = 'updated ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  }
+
+  var currentPw = null;
+
+  function load(){
+    if(!currentPw) return;
+    var btn = document.getElementById('refreshBtn');
+    btn.disabled = true;
+    document.getElementById('updated').textContent = 'refreshing…';
+    fetch(WORKER.replace(/\/+$/, '') + '/clicks?key=' + encodeURIComponent(currentPw), { cache:'no-store' })
+      .then(function(r){
+        if(r.status === 401){ throw new Error('unauthorized'); }
+        if(!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function(data){
+        render(data);
+        btn.disabled = false;
+      })
+      .catch(function(err){
+        btn.disabled = false;
+        if(String(err.message) === 'unauthorized'){
+          // Password was accepted before but the worker now rejects it
+          // (e.g. STATS_PASSWORD was changed) — send the user back to the gate.
+          sessionStorage.removeItem(PW_KEY);
+          currentPw = null;
+          document.getElementById('wrap').classList.remove('show');
+          document.getElementById('gate').classList.remove('hidden');
+          document.getElementById('gateerr').textContent = 'Password no longer valid — please re-enter it.';
+          return;
+        }
+        document.getElementById('updated').textContent = 'refresh failed — retrying next click';
+        console.error('[mushbox-stats] fetch failed:', err);
+      });
+  }
+
+  function tryUnlock(pw){
+    var btn = document.getElementById('gatebtn');
+    var err = document.getElementById('gateerr');
+    btn.disabled = true;
+    err.textContent = '';
+    fetch(WORKER.replace(/\/+$/, '') + '/clicks?key=' + encodeURIComponent(pw), { cache:'no-store' })
+      .then(function(r){
+        if(r.status === 401){ throw new Error('wrong'); }
+        if(!r.ok) throw new Error('http:' + r.status);
+        return r.json();
+      })
+      .then(function(data){
+        currentPw = pw;
+        sessionStorage.setItem(PW_KEY, pw);
+        document.getElementById('gate').classList.add('hidden');
+        document.getElementById('wrap').classList.add('show');
+        render(data);
+        btn.disabled = false;
+      })
+      .catch(function(e){
+        btn.disabled = false;
+        if(String(e.message) === 'wrong'){
+          err.textContent = 'Wrong password.';
+        } else {
+          err.textContent = 'Couldn’t reach the stats service. Try again shortly.';
+          console.error('[mushbox-stats] unlock failed:', e);
+        }
+      });
+  }
+
+  document.getElementById('gatebtn').addEventListener('click', function(){
+    var pw = document.getElementById('gatepw').value;
+    if(pw) tryUnlock(pw);
+  });
+  document.getElementById('gatepw').addEventListener('keydown', function(ev){
+    if(ev.key === 'Enter') document.getElementById('gatebtn').click();
+  });
+  document.getElementById('refreshBtn').addEventListener('click', load);
+
+  // Auto-unlock if this tab already had a working password this session.
+  var stored = sessionStorage.getItem(PW_KEY);
+  if(stored) tryUnlock(stored);
+</script>
+</body>
+</html>
