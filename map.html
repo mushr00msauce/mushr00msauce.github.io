@@ -458,6 +458,8 @@
     ["dc",38.90,-77.04,"Washington, DC"],
     ["dtla",34.04,-118.25,"Los Angeles, CA"],["philly",39.95,-75.17,"Philadelphia, PA"],
     ["sf",37.77,-122.42,"San Francisco, CA"],["socal",34.05,-118.24,"Southern California"],
+    ["norcal",37.77,-122.42,"Northern California"],["pnw",47.61,-122.33,"Pacific Northwest"],
+    ["tri state",40.75,-74.0,"Tri-State Area"],
     // airport-code style shorthand (only ones that don't collide with real words)
     ["atl",33.75,-84.39,"Atlanta, GA"],["phl",39.95,-75.17,"Philadelphia, PA"],
     ["dfw",32.78,-96.80,"Dallas–Fort Worth, TX"],["phx",33.45,-112.07,"Phoenix, AZ"],
@@ -557,7 +559,40 @@
       }
     }
 
-    // 3) full state-name mention
+    // 3) bare, ALL-CAPS 2-letter state abbreviation (e.g. "IRL in TN today")
+    //    Case-sensitive on purpose — matching lowercase would catch far too
+    //    many ordinary words ("or", "in", "hi"...). Even in caps, a handful
+    //    of codes are skipped because they collide with common capitalized
+    //    words/abbreviations streamers actually use:
+    //      IN/OR/HI/OK  — everyday words
+    //      MA/PA/ME/MI/MO/MS/MD  — "ma/pa/me/mi/mo" slang, "Ms."/"MD" titles
+    //      MT           — "Mt." (Mount ___), not Montana
+    //      LA           — almost always means Los Angeles here, not Louisiana
+    //      SD           — "SD card" (see gazetteer false-positive tests)
+    //      OH/WY        — "OH" exclamation, "WY" reads as "why"
+    //      AL/CO/DE/ID/KY/NC — common names/abbreviations (Al, Co., Dr., ID, NC="no comment")
+    //      PR           — "PR" = personal record in fitness/gaming titles
+    //      AR           — "AR" = augmented reality in camera/tech titles
+    var STATE_ABBR_SKIP = {IN:1,OR:1,HI:1,OK:1,MT:1,LA:1,SD:1,MA:1,PA:1,ME:1,MS:1,MI:1,
+      MO:1,MD:1,OH:1,WY:1,AL:1,CO:1,DE:1,ID:1,KY:1,NC:1,PR:1,AR:1};
+    // Codes where the *place* meaning wins over the state abbreviation
+    // (e.g. bare "LA" almost always means Los Angeles, not Louisiana).
+    var ABBR_OVERRIDE = { LA:[34.05,-118.24,"Los Angeles, CA"] };
+    var abbrMatches = title.match(/\b[A-Z]{2}\b/g);
+    if(abbrMatches){
+      for(var j=0;j<abbrMatches.length;j++){
+        var code = abbrMatches[j];
+        if(ABBR_OVERRIDE[code]){
+          var o=ABBR_OVERRIDE[code]; return {lat:o[0], lng:o[1], label:o[2]};
+        }
+        if(STATES[code] && !STATE_ABBR_SKIP[code]){
+          var s2 = STATES[code];
+          return {lat:s2[0], lng:s2[1], label:s2[2]};
+        }
+      }
+    }
+
+    // 4) full state-name mention
     for(var code in STATES){
       var s=STATES[code];
       if(padded.indexOf(' '+s[2].toLowerCase()+' ') !== -1) return {lat:s[0],lng:s[1],label:s[2]};
