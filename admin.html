@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Mushbox — Manual Pins (Admin)</title>
+
+<!-- =====================================================================
+     SECURITY — read before deploying
+     =====================================================================
+     This page has NO password of its own. It must be protected by
+     Cloudflare Access (Zero Trust) before it's reachable at all:
+
+       1. Cloudflare dashboard → Zero Trust → Access → Applications
+          → Add an application → Self-hosted.
+       2. Application domain: themushbox.com, path: /admin.html
+          (or move this file to /admin/ and protect /admin/* instead).
+       3. Add a policy that allows only your own email, using the
+          built-in "One-time PIN" identity provider (no extra setup
+          needed) — or your Google/GitHub login if you'd rather.
+       4. Save. Visiting /admin.html in a private/incognito window
+          should now prompt for a login code sent to your email
+          BEFORE this page's contents ever reach the browser.
+
+     Until that's set up, treat this file as unprotected — don't link
+     to it from anywhere public, and it can still be found by anyone
+     who guesses the URL.
+     ===================================================================== -->
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --black:#060810; --navy:#0A1535; --royal:#1E6FFF; --sky:#4DB8FF; --white:#fff;
+    --red:#ff3b4e; --red-soft:#ff5a6a;
+    --amber:#F5A623; --amber-soft:#ffbf4d;
+    --edge:rgba(77,184,255,.28);
+    --panel:rgba(10,21,53,.92);
+    --dim:#7f92b8;
+    --font:"Space Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    --mono:"Space Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--black);color:var(--white);font-family:var(--font);}
+  #map{position:fixed;inset:0;background:var(--black);z-index:0;}
+  .leaflet-container{background:#05070e;font-family:var(--font);}
+  .leaflet-control-attribution{background:rgba(6,8,16,.7)!important;color:#5b6b8f!important;font-size:10px;}
+  .leaflet-control-attribution a{color:#7f92b8!important;}
+  .leaflet-bar a{background:var(--navy);color:#cfe0ff;border-color:rgba(77,184,255,.25);}
+  .leaflet-bar a:hover{background:var(--royal);color:#fff;}
+
+  .panel{
+    position:fixed;z-index:1000;top:14px;left:14px;width:min(340px,calc(100vw - 28px));
+    max-height:calc(100vh - 28px);overflow-y:auto;
+    background:var(--panel);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    border:1px solid var(--edge);border-radius:16px;padding:16px 17px 14px;
+    box-shadow:0 22px 50px -24px rgba(0,0,0,.85);
+  }
+  .panel h1{margin:0 0 3px;font-size:13px;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;color:#fff}
+  .panel .sub{margin:0 0 14px;font-size:11px;color:var(--dim);line-height:1.5}
+  .panel .sub b{color:var(--red-soft)}
+
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--dim);margin-bottom:5px}
+  .field input{width:100%;font-family:var(--font);font-size:13px;background:rgba(6,8,16,.55);
+    border:1px solid var(--edge);border-radius:9px;color:#fff;padding:8px 10px}
+  .field input:focus{outline:none;border-color:var(--sky)}
+
+  .picked{font-family:var(--mono);font-size:11px;color:var(--sky);margin:2px 0 12px;min-height:14px}
+  .picked.empty{color:var(--dim)}
+
+  .addbtn{width:100%;font-family:var(--font);font-size:13px;font-weight:700;color:#fff;
+    background:var(--royal);border:1px solid var(--royal);border-radius:10px;padding:10px;cursor:pointer}
+  .addbtn:hover:not(:disabled){background:var(--sky);color:#04122b}
+  .addbtn:disabled{opacity:.4;cursor:not-allowed}
+  .formerr{font-family:var(--mono);font-size:10.5px;color:var(--red-soft);margin-top:8px;min-height:14px}
+
+  .divider{margin:16px 0 12px;border-top:1px solid rgba(77,184,255,.14)}
+  .listhead{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);
+    font-weight:700;margin-bottom:9px}
+  .pinlist{display:flex;flex-direction:column;gap:7px}
+  .pinrow{display:flex;align-items:center;gap:8px;font-size:11.5px;font-family:var(--mono);
+    color:var(--dim);background:rgba(30,111,255,.08);border-radius:9px;padding:8px 9px}
+  .pinrow .pinname{color:#fff;font-weight:700;font-family:var(--font);flex:0 1 auto;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px}
+  .pinrow .pinloc{color:var(--sky);flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pinrow .pinleft{color:var(--red-soft);flex:0 0 auto;font-size:10.5px}
+  .pinrow .pinrm{flex:0 0 auto;background:transparent;border:none;color:var(--dim);
+    cursor:pointer;font-size:14px;line-height:1;padding:0 2px}
+  .pinrow .pinrm:hover{color:var(--red-soft)}
+  .pinempty{font-size:11.5px;color:var(--dim);font-family:var(--mono)}
+
+  .beacon{position:relative;width:18px;height:18px}
+  .beacon .core{position:absolute;left:50%;top:50%;width:12px;height:12px;transform:translate(-50%,-50%);
+    border-radius:50%;z-index:2}
+  .beacon .ring{position:absolute;left:50%;top:50%;width:12px;height:12px;transform:translate(-50%,-50%);
+    border-radius:50%;border:2px solid transparent;opacity:0;animation:beam 2.6s ease-out infinite}
+  .beacon .ring.r2{animation-delay:1.3s}
+  .beacon.manual .core{background:radial-gradient(circle at 40% 35%,#ffd0d6,var(--red) 60%,#a8001a);
+    box-shadow:0 0 11px 2px rgba(255,59,78,.95),0 0 24px 7px rgba(255,59,78,.5)}
+  .beacon.manual .ring{border-color:rgba(255,90,106,.9)}
+  .beacon .pin{position:absolute;left:50%;top:-13px;transform:translateX(-50%);font-size:12px;
+    line-height:1;z-index:3;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
+  .beacon.staging .core{background:radial-gradient(circle at 40% 35%,#dbe8ff,var(--sky) 60%,#0b3a80);
+    box-shadow:0 0 11px 2px rgba(77,184,255,.95),0 0 24px 7px rgba(77,184,255,.5)}
+  .beacon.staging .ring{border-color:rgba(77,184,255,.9)}
+  @keyframes beam{0%{opacity:.8;width:12px;height:12px}70%{opacity:0}100%{opacity:0;width:52px;height:52px}}
+
+  .leaflet-popup-content-wrapper{background:var(--navy);color:#fff;border:1px solid var(--edge);
+    border-radius:14px;box-shadow:0 18px 44px -18px rgba(0,0,0,.85)}
+  .leaflet-popup-tip{background:var(--navy);border:1px solid var(--edge)}
+  .leaflet-popup-content{margin:12px 14px;font-family:var(--font)}
+  .pop .pnm{font-weight:700;font-size:14px;margin:0 0 3px}
+  .pop .pcity{font-family:var(--mono);font-size:11px;color:var(--sky);margin:0 0 3px}
+  .pop .psrc{font-size:10.5px;color:var(--dim);margin:0 0 8px}
+  .pop .pinremove{display:inline-block;background:transparent;color:var(--red-soft);
+    border:1px solid rgba(255,90,106,.4);font-weight:700;font-size:11.5px;
+    padding:6px 12px;border-radius:999px;cursor:pointer;font-family:var(--font)}
+  .pop .pinremove:hover{background:var(--red);color:#fff;border-color:var(--red)}
+
+  @media (max-width:720px){ .panel{top:10px;left:10px} }
+</style>
+</head>
+<body>
+
+<div id="map" role="application" aria-label="Pick a location for a manual pin"></div>
+
+<div class="panel">
+  <h1>Manual Pins</h1>
+  <p class="sub">Click the map to place a pin, name it, and add it. It shows up on the
+    live map for <b>24 hours</b>, then removes itself. Pins only ever appear in the
+    browser that's signed in here — nobody else sees them.</p>
+
+  <div class="field">
+    <label for="pinName">Name</label>
+    <input type="text" id="pinName" placeholder="Who is this for?" autocomplete="off">
+  </div>
+  <div class="field">
+    <label for="pinLabel">Label <span style="text-transform:none;opacity:.7">(shown on the pin, optional)</span></label>
+    <input type="text" id="pinLabel" placeholder="e.g. Austin, TX" autocomplete="off">
+  </div>
+  <p class="picked empty" id="pickedText">No location picked yet — click the map.</p>
+  <button type="button" class="addbtn" id="pinAdd" disabled>+ Add pin (expires in 24h)</button>
+  <p class="formerr" id="pinErr"></p>
+
+  <div class="divider"></div>
+  <div class="listhead">Active pins</div>
+  <div class="pinlist" id="pinList"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var PINS_KEY = 'mushbox_manual_pins';
+  var PIN_TTL_MS = 24 * 60 * 60 * 1000;
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  }); }
+
+  function loadPins(){
+    var raw;
+    try{ raw = JSON.parse(localStorage.getItem(PINS_KEY) || '[]'); }
+    catch(err){ raw = []; }
+    if(!Array.isArray(raw)) raw = [];
+    var now = Date.now();
+    var active = raw.filter(function(p){ return p && p.expiresAt > now; });
+    if(active.length !== raw.length) savePins(active);
+    return active;
+  }
+  function savePins(pins){
+    try{ localStorage.setItem(PINS_KEY, JSON.stringify(pins)); }catch(err){}
+  }
+  function addPin(name, label, lat, lng){
+    var pins = loadPins(), now = Date.now();
+    pins.push({
+      id: 'p' + now + Math.random().toString(36).slice(2, 7),
+      name: name, lat: lat, lng: lng, label: label || (lat.toFixed(3) + ', ' + lng.toFixed(3)),
+      addedAt: now, expiresAt: now + PIN_TTL_MS
+    });
+    savePins(pins);
+  }
+  function removePin(id){
+    savePins(loadPins().filter(function(p){ return p.id !== id; }));
+  }
+  function fmtRemaining(ms){
+    if(ms <= 0) return 'expired';
+    var h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
+    return h > 0 ? (h + 'h ' + m + 'm left') : (m + 'm left');
+  }
+
+  var map = L.map('map', { zoomControl:false, attributionControl:true, worldCopyJump:true })
+             .setView([39.5, -98.35], 4);
+  L.control.zoom({ position:'bottomright' }).addTo(map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    subdomains:'abcd', maxZoom:19,
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  }).addTo(map);
+
+  function manualIcon(){
+    return L.divIcon({ className:'', iconSize:[18,18], iconAnchor:[9,9],
+      html:'<div class="beacon manual"><span class="pin">📌</span><span class="ring"></span>'
+         + '<span class="ring r2"></span><span class="core"></span></div>' });
+  }
+  function stagingIcon(){
+    return L.divIcon({ className:'', iconSize:[18,18], iconAnchor:[9,9],
+      html:'<div class="beacon staging"><span class="ring"></span><span class="ring r2"></span><span class="core"></span></div>' });
+  }
+
+  var stagingMarker = null, pickedLatLng = null;
+  var pinMarkers = {};
+
+  var nameEl = document.getElementById('pinName');
+  var labelEl = document.getElementById('pinLabel');
+  var pickedText = document.getElementById('pickedText');
+  var addBtn = document.getElementById('pinAdd');
+  var pinErr = document.getElementById('pinErr');
+
+  function updateAddEnabled(){
+    addBtn.disabled = !(pickedLatLng && nameEl.value.trim());
+  }
+  nameEl.addEventListener('input', updateAddEnabled);
+
+  map.on('click', function(ev){
+    pickedLatLng = ev.latlng;
+    if(stagingMarker) map.removeLayer(stagingMarker);
+    stagingMarker = L.marker(pickedLatLng, { icon:stagingIcon(), zIndexOffset:2000 }).addTo(map);
+    pickedText.classList.remove('empty');
+    pickedText.textContent = pickedLatLng.lat.toFixed(4) + ', ' + pickedLatLng.lng.toFixed(4);
+    updateAddEnabled();
+  });
+
+  function renderExistingPins(){
+    Object.keys(pinMarkers).forEach(function(k){ map.removeLayer(pinMarkers[k]); });
+    pinMarkers = {};
+    var pins = loadPins();
+    pins.forEach(function(p){
+      var mk = L.marker([p.lat, p.lng], { icon:manualIcon(), zIndexOffset:1300, riseOnHover:true });
+      mk.bindPopup((function(pin){
+        return function(){
+          return '<div class="pop"><p class="pnm">' + esc(pin.name) + '</p>'
+            + '<p class="pcity">' + esc(pin.label) + '</p>'
+            + '<p class="psrc">' + fmtRemaining(pin.expiresAt - Date.now()) + '</p>'
+            + '<button type="button" class="pinremove" data-pinid="' + pin.id + '">Remove pin</button>'
+            + '</div>';
+        };
+      })(p));
+      mk.addTo(map);
+      pinMarkers[p.id] = mk;
+    });
+    renderPinList(pins);
+  }
+  function renderPinList(pins){
+    var el = document.getElementById('pinList');
+    if(!pins.length){ el.innerHTML = '<div class="pinempty">No manual pins yet.</div>'; return; }
+    el.innerHTML = pins.map(function(p){
+      return '<div class="pinrow"><span class="pinname">' + esc(p.name) + '</span>'
+        + '<span class="pinloc">' + esc(p.label) + '</span>'
+        + '<span class="pinleft">' + fmtRemaining(p.expiresAt - Date.now()) + '</span>'
+        + '<button type="button" class="pinrm" data-pinid="' + p.id + '" aria-label="Remove pin">✕</button></div>';
+    }).join('');
+  }
+  document.addEventListener('click', function(ev){
+    var t = ev.target.closest && ev.target.closest('[data-pinid]');
+    if(t){ removePin(t.getAttribute('data-pinid')); renderExistingPins(); }
+  });
+
+  addBtn.addEventListener('click', function(){
+    pinErr.textContent = '';
+    var name = nameEl.value.trim();
+    if(!name || !pickedLatLng){ return; }
+    addPin(name, labelEl.value.trim(), pickedLatLng.lat, pickedLatLng.lng);
+    nameEl.value = ''; labelEl.value = '';
+    if(stagingMarker){ map.removeLayer(stagingMarker); stagingMarker = null; }
+    pickedLatLng = null;
+    pickedText.classList.add('empty');
+    pickedText.textContent = 'No location picked yet — click the map.';
+    updateAddEnabled();
+    renderExistingPins();
+    nameEl.focus();
+  });
+
+  renderExistingPins();
+  setInterval(renderExistingPins, 60000); // prune expired + refresh countdowns
+})();
+</script>
+</body>
+</html>
