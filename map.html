@@ -117,6 +117,7 @@
   .row .nm{font-weight:700;font-size:13.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .row .sub{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--mono)}
   .row .sub .pin{color:var(--sky)}
+  .row .tel{font-size:10.5px;color:var(--sky);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--mono);opacity:.85}
   .row .vw{font-family:var(--mono);font-size:11px;color:var(--sky);flex:0 0 auto;text-align:right}
   .row .vw small{display:block;color:var(--dim);font-size:9px;letter-spacing:.08em}
 
@@ -733,6 +734,21 @@
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
+  // Shared bitrate/temp formatter — used by both the popup and the
+  // sidebar row, so the two can't drift out of sync with each other.
+  // Returns '' when there's nothing to show yet (telemetry can be
+  // null/partial right after a box first comes online, before the
+  // WS check has seen every message type).
+  function telemetryText(e){
+    var t = e.telemetry;
+    if(!t) return '';
+    var bits = [];
+    if(t.bitrateKbps != null) bits.push(fmtViewers(t.bitrateKbps)+' Kbps');
+    if(t.tempF != null) bits.push(Math.round(t.tempF)+'°F');
+    else if(t.tempC != null) bits.push(Math.round(t.tempC)+'°C');
+    return bits.join(' · ');
+  }
+
   function popupHTML(e){
     var srcLine = e.warming
       ? '🔌 Mushbox Online · not yet live on platform'
@@ -756,15 +772,9 @@
     // Telemetry line — bitrate + temp from the Belabox encoder. Only
     // shown when at least one field is present; can be null/partial
     // on a fresh poll if the WS check hasn't yet seen every message.
-    var t = e.telemetry;
-    var telemetryBits = [];
-    if(t){
-      if(t.bitrateKbps != null) telemetryBits.push(fmtViewers(t.bitrateKbps)+' Kbps');
-      if(t.tempF != null) telemetryBits.push(Math.round(t.tempF)+'°F');
-      else if(t.tempC != null) telemetryBits.push(Math.round(t.tempC)+'°C');
-    }
-    var telemetryLine = telemetryBits.length
-      ? '<p class="ptelemetry">📡 '+telemetryBits.join(' · ')+'</p>' : '';
+    var telemetryStr = telemetryText(e);
+    var telemetryLine = telemetryStr
+      ? '<p class="ptelemetry">📡 '+telemetryStr+'</p>' : '';
     return '<div class="pop">'
       + '<div class="phead">' + ava
       +   '<div class="ptext">'
@@ -1085,10 +1095,14 @@
       row.className = 'row' + (e.irl?' irl':'') + (e.warming?' warming':'') + (e.confirmed?' confirmed':'');
       row.href = watchURL(e.login, e.platform); row.target='_blank'; row.rel='noopener';
       var pin = e.source==='title' ? '<span class="pin">📍</span> ' : '';
+      var telStr = telemetryText(e);
+      var telLine = telStr ? '<span class="tel">📡 '+telStr+'</span>' : '';
       row.innerHTML =
         '<span class="beacon-mini"></span>'
         + '<span class="info"><span class="nm">'+esc(e.name)+'</span>'
-        + '<span class="sub">'+pin+esc(e.label) + (e.cat ? ' · '+esc(e.cat) : '') +'</span></span>'
+        + '<span class="sub">'+pin+esc(e.label) + (e.cat ? ' · '+esc(e.cat) : '') +'</span>'
+        + telLine
+        + '</span>'
         + '<span class="vw">'+fmtViewers(e.viewers)+'<small>WATCHING</small></span>';
       row.addEventListener('mouseenter', function(){ mk.openPopup(); });
       row.addEventListener('click', function(){ trackClick(e.login, e.platform, 'sidebar'); });
