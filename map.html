@@ -929,6 +929,12 @@
   var audioCtx = null;
 
   function beep(){
+    // Never sound from the homepage thumbnail preview (map.html?embed=1)
+    // — that iframe has pointer-events:none, so it never receives a real
+    // user gesture and its AudioContext likely stays suspended anyway,
+    // but that's incidental browser behavior, not something to rely on.
+    // Explicit skip here is the deterministic fix.
+    if(EMBED) return;
     if(!document.getElementById('soundOn').checked) return;
     try{
       audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
@@ -1180,6 +1186,22 @@
     }
     document.addEventListener('click', unlock);
     document.addEventListener('keydown', unlock);
+
+    // EMBED-only: the homepage thumbnail iframe has pointer-events:none
+    // (so clicks pass through to the card's link instead of hitting the
+    // map), which means this document never receives a click/keydown of
+    // its own — unlock() above would never fire, leaving the
+    // AudioContext permanently suspended and the sound alert silent.
+    // The parent page (index.html) listens for the first click/keydown
+    // ANYWHERE on the homepage and relays it in via postMessage; we
+    // treat that as our unlock signal here.
+    if(EMBED){
+      window.addEventListener('message', function(ev){
+        if(ev.source === window.parent && ev.data && ev.data.type === 'mushbox-unlock-audio'){
+          unlock();
+        }
+      });
+    }
   })();
 
   // One-shot fetch of roster avatars/names. Kept separate from the live poll:

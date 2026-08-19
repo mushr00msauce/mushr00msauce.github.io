@@ -1604,6 +1604,31 @@
       label.textContent = "The Mushbox Family \u2014 49 strong \u00B7 " + famLive + " live now";
     }
   }).catch(function(){ /* worker unreachable: page works fine without it */ });
+
+  // Relay a user-gesture signal into the LIVE MAP thumbnail iframe
+  // (map.html?embed=1) so its sound alert can actually play. That
+  // iframe has pointer-events:none — clicks pass through to the card's
+  // link rather than hitting the map — so it never gets a click/keydown
+  // of its own, and without one, browsers keep its AudioContext
+  // permanently suspended. The first interaction anywhere on this page
+  // is forwarded in via postMessage as the substitute unlock signal.
+  (function(){
+    var mapFrame = document.querySelector('.mbxmap-frame');
+    if(!mapFrame) return;
+    function relay(){
+      try{
+        if(mapFrame.contentWindow){
+          mapFrame.contentWindow.postMessage({type:'mushbox-unlock-audio'}, window.location.origin);
+        }
+      }catch(err){}
+      // Not removed after first fire: the thumbnail iframe is
+      // loading="lazy" and may not have a contentWindow ready yet on
+      // the very first click, so later clicks/keydowns keep retrying
+      // harmlessly until it lands.
+    }
+    document.addEventListener('click', relay);
+    document.addEventListener('keydown', relay);
+  })();
 })();
 </script>
 </body>
