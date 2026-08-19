@@ -160,7 +160,34 @@
       + '<p class="note">Needs <b>' + p.threshold + '+ average concurrent viewers</b> across a full stream day to bank that day, on <b>' + p.daysNeeded + ' unique days</b> within a rolling ' + p.windowDays + '-day window. Twitch also requires this twice in a row (two consecutive qualifying windows) to formally apply — this page tracks the current window.</p>';
   }
 
+  // ?demo=1 — renders a canned progress card client-side, no Worker call
+  // involved. Useful for eyeballing the page's look before the real
+  // Worker (v26) is deployed, or before anyone's actually banked days.
+  // Optional &viewers= and &days= tweak the numbers shown.
+  var params = new URLSearchParams(location.search);
+  var DEMO = params.get('demo') === '1';
+
+  function loadDemo(){
+    var demoLogin = login || 'demostreamer';
+    NAMES[demoLogin] = NAMES[demoLogin] || (login ? (NAMES[login] || login) : 'Demo Streamer');
+    var viewers = parseInt(params.get('viewers'), 10);
+    var days = parseInt(params.get('days'), 10);
+    if(isNaN(viewers)) viewers = 88;
+    if(isNaN(days)) days = 3;
+    days = Math.max(0, Math.min(6, days));
+    login = demoLogin;
+    render({
+      qualifyingDays: days, daysNeeded: 6, windowDays: 30, threshold: 75,
+      qualifyingDates: [],
+      isLiveNow: viewers > 0,
+      currentViewers: viewers,
+      aboveThresholdNow: viewers >= 75
+    });
+    document.getElementById('updated').textContent = 'demo mode — not live data';
+  }
+
   function load(){
+    if(DEMO){ loadDemo(); return; }
     if(!login){ renderPicker(); return; }
     fetch(PARTNER_URL, { cache:'no-store' })
       .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
@@ -182,9 +209,13 @@
       .catch(function(){ /* falls back to login-only display */ });
   }
 
-  loadAvatars();
-  load();
-  setInterval(load, REFRESH_MS);
+  if(DEMO){
+    load(); // demo mode is fully self-contained — no Worker calls at all
+  } else {
+    loadAvatars();
+    load();
+    setInterval(load, REFRESH_MS);
+  }
 })();
 </script>
 </body>
