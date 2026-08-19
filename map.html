@@ -992,26 +992,42 @@
     var logins = Object.keys(progress || {});
     if(!logins.length){ el.innerHTML = ''; return; }
 
-    // Live-and-above-threshold first, then by qualifying days banked.
+    // Ready-to-apply first, then live-and-above-threshold, then by overall
+    // progress (completed windows weigh more than partial days in the
+    // current one).
     logins.sort(function(a,b){
       var pa = progress[a], pb = progress[b];
+      if(!!pa.readyToApply !== !!pb.readyToApply) return pa.readyToApply ? -1 : 1;
       if(pa.aboveThresholdNow !== pb.aboveThresholdNow) return pa.aboveThresholdNow ? -1 : 1;
-      return (pb.qualifyingDays||0) - (pa.qualifyingDays||0);
+      var scoreA = (pa.batchesCompleted||0) * pa.daysNeeded + (pa.qualifyingDays||0);
+      var scoreB = (pb.batchesCompleted||0) * pb.daysNeeded + (pb.qualifyingDays||0);
+      return scoreB - scoreA;
     });
 
     var html = '<div class="pwhead"><span class="pwicon">🏆</span>Partner Watch</div>';
     html += logins.map(function(login){
       var p = progress[login];
       var name = NAMES[login] || login;
+      // Once both windows are done, show the dots fully filled — the
+      // underlying "current batch" counter has already moved on to a
+      // fresh (empty) hypothetical next one, which would otherwise look
+      // like backsliding right next to a "complete" message.
+      var filledCount = p.readyToApply ? p.daysNeeded : p.qualifyingDays;
       var dots = '';
       for(var i=0;i<p.daysNeeded;i++){
-        dots += '<span class="pw-dot' + (i < p.qualifyingDays ? ' filled' : '') + '"></span>';
+        dots += '<span class="pw-dot' + (i < filledCount ? ' filled' : '') + '"></span>';
       }
-      var sub = p.aboveThresholdNow
-        ? '<b>' + fmtViewers(p.currentViewers) + ' avg now</b> · ' + p.qualifyingDays + '/' + p.daysNeeded + ' days'
-        : (p.isLiveNow
-            ? fmtViewers(p.currentViewers) + ' watching now · ' + p.qualifyingDays + '/' + p.daysNeeded + ' qualifying days'
-            : p.qualifyingDays + '/' + p.daysNeeded + ' qualifying days banked');
+      var windowLbl = p.batchesNeeded > 1 ? ' · window ' + p.batchNumber + '/' + p.batchesNeeded : '';
+      var sub;
+      if(p.readyToApply){
+        sub = '<b>🎉 both windows complete</b>';
+      } else if(p.aboveThresholdNow){
+        sub = '<b>' + fmtViewers(p.currentViewers) + ' avg now</b> · ' + p.qualifyingDays + '/' + p.daysNeeded + ' days' + windowLbl;
+      } else if(p.isLiveNow){
+        sub = fmtViewers(p.currentViewers) + ' watching now · ' + p.qualifyingDays + '/' + p.daysNeeded + ' days' + windowLbl;
+      } else {
+        sub = p.qualifyingDays + '/' + p.daysNeeded + ' qualifying days banked' + windowLbl;
+      }
       return '<a class="pwrow" href="partner.html?login=' + encodeURIComponent(login) + '" target="_blank" rel="noopener">'
         + '<span class="pwnm">' + (p.isLiveNow ? '<span class="pwlive"></span>' : '') + esc(name) + '</span>'
         + '<span class="pw-dots">' + dots + '</span>'
