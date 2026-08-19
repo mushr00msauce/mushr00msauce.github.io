@@ -127,6 +127,13 @@
   .row .nm{font-weight:700;font-size:13.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .row .sub{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--mono)}
   .row .sub .pin{color:var(--sky)}
+  /* Tag for family members streaming from a phone (OBS + Noalbs) rather
+     than Mushbox hardware — informational only, used in the sidebar row
+     and the map popup. Amber-toned but a pill/outline (not a solid dot
+     or beacon color), so it reads as a footnote, not a status light. */
+  .mobiletag{display:inline-block;margin:2px 0 0;font-family:var(--mono);font-size:9.5px;
+    letter-spacing:.03em;color:var(--amber-soft);background:rgba(245,166,35,.12);
+    border:1px solid rgba(245,166,35,.35);border-radius:999px;padding:2px 7px;white-space:nowrap}
   .row .tel{font-size:10.5px;color:var(--sky);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--mono);opacity:.85}
   .row .vw{font-family:var(--mono);font-size:11px;color:var(--sky);flex:0 0 auto;text-align:right}
   .row .vw small{display:block;color:var(--dim);font-size:9px;letter-spacing:.08em}
@@ -392,6 +399,7 @@
     "jdcharisma":          "San Jose, California",
     "jetlagjacko":         "United Kingdom",
     "jtengland":           "San Diego, CA",
+    "k9gizmo":             [38.5495, -86.6178, "French Lick, IN"],
     "kardtrick":           "Kentucky",
     "kaseysnowart":        "Colorado",
     "katana1988":          "Missouri",
@@ -401,6 +409,7 @@
     "lyndainfj":           "Delaware",
     "maestroharrell":      "California",
     "miekii":              "New York",
+    "mikefromny":          [40.7891, -73.1350, "Long Island, NY"],
     "missyalcazarmusic":   "California",
     "mocomade":            "Pennsylvania",
     "morwen_xo":           "Tampa, Florida",
@@ -713,6 +722,16 @@
   // Kick family logins — watch links point at kick.com, never twitch.tv,
   // even for offline dots where platform isn't in the live feed.
   var KICK_LOGINS = { "jetlagjacko":1 };
+
+  // Family members streaming from a phone (OBS + Noalbs) rather than actual
+  // Mushbox encoder hardware. Shows a small "📱 Phone Streamer" tag next to
+  // their name while they're live — informational, not a ranking. Add a
+  // login here to tag them; nothing else about how they're displayed changes.
+  var PHONE_LOGINS = { "mikefromny":1, "k9gizmo":1 };
+  function mobileTag(login){
+    return PHONE_LOGINS[(login||'').toString().toLowerCase()]
+      ? '<span class="mobiletag" title="Streams via phone (OBS + Noalbs), not Mushbox hardware">📱 Phone Streamer</span>' : '';
+  }
   function watchURL(login, platform){
     var isKick = platform==='kick' || KICK_LOGINS[(login||'').toString().toLowerCase()];
     return (isKick ? 'https://kick.com/' : 'https://twitch.tv/') + encodeURIComponent(login);
@@ -826,6 +845,7 @@
       +   '<div class="ptext">'
       +     '<p class="pnm">'+esc(e.name)+'</p>'
       +     '<div class="pcity">'+esc(e.label)+'</div>'
+      +     mobileTag(e.login || e.person)
       +   '</div>'
       + '</div>'
       + altLine
@@ -1166,7 +1186,7 @@
       var telLine = telStr ? '<span class="tel">📡 '+telStr+'</span>' : '';
       row.innerHTML =
         '<span class="beacon-mini"></span>'
-        + '<span class="info"><span class="nm">'+esc(e.name)+'</span>'
+        + '<span class="info"><span class="nm">'+esc(e.name)+'</span>' + mobileTag(e.login || e.person)
         + '<span class="sub">'+pin+esc(e.label) + (e.cat ? ' · '+esc(e.cat) : '') +'</span>'
         + telLine
         + '</span>'
