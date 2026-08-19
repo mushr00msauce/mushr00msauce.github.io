@@ -205,6 +205,7 @@
   .pop .psrc{font-size:10.5px;color:var(--dim);margin:0 0 8px;letter-spacing:.02em}
   .pop .pcat{font-size:12px;color:#cfe0ff;margin:0 0 3px}
   .pop .pvw{font-family:var(--mono);font-size:12px;color:var(--dim);margin:0 0 10px}
+  .pop .ptelemetry{font-family:var(--mono);font-size:11px;color:var(--sky);margin:0 0 8px;letter-spacing:.02em}
   .pop a.watch{display:inline-block;background:var(--royal);color:#fff;text-decoration:none;font-weight:700;
     font-size:12.5px;padding:7px 14px;border-radius:999px}
   .pop a.watch:hover{background:var(--sky);color:#04122b}
@@ -751,6 +752,18 @@
       ? '<p class="pconfirmed">✓ Mushbox confirmed online</p>' : '';
     var viewersLine = e.warming ? '' : ('<p class="pvw">'+fmtViewers(e.viewers)+' watching</p>');
     var watchLabel = e.warming ? 'View channel ▸' : 'Watch live ▸';
+    // Telemetry line — bitrate + temp from the Belabox encoder. Only
+    // shown when at least one field is present; can be null/partial
+    // on a fresh poll if the WS check hasn't yet seen every message.
+    var t = e.telemetry;
+    var telemetryBits = [];
+    if(t){
+      if(t.bitrateKbps != null) telemetryBits.push(fmtViewers(t.bitrateKbps)+' Kbps');
+      if(t.tempF != null) telemetryBits.push(Math.round(t.tempF)+'°F');
+      else if(t.tempC != null) telemetryBits.push(Math.round(t.tempC)+'°C');
+    }
+    var telemetryLine = telemetryBits.length
+      ? '<p class="ptelemetry">📡 '+telemetryBits.join(' · ')+'</p>' : '';
     return '<div class="pop">'
       + '<div class="phead">' + ava
       +   '<div class="ptext">'
@@ -763,6 +776,7 @@
       + confirmedLine
       + (e.cat ? '<p class="pcat">'+esc(e.cat)+'</p>' : '')
       + viewersLine
+      + telemetryLine
       + '<a class="watch" data-login="'+esc(e.login)+'" data-platform="'+esc(e.platform||'')+'" href="'+watchURL(e.login, e.platform)+'" target="_blank" rel="noopener">'+watchLabel+'</a>'
       + '</div>';
   }
@@ -871,7 +885,8 @@
         cat:   e.game || e.category || e.game_name || '',
         title: e.title || '',
         viewers: e.viewers != null ? e.viewers : (e.viewer_count != null ? e.viewer_count : 0),
-        encoderConfirmed: !!e.encoderConfirmed
+        encoderConfirmed: !!e.encoderConfirmed,
+        telemetry: e.telemetry || null
       };
     }).filter(function(e){ return e.login; });
   }
@@ -884,7 +899,7 @@
       var person = ALT2MAIN[e.login] || e.login;
       var cur = by[person];
       if(!cur || (+e.viewers||0) > (+cur.viewers||0)){
-        by[person] = { person:person, login:e.login, name:e.name, cat:e.cat, title:e.title, viewers:e.viewers, platform:e.platform, encoderConfirmed:e.encoderConfirmed };
+        by[person] = { person:person, login:e.login, name:e.name, cat:e.cat, title:e.title, viewers:e.viewers, platform:e.platform, encoderConfirmed:e.encoderConfirmed, telemetry:e.telemetry };
       }
     });
     return Object.keys(by).map(function(k){ return by[k]; });
