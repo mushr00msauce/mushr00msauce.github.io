@@ -160,8 +160,14 @@
   }
   .partnerwatch:empty{display:none}
   .partnerwatch .pwhead{margin:0 0 9px;font-size:11px;font-weight:700;letter-spacing:.12em;
-    text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:7px}
+    text-transform:uppercase;color:var(--twitch);display:flex;align-items:center;gap:7px}
   .partnerwatch .pwhead .pwicon{color:var(--amber)}
+  /* Small "verified"-style checkmark badge, Twitch purple — a generic
+     verified-badge shape (not the trademarked Twitch glyph itself),
+     just echoing that visual language next to the Partner Watch label. */
+  .partnerwatch .pwhead .partner-badge{display:inline-flex;align-items:center;justify-content:center;
+    width:14px;height:14px;border-radius:50%;background:var(--twitch);flex:0 0 auto;}
+  .partnerwatch .pwhead .partner-badge svg{width:8px;height:8px;display:block}
   .pwrow{display:block;text-decoration:none;color:inherit;padding:8px 6px;border-radius:11px;
     transition:background .14s;}
   .pwrow:hover{background:rgba(245,166,35,.12)}
@@ -1023,7 +1029,8 @@
       return scoreB - scoreA;
     });
 
-    var html = '<div class="pwhead"><span class="pwicon">🏆</span>Partner Watch</div>';
+    var html = '<div class="pwhead"><span class="pwicon">🏆</span>Partner Watch'
+      + '<span class="partner-badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div>';
     html += logins.map(function(login){
       var p = progress[login];
       var name = NAMES[login] || login;
