@@ -138,6 +138,37 @@
   .row .vw{font-family:var(--mono);font-size:11px;color:var(--sky);flex:0 0 auto;text-align:right}
   .row .vw small{display:block;color:var(--dim);font-size:9px;letter-spacing:.08em}
 
+  /* Twitch Partner progress watch — appears whenever anyone in the
+     family has banked qualifying days or is currently live above the
+     viewer threshold. Same panel language as .console/.live-list so it
+     reads as part of the same family of UI, not a bolted-on widget. */
+  .partnerwatch{
+    position:fixed;z-index:1000;top:70px;right:14px;width:min(280px,calc(100vw - 28px));
+    max-height:44vh;overflow-y:auto;background:var(--panel);
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    border:1px solid var(--edge);border-radius:16px;padding:12px 13px 10px;
+    box-shadow:0 22px 50px -24px rgba(0,0,0,.85);
+  }
+  .partnerwatch:empty{display:none}
+  .partnerwatch .pwhead{margin:0 0 9px;font-size:11px;font-weight:700;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--dim);display:flex;align-items:center;gap:7px}
+  .partnerwatch .pwhead .pwicon{color:var(--amber)}
+  .pwrow{display:block;text-decoration:none;color:inherit;padding:8px 6px;border-radius:11px;
+    transition:background .14s;}
+  .pwrow:hover{background:rgba(245,166,35,.12)}
+  .pwrow + .pwrow{border-top:1px solid rgba(77,184,255,.12)}
+  .pwrow .pwnm{font-weight:700;font-size:12.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    display:flex;align-items:center;gap:6px}
+  .pwrow .pwnm .pwlive{width:6px;height:6px;border-radius:50%;background:var(--sky);
+    box-shadow:0 0 6px var(--sky);flex:0 0 auto}
+  .pw-dots{display:flex;gap:4px;margin:6px 0 5px}
+  .pw-dot{width:10px;height:10px;border-radius:50%;background:#39507f;
+    border:1px solid rgba(120,150,200,.5);flex:0 0 auto}
+  .pw-dot.filled{background:radial-gradient(circle at 40% 35%,#ffe9bd,var(--amber) 60%,#b97400);
+    box-shadow:0 0 7px 1px rgba(245,166,35,.85);border-color:var(--amber)}
+  .pwrow .pwsub{font-size:10.5px;color:var(--dim);font-family:var(--mono);letter-spacing:.02em}
+  .pwrow .pwsub b{color:var(--amber-soft);font-weight:700}
+
   .unmapped{padding:8px 11px;font-size:11px;color:var(--dim);font-family:var(--mono);border-top:1px solid rgba(77,184,255,.14);margin-top:4px}
   .unmapped b{color:#cfe0ff;font-weight:700}
   .empty{padding:16px 12px;text-align:center;color:var(--dim);font-size:12.5px;line-height:1.5}
@@ -231,6 +262,7 @@
   @media (max-width:720px){
     .console{top:10px;left:10px}
     .live-list{left:10px;bottom:10px;max-height:32vh}
+    .partnerwatch{top:64px;right:10px;max-height:26vh;width:min(240px,calc(100vw - 20px))}
 
     /* Mobile drawer: both cards start slid off-screen to the left,
        leaving only their pull-tab visible — same idea as the little
@@ -295,16 +327,12 @@
   html.embed, html.embed body{background:transparent}
   html.embed .console,
   html.embed .live-list,
+  html.embed .partnerwatch,
   html.embed .backbtn,
   html.embed .drawer-tab,
   html.embed .leaflet-control-zoom{display:none!important}
   html.embed .leaflet-control-attribution{font-size:8px;opacity:.5;padding:0 3px}
 </style>
-  <!-- Cloudflare Web Analytics — same token already live on index.html,
-       so this page reports into the same dashboard entry as the rest
-       of themushbox.com instead of fragmenting into a separate one. -->
-  <script type='module' defer src='https://static.cloudflareinsights.com/beacon.min.js'
-    data-cf-beacon='{"token": "95572a93d4ee4bf1bc6ef531dccab9af"}'></script>
 </head>
 <body>
 
@@ -345,6 +373,8 @@
 
 <div class="live-list" id="liveList"></div>
 <button class="drawer-tab" id="listTab" type="button" aria-label="Show live streamer list" aria-controls="liveList" aria-expanded="false"><span class="drawer-arrow" aria-hidden="true">&rsaquo;</span></button>
+
+<div class="partnerwatch" id="partnerWatch"></div>
 
 <script>
 (function(){
@@ -568,6 +598,7 @@
   var WORKER = "https://mushbox-live.wkennedy74.workers.dev/";
   var AVATARS_URL = WORKER.replace(/\/+$/, "") + "/avatars";
   var ACTIVITY_URL = WORKER.replace(/\/+$/, "") + "/activity";
+  var PARTNER_URL = WORKER.replace(/\/+$/, "") + "/partner-progress";
   var REFRESH_MS = 60000;
   // Profile pics + display names for the whole roster, fetched once from the
   // Worker's /avatars route (cached daily server-side). Populated on load;
@@ -948,6 +979,53 @@
       .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(d){ if(d) renderActivity(d.activity || []); })
       .catch(function(){ /* activity feed is a nice-to-have; fail quietly */ });
+  }
+
+  /* ===== Twitch Partner progress watch =====
+     Public to everyone — viewer counts are already public Twitch data.
+     Shows up only for people with banked qualifying days, or who are
+     live right now averaging 75+ viewers. Each row links out to a
+     standalone, phone-friendly page for tracking just that one person
+     in real time. */
+  function renderPartnerWatch(progress){
+    var el = document.getElementById('partnerWatch');
+    var logins = Object.keys(progress || {});
+    if(!logins.length){ el.innerHTML = ''; return; }
+
+    // Live-and-above-threshold first, then by qualifying days banked.
+    logins.sort(function(a,b){
+      var pa = progress[a], pb = progress[b];
+      if(pa.aboveThresholdNow !== pb.aboveThresholdNow) return pa.aboveThresholdNow ? -1 : 1;
+      return (pb.qualifyingDays||0) - (pa.qualifyingDays||0);
+    });
+
+    var html = '<div class="pwhead"><span class="pwicon">🏆</span>Partner Watch</div>';
+    html += logins.map(function(login){
+      var p = progress[login];
+      var name = NAMES[login] || login;
+      var dots = '';
+      for(var i=0;i<p.daysNeeded;i++){
+        dots += '<span class="pw-dot' + (i < p.qualifyingDays ? ' filled' : '') + '"></span>';
+      }
+      var sub = p.aboveThresholdNow
+        ? '<b>' + fmtViewers(p.currentViewers) + ' avg now</b> · ' + p.qualifyingDays + '/' + p.daysNeeded + ' days'
+        : (p.isLiveNow
+            ? fmtViewers(p.currentViewers) + ' watching now · ' + p.qualifyingDays + '/' + p.daysNeeded + ' qualifying days'
+            : p.qualifyingDays + '/' + p.daysNeeded + ' qualifying days banked');
+      return '<a class="pwrow" href="partner.html?login=' + encodeURIComponent(login) + '" target="_blank" rel="noopener">'
+        + '<span class="pwnm">' + (p.isLiveNow ? '<span class="pwlive"></span>' : '') + esc(name) + '</span>'
+        + '<span class="pw-dots">' + dots + '</span>'
+        + '<span class="pwsub">' + sub + '</span>'
+        + '</a>';
+    }).join('');
+    el.innerHTML = html;
+  }
+
+  function loadPartnerProgress(){
+    fetch(PARTNER_URL, { cache:'no-store' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){ if(d) renderPartnerWatch(d.progress || {}); })
+      .catch(function(){ /* partner watch is a nice-to-have; fail quietly */ });
   }
 
   function parseLive(data){
@@ -1383,8 +1461,10 @@
   load();
   loadAvatars();
   loadActivity();
+  loadPartnerProgress();
   setInterval(load, REFRESH_MS);
   setInterval(loadActivity, REFRESH_MS);
+  setInterval(loadPartnerProgress, REFRESH_MS);
 })();
 </script>
 </body>

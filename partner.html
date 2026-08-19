@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Partner Progress — Mushbox</title>
+<meta name="description" content="Real-time Twitch Partner viewer-average progress tracker.">
+<meta name="robots" content="noindex">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --black:#060810; --navy:#0A1535; --royal:#1E6FFF; --sky:#4DB8FF; --white:#fff;
+    --amber:#F5A623; --amber-soft:#ffbf4d;
+    --edge:rgba(77,184,255,.28);
+    --panel:rgba(10,21,53,.82);
+    --dim:#7f92b8;
+    --font:"Space Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    --mono:"Space Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--black);color:var(--white);font-family:var(--font);}
+  body{
+    background:
+      radial-gradient(60% 50% at 20% 0%, rgba(30,111,255,.16), transparent 60%),
+      radial-gradient(50% 45% at 85% 15%, rgba(245,166,35,.10), transparent 60%),
+      var(--black);
+    min-height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:24px 16px;
+  }
+  .wrap{width:100%;max-width:420px}
+  .backbtn{
+    display:inline-flex;align-items:center;gap:6px;margin-bottom:16px;
+    color:var(--dim);text-decoration:none;font-size:12.5px;font-weight:700;letter-spacing:.03em;
+  }
+  .backbtn:hover{color:var(--sky)}
+
+  .card{
+    background:var(--panel);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    border:1px solid var(--edge);border-radius:20px;padding:26px 24px 22px;
+    box-shadow:0 26px 60px -28px rgba(0,0,0,.9);
+    text-align:center;
+  }
+  .avatar{width:84px;height:84px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 14px;
+    border:3px solid var(--edge);background:#0c1533;}
+  .avatar.live{border-color:var(--sky);box-shadow:0 0 0 3px rgba(77,184,255,.25)}
+  .name{font-size:19px;font-weight:700;margin:0 0 4px;display:flex;align-items:center;justify-content:center;gap:8px}
+  .livepip{width:8px;height:8px;border-radius:50%;background:var(--sky);box-shadow:0 0 8px var(--sky);
+    animation:ping 1.8s ease-out infinite;flex:0 0 auto}
+  @keyframes ping{0%{box-shadow:0 0 0 0 rgba(77,184,255,.7)}70%{box-shadow:0 0 0 8px rgba(77,184,255,0)}100%{box-shadow:0 0 0 0 rgba(77,184,255,0)}}
+  .headline{font-family:var(--mono);font-size:12px;color:var(--dim);letter-spacing:.04em;margin:0 0 22px}
+
+  .dots{display:flex;justify-content:center;gap:10px;margin:0 0 10px}
+  .dot{width:26px;height:26px;border-radius:50%;background:#0e1c40;
+    border:2px solid rgba(120,150,200,.4);display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:10px;color:var(--dim);}
+  .dot.filled{background:radial-gradient(circle at 40% 32%,#ffe9bd,var(--amber) 60%,#b97400);
+    box-shadow:0 0 14px 2px rgba(245,166,35,.75);border-color:var(--amber);color:#3a2400}
+
+  .progress-lbl{font-family:var(--mono);font-size:13px;color:var(--amber-soft);font-weight:700;margin:0 0 20px}
+
+  .stat-row{display:flex;justify-content:center;gap:22px;margin:0 0 6px;padding-top:16px;
+    border-top:1px solid rgba(77,184,255,.14)}
+  .stat{text-align:center}
+  .stat .v{font-family:var(--mono);font-size:22px;font-weight:700;color:#fff;line-height:1}
+  .stat.hot .v{color:var(--sky)}
+  .stat .l{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-top:4px}
+
+  .note{font-size:11px;color:var(--dim);line-height:1.6;margin:18px 0 0}
+  .note b{color:#cfe0ff}
+
+  .picker{margin-top:18px}
+  .picker input{
+    width:100%;background:rgba(10,21,53,.6);border:1px solid var(--edge);border-radius:12px;
+    padding:11px 14px;color:#fff;font-family:var(--font);font-size:14px;text-align:center;
+  }
+  .picker input::placeholder{color:var(--dim)}
+  .picker p{font-size:11px;color:var(--dim);margin:8px 0 0;text-align:center}
+
+  .updated{font-family:var(--mono);font-size:10px;color:var(--dim);text-align:center;margin-top:16px;opacity:.75}
+  .empty{color:var(--dim);font-size:13px;line-height:1.6;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="backbtn" href="map.html"><span aria-hidden="true">&larr;</span> Back to the live map</a>
+  <div class="card" id="card">
+    <p class="empty">Loading…</p>
+  </div>
+  <p class="updated" id="updated"></p>
+</div>
+
+<script>
+(function(){
+  var WORKER = "https://mushbox-live.wkennedy74.workers.dev/";
+  var PARTNER_URL = WORKER.replace(/\/+$/, "") + "/partner-progress";
+  var AVATARS_URL = WORKER.replace(/\/+$/, "") + "/avatars";
+  var REFRESH_MS = 20000; // faster than the map's poll — this page is meant to be watched live during a stream
+
+  var login = (new URLSearchParams(location.search).get('login') || '').toLowerCase().trim();
+  var AVATARS = {}, NAMES = {};
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  }); }
+  function fmtViewers(v){ v=+v||0; return v>=1000 ? (v/1000).toFixed(v>=10000?0:1)+'k' : String(v); }
+
+  function renderPicker(){
+    document.getElementById('card').innerHTML =
+      '<p class="empty">Open this page with <b>?login=</b>&lt;twitch handle&gt; in the URL to track someone’s progress, or enter one below.</p>'
+      + '<div class="picker">'
+      + '<input type="text" id="loginInput" placeholder="twitch handle" autocapitalize="off" autocorrect="off" spellcheck="false">'
+      + '<p>Tracks the same 75-avg-viewer / 6-day window used on the live map.</p>'
+      + '</div>';
+    var input = document.getElementById('loginInput');
+    input.addEventListener('keydown', function(ev){
+      if(ev.key === 'Enter' && input.value.trim()){
+        location.search = '?login=' + encodeURIComponent(input.value.trim().toLowerCase());
+      }
+    });
+  }
+
+  function renderNoData(name){
+    document.getElementById('card').innerHTML =
+      '<p class="name">' + esc(name) + '</p>'
+      + '<p class="empty">No progress banked yet, and not currently live above the 75-viewer-average threshold.<br>This page updates automatically once they cross it.</p>';
+  }
+
+  function render(p){
+    var name = NAMES[login] || login;
+    var avatar = AVATARS[login];
+    var avaClass = 'avatar' + (p.isLiveNow ? ' live' : '');
+    var avaHtml = avatar
+      ? '<img class="' + avaClass + '" src="' + esc(avatar) + '" alt="">'
+      : '<div class="' + avaClass + '" style="display:flex;align-items:center;justify-content:center;font-size:30px;">🍄</div>';
+
+    var dots = '';
+    for(var i=0;i<p.daysNeeded;i++){
+      dots += '<div class="dot' + (i < p.qualifyingDays ? ' filled' : '') + '">' + (i < p.qualifyingDays ? '✓' : '') + '</div>';
+    }
+
+    var progressLbl = p.qualifyingDays >= p.daysNeeded
+      ? '✅ Window complete — ' + p.qualifyingDays + '/' + p.daysNeeded + ' qualifying days'
+      : p.qualifyingDays + ' of ' + p.daysNeeded + ' qualifying days banked';
+
+    document.getElementById('card').innerHTML =
+      avaHtml
+      + '<p class="name">' + (p.isLiveNow ? '<span class="livepip"></span>' : '') + esc(name) + '</p>'
+      + '<p class="headline">Twitch Partner progress</p>'
+      + '<div class="dots">' + dots + '</div>'
+      + '<p class="progress-lbl">' + progressLbl + '</p>'
+      + '<div class="stat-row">'
+      + '<div class="stat' + (p.aboveThresholdNow ? ' hot' : '') + '"><div class="v">' + (p.isLiveNow ? fmtViewers(p.currentViewers) : '—') + '</div><div class="l">' + (p.isLiveNow ? 'avg viewers now' : 'offline') + '</div></div>'
+      + '<div class="stat"><div class="v">' + p.threshold + '</div><div class="l">viewer target</div></div>'
+      + '<div class="stat"><div class="v">' + p.windowDays + 'd</div><div class="l">rolling window</div></div>'
+      + '</div>'
+      + '<p class="note">Needs <b>' + p.threshold + '+ average concurrent viewers</b> across a full stream day to bank that day, on <b>' + p.daysNeeded + ' unique days</b> within a rolling ' + p.windowDays + '-day window. Twitch also requires this twice in a row (two consecutive qualifying windows) to formally apply — this page tracks the current window.</p>';
+  }
+
+  function load(){
+    if(!login){ renderPicker(); return; }
+    fetch(PARTNER_URL, { cache:'no-store' })
+      .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(function(d){
+        var p = (d.progress || {})[login];
+        if(p) render(p); else renderNoData(NAMES[login] || login);
+        document.getElementById('updated').textContent = 'updated ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+      })
+      .catch(function(err){
+        console.error('[partner] fetch failed:', err);
+        document.getElementById('updated').textContent = 'retrying…';
+      });
+  }
+
+  function loadAvatars(){
+    fetch(AVATARS_URL, { cache:'default' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){ if(d){ AVATARS = d.avatars || {}; NAMES = d.names || {}; load(); } })
+      .catch(function(){ /* falls back to login-only display */ });
+  }
+
+  loadAvatars();
+  load();
+  setInterval(load, REFRESH_MS);
+})();
+</script>
+</body>
+</html>
