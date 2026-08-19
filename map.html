@@ -137,6 +137,15 @@
   .row .tel{font-size:10.5px;color:var(--sky);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--mono);opacity:.85}
   .row .vw{font-family:var(--mono);font-size:11px;color:var(--sky);flex:0 0 auto;text-align:right}
   .row .vw small{display:block;color:var(--dim);font-size:9px;letter-spacing:.08em}
+  /* Viewer count flips Twitch-purple + clickable once someone's sample
+     is at/above the Partner threshold — links out to their progress card.
+     Sits inside the row's own <a> (to the stream), so this is a plain
+     span with a delegated click handler, not a nested <a>. */
+  .partner-hot{color:var(--twitch)!important;cursor:pointer;
+    text-decoration:underline dotted;text-underline-offset:2px;}
+  .partner-hot:hover{color:var(--twitch-soft)!important}
+  a.pvw.partner-hot{color:var(--twitch);text-decoration:none;display:inline-block}
+  a.pvw.partner-hot:hover{color:var(--twitch-soft);text-decoration:underline dotted}
 
   /* Twitch Partner progress watch — appears whenever anyone in the
      family has banked qualifying days or is currently live above the
@@ -599,6 +608,10 @@
   var AVATARS_URL = WORKER.replace(/\/+$/, "") + "/avatars";
   var ACTIVITY_URL = WORKER.replace(/\/+$/, "") + "/activity";
   var PARTNER_URL = WORKER.replace(/\/+$/, "") + "/partner-progress";
+  // Keep in sync with PARTNER_VIEWER_THRESHOLD in worker.js — used here
+  // just to color/link a live viewer count without waiting on a separate
+  // /partner-progress fetch (the two run on independent poll cycles).
+  var PARTNER_VIEWER_THRESHOLD = 75;
   var REFRESH_MS = 60000;
   // Profile pics + display names for the whole roster, fetched once from the
   // Worker's /avatars route (cached daily server-side). Populated on load;
@@ -863,7 +876,13 @@
     // stuck platform flag. Not shown for the warming state itself (redundant).
     var confirmedLine = (e.encoderConfirmed && !e.warming)
       ? '<p class="pconfirmed">✓ Mushbox confirmed online</p>' : '';
-    var viewersLine = e.warming ? '' : ('<p class="pvw">'+fmtViewers(e.viewers)+' watching</p>');
+    // Twitch-only, at/above the Partner viewer threshold: swap the plain
+    // viewer line for a real link out to the progress card (safe here —
+    // unlike the sidebar row, this isn't nested inside another <a>).
+    var popupPartnerHot = !e.warming && e.platform === 'twitch' && (+e.viewers||0) >= PARTNER_VIEWER_THRESHOLD;
+    var viewersLine = e.warming ? '' : (popupPartnerHot
+      ? '<a class="pvw partner-hot" href="partner.html?login='+encodeURIComponent(e.login||e.person)+'" target="_blank" rel="noopener" title="At/above the Twitch Partner viewer threshold — tap to see progress">'+fmtViewers(e.viewers)+' watching · 🏆 progress ▸</a>'
+      : ('<p class="pvw">'+fmtViewers(e.viewers)+' watching</p>'));
     var watchLabel = e.warming ? 'View channel ▸' : 'Watch live ▸';
     // Telemetry line — bitrate + temp from the Belabox encoder. Only
     // shown when at least one field is present; can be null/partial
@@ -1278,13 +1297,38 @@
       var pin = e.source==='title' ? '<span class="pin">📍</span> ' : '';
       var telStr = telemetryText(e);
       var telLine = telStr ? '<span class="tel">📡 '+telStr+'</span>' : '';
+      // Twitch-only, and only once the current sample is at/above the
+      // Partner viewer threshold — turns purple + links out to the
+      // progress card instead of the stream itself. A plain span (not a
+      // real nested <a> — the whole row is already one) with its own
+      // click listener attached below, right after this row's innerHTML
+      // is set.
+      var isPartnerHot = e.platform === 'twitch' && (+e.viewers||0) >= PARTNER_VIEWER_THRESHOLD;
+      var vwNum = isPartnerHot
+        ? '<span class="partner-hot" data-partnerlogin="'+esc(e.login||e.person)+'" title="At/above the Twitch Partner viewer threshold — tap to see progress">'+fmtViewers(e.viewers)+'</span>'
+        : fmtViewers(e.viewers);
       row.innerHTML =
         '<span class="beacon-mini"></span>'
         + '<span class="info"><span class="nm">'+esc(e.name)+'</span>' + mobileTag(e.login || e.person)
         + '<span class="sub">'+pin+esc(e.label) + (e.cat ? ' · '+esc(e.cat) : '') +'</span>'
         + telLine
         + '</span>'
-        + '<span class="vw">'+fmtViewers(e.viewers)+'<small>WATCHING</small></span>';
+        + '<span class="vw">'+vwNum+'<small>WATCHING</small></span>';
+      if(isPartnerHot){
+        // Attached directly (row is a fresh element each render, no need
+        // for delegation) so stopPropagation reliably runs BEFORE the
+        // row's own click listener below — otherwise trackClick() would
+        // still log a stream click-through even though we're navigating
+        // to the progress card instead.
+        var hotEl = row.querySelector('.partner-hot');
+        if(hotEl){
+          hotEl.addEventListener('click', function(ev){
+            ev.preventDefault();
+            ev.stopPropagation();
+            window.open('partner.html?login=' + encodeURIComponent(e.login || e.person), '_blank', 'noopener');
+          });
+        }
+      }
       row.addEventListener('mouseenter', function(){ mk.openPopup(); });
       row.addEventListener('click', function(){ trackClick(e.login, e.platform, 'sidebar'); });
       list.appendChild(row);
