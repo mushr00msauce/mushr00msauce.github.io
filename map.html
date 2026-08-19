@@ -214,6 +214,39 @@
   @media (max-width:720px){
     .console{top:10px;left:10px}
     .live-list{left:10px;bottom:10px;max-height:32vh}
+
+    /* Mobile drawer: both cards start slid off-screen to the left,
+       leaving only their pull-tab visible — same idea as the little
+       arrow iOS leaves when you swipe something off the edge. Tapping
+       the tab (or tapping the map) slides the card back in/out. */
+    .console,.live-list{
+      transform:translateX(calc(-100% - 20px));
+      transition:transform .32s cubic-bezier(.4,0,.2,1);
+    }
+    .console.mb-open,.live-list.mb-open{transform:translateX(0)}
+  }
+  .drawer-tab{display:none}
+  @media (max-width:720px){
+    .drawer-tab{
+      display:flex;align-items:center;justify-content:center;
+      position:fixed;z-index:1001;left:0;width:26px;height:52px;
+      background:var(--panel);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+      border:1px solid var(--edge);border-left:none;border-radius:0 14px 14px 0;
+      box-shadow:0 12px 30px -18px rgba(0,0,0,.85);
+      padding:0;cursor:pointer;
+      transition:left .32s cubic-bezier(.4,0,.2,1);
+    }
+    #consoleTab{top:10px}
+    #listTab{bottom:10px}
+    .drawer-tab .drawer-arrow{
+      font-size:17px;line-height:1;color:var(--sky);
+      display:inline-block;transition:transform .32s ease;
+    }
+    /* When open, the tab slides along to sit flush against the card's
+       right edge (same width formula as .console/.live-list) and its
+       arrow flips to point back the other way. */
+    .drawer-tab.is-open{left:calc(10px + min(340px,calc(100vw - 28px)))}
+    .drawer-tab.is-open .drawer-arrow{transform:rotate(180deg)}
   }
   @media (prefers-reduced-motion:reduce){
     .beacon .ring{display:none}
@@ -246,6 +279,7 @@
   html.embed .console,
   html.embed .live-list,
   html.embed .backbtn,
+  html.embed .drawer-tab,
   html.embed .leaflet-control-zoom{display:none!important}
   html.embed .leaflet-control-attribution{font-size:8px;opacity:.5;padding:0 3px}
 </style>
@@ -290,8 +324,10 @@
   <label class="toggle"><input type="checkbox" id="showOff" checked> Show offline home bases</label>
   <label class="toggle"><input type="checkbox" id="soundOn" checked> Sound on new live</label>
 </div>
+<button class="drawer-tab" id="consoleTab" type="button" aria-label="Show live map stats" aria-controls="console" aria-expanded="false"><span class="drawer-arrow" aria-hidden="true">&rsaquo;</span></button>
 
 <div class="live-list" id="liveList"></div>
+<button class="drawer-tab" id="listTab" type="button" aria-label="Show live streamer list" aria-controls="liveList" aria-expanded="false"><span class="drawer-arrow" aria-hidden="true">&rsaquo;</span></button>
 
 <script>
 (function(){
@@ -1213,6 +1249,36 @@
       .then(function(d){ if(d){ AVATARS = d.avatars || {}; NAMES = d.names || {}; } })
       .catch(function(){ /* offline cards just fall back to name-only */ });
   }
+
+  // Mobile drawer tabs — console + live-list start slid off-screen
+  // (via CSS, @media max-width:720px) with just this little tab peeking
+  // out. Tap the tab to slide the card in; tap it again (or tap the
+  // map) to slide it back out.
+  (function(){
+    var drawers = [
+      { card: document.getElementById('console'),  tab: document.getElementById('consoleTab') },
+      { card: document.getElementById('liveList'), tab: document.getElementById('listTab') }
+    ];
+    function setOpen(d, open){
+      if(!d.card || !d.tab) return;
+      d.card.classList.toggle('mb-open', open);
+      d.tab.classList.toggle('is-open', open);
+      d.tab.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    drawers.forEach(function(d){
+      if(!d.tab) return;
+      d.tab.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        setOpen(d, !d.card.classList.contains('mb-open'));
+      });
+    });
+    var mapEl = document.getElementById('map');
+    if(mapEl){
+      mapEl.addEventListener('click', function(){
+        drawers.forEach(function(d){ setOpen(d, false); });
+      });
+    }
+  })();
 
   renderOffline(true);
   load();
