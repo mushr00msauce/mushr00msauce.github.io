@@ -618,6 +618,12 @@
   // just to color/link a live viewer count without waiting on a separate
   // /partner-progress fetch (the two run on independent poll cycles).
   var PARTNER_VIEWER_THRESHOLD = 75;
+  // Note: the sidebar/popup viewer-count highlight below lights up purely
+  // on viewer count — including for logins already excluded from the
+  // Partner Watch panel (ALREADY_PARTNERED in worker.js). That's
+  // intentional: it still clicks through to partner.html, which shows a
+  // distinct "already a Partner" state for them instead of hiding the
+  // highlight entirely.
   var REFRESH_MS = 60000;
   // Profile pics + display names for the whole roster, fetched once from the
   // Worker's /avatars route (cached daily server-side). Populated on load;
