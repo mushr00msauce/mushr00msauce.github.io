@@ -75,6 +75,8 @@
   .activityfeed .actrow b{color:var(--sky);font-weight:600}
   .activityfeed .actrow .actago{color:var(--dim);opacity:.75}
   .activityfeed:empty{display:none}
+  .actdot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--sky);
+    vertical-align:middle;margin:0 7px 2px 1px;flex:0 0 auto;}
   .livedot,.mushroomdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#39507f;flex:0 0 auto;align-self:center;}
   .stat.is-live .livedot{background:var(--sky);box-shadow:0 0 0 0 rgba(77,184,255,.7);animation:ping 1.8s ease-out infinite;}
   .stat.mushbox.is-live .mushroomdot{background:var(--amber);box-shadow:0 0 0 0 rgba(245,166,35,.7);animation:pingAmber 1.8s ease-out infinite;}
@@ -1001,7 +1003,7 @@
     var el = document.getElementById('activityFeed');
     if(!events || !events.length){ el.innerHTML = ''; return; }
     el.innerHTML = events.slice(0, 5).map(function(ev){
-      return '<div class="actrow">🔴 <b>' + esc(ev.name || ev.login) + '</b> went live · '
+      return '<div class="actrow"><span class="actdot"></span><b>' + esc(ev.name || ev.login) + '</b> went live · '
         + '<span class="actago">' + relTime(ev.at) + '</span></div>';
     }).join('');
   }
