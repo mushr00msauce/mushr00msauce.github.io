@@ -459,8 +459,21 @@ No lines at all          →  neither is currently detected — check it's plugg
     <div class="step">
       <div class="step-num">11</div>
       <div class="step-body">
+        <div class="step-title">Hide the Tailscale interface from belaUI</div>
+        <div class="step-text">belaUI has no built-in way to exclude a specific interface from its connections list — it just shows whatever's active. Bringing Tailscale down removes <code class="inline">tailscale0</code> from the system entirely, so it disappears from belaUI right away. Run this in the same SSH session, right before telling the streamer they can close the window:</div>
+        <div class="code-block">
+          <div class="code-top"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>sudo tailscale down</pre>
+        </div>
+        <div class="step-text">Tailscale stays installed — if you need back in later, the streamer just SSHs in locally again and runs <code class="inline">tailscale up</code>, no reinstall needed.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">12</div>
+      <div class="step-body">
         <div class="step-title">Clean up (optional)</div>
-        <div class="step-text">If this was one-off access, remove their device from your tailnet: <a href="https://login.tailscale.com/admin/machines" target="_blank">login.tailscale.com/admin/machines</a> → find device → remove.</div>
+        <div class="step-text">If this was one-off access and you don't want the device lingering in your tailnet at all, remove it: <a href="https://login.tailscale.com/admin/machines" target="_blank">login.tailscale.com/admin/machines</a> → find device → remove.</div>
       </div>
     </div>
   </section>
