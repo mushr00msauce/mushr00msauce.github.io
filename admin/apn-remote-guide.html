@@ -306,15 +306,37 @@
     <p class="part-sub">You already have their local IP and SSH password from their belaUI dashboard — no need to make them dig for it.</p>
 
     <div class="msg-block">
-<span class="tag">Copy / paste to streamer</span>Hey, need you to SSH into your Mushbox for a sec:
+<span class="tag">Copy / paste to streamer</span>Hey, need you to SSH into your Mushbox for a sec. Instructions below depending on what you've got:
 
-1. On your phone or laptop (same WiFi as the box), open an SSH app — iOS: "Blink Shell" (App Store), Android: "ConnectBot" (Play Store, free, no account needed), laptop: Terminal (Mac) or Windows Terminal
-2. Connect with: ssh user@[IP FROM BELAUI]
-3. Password: [PASSWORD FROM BELAUI]
-4. Once connected, paste this exactly and hit enter:
+--- iPhone/iPad ---
+1. Download "Shellfish" from the App Store (SSH & file browser, free)
+2. Open it, tap "+" to add a new connection
+3. Host: [ask mushr00m for IP]   Username: user
+4. Tap connect, it'll ask for a password the first time — enter: [ask mushr00m for password]
+5. Open the terminal/console view within the connection — you should land on a prompt like user@belabox:~$
+
+--- Android ---
+1. Download "ConnectBot" from the Play Store (free, no account needed)
+2. Open it, tap the "+" in the bottom right
+3. Type: user@[ask mushr00m for IP]  then tap the entry it creates
+4. First time connecting it'll ask to trust the host key — tap Yes
+5. Enter the password when prompted: [ask mushr00m for password]
+6. You should land on a black screen with a prompt like user@belabox:~$
+
+--- Laptop (Mac) ---
+1. Open Spotlight (Cmd+Space), type "Terminal", hit enter
+2. Type: ssh user@[ask mushr00m for IP]  and hit enter
+3. Enter the password when prompted: [ask mushr00m for password]
+
+--- Laptop (Windows) ---
+1. Click Start, type "Windows Terminal" or "PowerShell", open it
+2. Type: ssh user@[ask mushr00m for IP]  and hit enter
+3. Enter the password when prompted: [ask mushr00m for password]
+
+Once you're at that black screen prompt, paste this exactly and hit enter:
    wget -qO- https://tailscale.com/install.sh | sh &amp;&amp; sudo tailscale up
-5. It'll print a link starting with https://login.tailscale.com/a/... — send me that exact link
-6. Leave the SSH session open until I say you're good to close it
+
+It'll print a link starting with https://login.tailscale.com/a/... — send me that exact link, and leave the window open until I say you're good to close it.
     </div>
   </section>
 
