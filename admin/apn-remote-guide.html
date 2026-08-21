@@ -382,30 +382,44 @@ It'll print a link starting with https://login.tailscale.com/a/... — send me t
     <div class="step">
       <div class="step-num">04</div>
       <div class="step-body">
-        <div class="step-title">Check if the script is already installed</div>
+        <div class="step-title">Check whether this box has ever pulled the script before</div>
         <div class="code-block">
           <div class="code-top"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre>ls ~/scripts/change-apn-auto.sh</pre>
+          <pre>[ -d ~/scripts/.git ] &amp;&amp; echo "already cloned — just needs a pull" || echo "never cloned — needs the full clone"</pre>
         </div>
-        <div class="step-text">If it exists, skip to step 06. If not, install it — see <a href="#script">full script below</a>, or run the transfer in step 05.</div>
+        <div class="step-text">This doesn't change whether you run step 05 — you <b style="color:var(--text)">always</b> run it, every session. It just tells you which of the two commands in step 05 applies: the one-time <code class="inline">git clone</code>, or the everyday <code class="inline">git pull</code>. That's the whole point of moving this to GitHub — you're never running a stale copy of the script.</div>
       </div>
     </div>
 
     <div class="step">
       <div class="step-num">05</div>
       <div class="step-body">
-        <div class="step-title">Install the script (only if missing)</div>
-        <div class="step-text">Don't paste the script as a heredoc into an open SSH session — large multi-line pastes (especially ones with backslash line-continuations) reliably get scrambled by both browser-based consoles and PowerShell's paste handling. Instead, download <code class="inline">change-apn-auto.sh</code> from the <a href="#script">Full script</a> section below to your own machine, then copy it over directly — no paste involved:</div>
+        <div class="step-title">Install or update the script (GitHub is now the source of truth)</div>
+        <div class="step-text">The scripts live in a GitHub repo instead of being pasted or scp'd by hand each time. That means fixing a bug once fixes it everywhere — every box just pulls the latest version instead of you having to remember which units are running which copy. Swap in your real repo URL below (this assumes <code class="inline">mushr00msauce/mushbox-apn-scripts</code> — update it if that's not the actual name):</div>
+
+        <div class="step-text"><b style="color:var(--text)">First time on this box</b> — clone it fresh:</div>
         <div class="code-block">
-          <div class="code-top"><span>bash — from your machine</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre>scp change-apn-auto.sh user@&lt;their-device-hostname&gt;:/home/user/scripts/change-apn-auto.sh</pre>
+          <div class="code-top"><span>bash — first-time clone</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="var">git clone https://github.com/mushr00msauce/mushbox-apn-scripts.git ~/scripts</span>
+chmod +x ~/scripts/change-apn-auto.sh</pre>
         </div>
-        <div class="step-text">(create the <code class="inline">scripts</code> folder first with <code class="inline">tailscale ssh user@&lt;hostname&gt; "mkdir -p ~/scripts"</code> if it doesn't exist yet). Then SSH in and set the permission:</div>
+
+        <div class="step-text"><b style="color:var(--text)">Every other time</b> — pull whatever's changed since the last visit:</div>
         <div class="code-block">
-          <div class="code-top"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre>chmod +x ~/scripts/change-apn-auto.sh</pre>
+          <div class="code-top"><span>bash — update</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="var">cd ~/scripts &amp;&amp; git pull</span></pre>
+        </div>
+
+        <div class="step-text">If <code class="inline">~/scripts</code> already exists but isn't a git repo (e.g. it still has the old hand-pasted copy from before this was on GitHub), move the old one aside first so the clone doesn't collide with it:</div>
+        <div class="code-block">
+          <div class="code-top"><span>bash — one-time migration</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>mv ~/scripts ~/scripts-old &amp;&amp; git clone https://github.com/mushr00msauce/mushbox-apn-scripts.git ~/scripts</pre>
         </div>
       </div>
+    </div>
+
+    <div class="callout">
+      <b>Public vs. private repo:</b> the script itself has no secrets baked in — it grabs each modem's security token live on every run, so there's nothing sensitive to leak by making the repo public. What it does expose is the admin-panel endpoints and form field names for the USB800/USB730L. If you're fine with that being visible, a public repo keeps the <code class="inline">git clone</code> command above exactly as written. If you'd rather keep it private, the clone command needs auth — either <code class="inline">git clone https://&lt;your-github-token&gt;@github.com/mushr00msauce/mushbox-apn-scripts.git ~/scripts</code>, or set up a deploy key on the box ahead of time and use the <code class="inline">git@github.com:...</code> SSH form instead.
     </div>
 
     <div class="step">
@@ -507,9 +521,12 @@ It'll print a link starting with https://login.tailscale.com/a/... — send me t
       <span class="part-tag">Install</span>
       <h2>Full script — one-shot installer</h2>
     </div>
-    <p class="part-sub">Save this as <code class="inline">change-apn-auto.sh</code> on your own machine and transfer it with <code class="inline">scp</code> (see step 05) — don't paste it directly into an open SSH session, large pastes get scrambled. Auto-detects whatever modem(s) are plugged in; no need to specify a keyword per model.</p>
+    <p class="part-sub">As of this version, <a href="https://github.com/mushr00msauce/mushbox-apn-scripts" target="_blank">the GitHub repo</a> is the actual source of truth — step 05 pulls straight from it, and that's the copy that stays current. What's pasted below is a fallback mirror for the rare case a box can't reach GitHub (e.g. hotel/venue WiFi blocking it) and you need to <code class="inline">scp</code> it over by hand instead: don't paste it directly into an open SSH session, large pastes get scrambled. Auto-detects whatever modem(s) are plugged in; no need to specify a keyword per model.</p>
+    <div class="callout warn">
+      <b>Keep this in sync manually.</b> This is a copy-paste snapshot, not a live embed — if you update the script in the repo, remember to paste the new version in here too, or this fallback will quietly drift out of date.
+    </div>
     <div class="code-block">
-      <div class="code-top"><span>change-apn-auto.sh</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <div class="code-top"><span>change-apn-auto.sh — fallback scp target: user@&lt;hostname&gt;:/home/user/scripts/change-apn-auto.sh</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
       <pre id="fullscript">#!/bin/bash
 # change-apn-auto.sh
 #
@@ -733,7 +750,7 @@ done
 </div>
 
 <footer>
-  mushbox internal — remote apn runbook — v3, aug 21 2026 — switched to change-apn-auto.sh: auto-detects modem model + interface per box instead of assuming eth1=usb800/eth2=usb730l, so it works on any combo (single, dual-same-model, or mixed). Adds per-interface policy routing to disambiguate multiple modems sharing a gateway IP (e.g. dual 730L), and refuses a blanket APN write across mixed carrier models — use --usb800=/--usb730l= flags for boxes with one of each. v2 fixed usb730l silent-revert bug (disconnect/reconnect before write), added user@ vs root@ warning, switched installer to scp transfer after heredoc paste corruption. last verified against usb800 (att/firstnet) &amp; usb730l (verizon) firmware.
+  mushbox internal — remote apn runbook — v4, aug 21 2026 — moved change-apn-auto.sh + change-apn.sh to a GitHub repo (mushr00msauce/mushbox-apn-scripts) as the source of truth; step 05 now git clone (first visit) / git pull (every visit after) instead of scp, so every box always runs the latest version and a fix only needs to be made once. scp install kept as documented fallback for boxes that can't reach GitHub. Embedded script in the "Full script" section is now a manually-synced mirror, not the live copy — update it by hand if the repo changes. v3 switched to change-apn-auto.sh: auto-detects modem model + interface per box instead of assuming eth1=usb800/eth2=usb730l, so it works on any combo (single, dual-same-model, or mixed). Adds per-interface policy routing to disambiguate multiple modems sharing a gateway IP (e.g. dual 730L), and refuses a blanket APN write across mixed carrier models — use --usb800=/--usb730l= flags for boxes with one of each. v2 fixed usb730l silent-revert bug (disconnect/reconnect before write), added user@ vs root@ warning, switched installer to scp transfer after heredoc paste corruption. last verified against usb800 (att/firstnet) &amp; usb730l (verizon) firmware.
 </footer>
 
 <script>
