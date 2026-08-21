@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Remote APN Change — Mushbox Admin</title>
+<style>
+  :root{
+    --bg: #0d1210;
+    --panel: #131a17;
+    --panel-2: #0f1512;
+    --line: #223028;
+    --moss: #6fae7c;
+    --moss-bright: #8fd39e;
+    --spore: #b98ce0;
+    --text: #dfe8e2;
+    --text-dim: #8fa298;
+    --warn: #e0a458;
+    --danger: #e0705c;
+    --mono: "JetBrains Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    --sans: "Inter","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(111,174,124,0.10), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 10%, rgba(185,140,224,0.07), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    line-height:1.55;
+    padding-bottom:80px;
+  }
+  a{color:var(--moss-bright);}
+
+  header.top{
+    padding:56px 24px 40px;
+    max-width:900px;
+    margin:0 auto;
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--spore);
+    margin-bottom:14px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:6px;height:6px;border-radius:50%;
+    background:var(--spore);
+    box-shadow:0 0 8px var(--spore);
+  }
+  h1{
+    font-size:clamp(28px,4vw,40px);
+    margin:0 0 12px;
+    letter-spacing:-0.01em;
+    font-weight:650;
+  }
+  .lede{
+    color:var(--text-dim);
+    font-size:16px;
+    max-width:640px;
+  }
+
+  .wrap{max-width:900px; margin:0 auto; padding:0 24px;}
+
+  .callout{
+    margin:28px 0;
+    padding:16px 18px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:var(--panel);
+    font-size:14px;
+    color:var(--text-dim);
+  }
+  .callout b{color:var(--text);}
+  .callout.warn{border-color:#4a3a22; background:rgba(224,164,88,0.06);}
+  .callout.warn b{color:var(--warn);}
+
+  section.part{
+    margin-top:56px;
+  }
+  .part-head{
+    display:flex;
+    align-items:baseline;
+    gap:14px;
+    margin-bottom:6px;
+  }
+  .part-tag{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--moss);
+    border:1px solid var(--line);
+    padding:3px 8px;
+    border-radius:999px;
+    white-space:nowrap;
+  }
+  .part-head h2{
+    font-size:22px;
+    margin:0;
+    font-weight:650;
+  }
+  .part-sub{
+    color:var(--text-dim);
+    font-size:14px;
+    margin:0 0 24px;
+  }
+
+  .step{
+    display:flex;
+    gap:16px;
+    padding:18px 0;
+    border-top:1px solid var(--line);
+  }
+  .step:last-child{padding-bottom:0;}
+  .step-num{
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--moss-bright);
+    width:26px;
+    flex-shrink:0;
+    padding-top:2px;
+  }
+  .step-body{flex:1; min-width:0;}
+  .step-title{
+    font-weight:600;
+    margin-bottom:6px;
+  }
+  .step-text{
+    color:var(--text-dim);
+    font-size:14.5px;
+    margin-bottom:10px;
+  }
+  .step-text code.inline{
+    font-family:var(--mono);
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:1px 6px;
+    font-size:13px;
+    color:var(--moss-bright);
+  }
+
+  .code-block{
+    position:relative;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+    margin:10px 0;
+  }
+  .code-block .code-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:8px 12px;
+    border-bottom:1px solid var(--line);
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--text-dim);
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+  }
+  .copy-btn{
+    font-family:var(--mono);
+    font-size:11px;
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    border-radius:6px;
+    padding:4px 10px;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .copy-btn:hover{
+    border-color:var(--moss);
+    color:var(--moss-bright);
+  }
+  .copy-btn.copied{
+    border-color:var(--moss-bright);
+    color:var(--moss-bright);
+    background:rgba(111,174,124,0.12);
+  }
+  pre{
+    margin:0;
+    padding:14px 16px;
+    overflow-x:auto;
+    font-family:var(--mono);
+    font-size:13px;
+    line-height:1.6;
+    color:#c9dccf;
+    white-space:pre;
+  }
+  pre .cmt{color:var(--text-dim);}
+  pre .str{color:var(--warn);}
+  pre .var{color:var(--spore);}
+
+  .msg-block{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-left:3px solid var(--spore);
+    border-radius:8px;
+    padding:16px 18px;
+    font-size:14px;
+    color:var(--text-dim);
+    margin:14px 0;
+    white-space:pre-wrap;
+  }
+  .msg-block .tag{
+    font-family:var(--mono);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--spore);
+    display:block;
+    margin-bottom:8px;
+  }
+
+  .modem-ref{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin-top:14px;
+  }
+  @media (max-width:640px){ .modem-ref{grid-template-columns:1fr;} }
+  .modem-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px 18px;
+  }
+  .modem-card h3{
+    margin:0 0 10px;
+    font-size:15px;
+    font-family:var(--mono);
+    color:var(--moss-bright);
+  }
+  .modem-card dl{margin:0; font-size:13px;}
+  .modem-card dt{color:var(--text-dim); display:inline;}
+  .modem-card dd{margin:0 0 6px 0; display:inline; color:var(--text);}
+  .modem-card .kv{display:block; margin-bottom:4px;}
+
+  footer{
+    max-width:900px;
+    margin:64px auto 0;
+    padding:24px 24px 0;
+    border-top:1px solid var(--line);
+    color:var(--text-dim);
+    font-size:12.5px;
+    font-family:var(--mono);
+  }
+
+  .toc{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:20px;
+  }
+  .toc a{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--text-dim);
+    border:1px solid var(--line);
+    padding:6px 12px;
+    border-radius:999px;
+    text-decoration:none;
+    transition:all .15s ease;
+  }
+  .toc a:hover{color:var(--moss-bright); border-color:var(--moss);}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="eyebrow">Mushbox Internal · Field Ops</div>
+  <h1>Remote APN Change</h1>
+  <p class="lede">
+    Change a streamer's cellular APN over Tailscale, no physical access needed and no laptop required on their end. Works for both the AT&amp;T/FirstNet USB800 and the Verizon USB730L.
+  </p>
+  <div class="toc">
+    <a href="#part1">1. Message to send</a>
+    <a href="#part2">2. Your steps</a>
+    <a href="#reference">Modem reference</a>
+    <a href="#script">Full script</a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="callout warn">
+    <b>Before you touch anything —</b> run the script with no APN argument first on whichever modem you're changing. It only reads and prints the current value; nothing is written unless you explicitly pass a new APN as the second argument. Get in the habit of checking first, every time.
+  </div>
+
+  <section class="part" id="part1">
+    <div class="part-head">
+      <span class="part-tag">Part 1</span>
+      <h2>Message to send the streamer</h2>
+    </div>
+    <p class="part-sub">You already have their local IP and SSH password from their belaUI dashboard — no need to make them dig for it.</p>
+
+    <div class="msg-block">
+<span class="tag">Copy / paste to streamer</span>Hey, need you to SSH into your Mushbox for a sec:
+
+1. On your phone or laptop (same WiFi as the box), open an SSH app — iOS/Android: "Termius" or "JuiceSSH" from the app store, laptop: Terminal (Mac) or Windows Terminal
+2. Connect with: ssh user@[IP FROM BELAUI]
+3. Password: [PASSWORD FROM BELAUI]
+4. Once connected, paste this exactly and hit enter:
+   wget -qO- https://tailscale.com/install.sh | sh &amp;&amp; sudo tailscale up
+5. It'll print a link starting with https://login.tailscale.com/a/... — send me that exact link
+6. Leave the SSH session open until I say you're good to close it
+    </div>
+  </section>
+
+  <section class="part" id="part2">
+    <div class="part-head">
+      <span class="part-tag">Part 2</span>
+      <h2>What you do</h2>
+    </div>
+    <p class="part-sub">Once their link lands in your inbox.</p>
+
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-body">
+        <div class="step-title">Approve the device</div>
+        <div class="step-text">Open the link they sent you, logged into your own Tailscale account. This adds their box to <b style="color:var(--text)">your</b> tailnet.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-body">
+        <div class="step-title">Confirm it shows up</div>
+        <div class="step-text">Check <a href="https://login.tailscale.com/admin/machines" target="_blank">login.tailscale.com/admin/machines</a> for the new device, note its hostname.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-body">
+        <div class="step-title">Connect</div>
+        <div class="code-block">
+          <div class="code-top"><span>ssh</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="var">tailscale ssh user@&lt;their-device-hostname&gt;</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-body">
+        <div class="step-title">Check which modems they actually have</div>
+        <div class="step-text">Some older builds only have the USB730L, or a different mix. Don't assume.</div>
+        <div class="code-block">
+          <div class="code-top"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>lsusb | grep -i "1410:"</pre>
+        </div>
+        <div class="msg-block" style="margin-top:8px;">
+<span class="tag">Reading the output</span>1410:9032 or 1410:9030  →  USB730L present  →  use "usb730l"
+1410:b020               →  USB800 present   →  use "usb800"
+Both lines               →  they have one of each
+No lines at all          →  neither is currently detected — check it's plugged in
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">05</div>
+      <div class="step-body">
+        <div class="step-title">Confirm interface mapping</div>
+        <div class="step-text">Older builds may enumerate <code class="inline">eth1</code>/<code class="inline">eth2</code> differently — worth a sanity check.</div>
+        <div class="code-block">
+          <div class="code-top"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>dmesg | grep -i "9032\|9030\|b020" | tail -10</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">06</div>
+      <div class="step-body">
+        <div class="step-title">Check if the script is already installed</div>
+        <div class="code-block">
+          <div class="code-top"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>ls ~/scripts/change-apn.sh</pre>
+        </div>
+        <div class="step-text">If it exists, skip to step 08. If not, install it — see <a href="#script">full script below</a>, or run the one-shot installer in step 07.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">07</div>
+      <div class="step-body">
+        <div class="step-title">Install the script (only if missing)</div>
+        <div class="step-text">Paste the whole block from the <a href="#script">Full script</a> section below as one paste.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">08</div>
+      <div class="step-body">
+        <div class="step-title">Check current APN — read only, nothing changes</div>
+        <div class="code-block">
+          <div class="code-top"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="var">~/scripts/change-apn.sh usb800</span>
+<span class="var">~/scripts/change-apn.sh usb730l</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">09</div>
+      <div class="step-body">
+        <div class="step-title">Set the real APN</div>
+        <div class="step-text">Replace <code class="inline">THEACTUALAPN</code> with the real value. Double-check it before hitting enter — this is a live write.</div>
+        <div class="code-block">
+          <div class="code-top"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="var">~/scripts/change-apn.sh usb800 </span><span class="str">THEACTUALAPN</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">10</div>
+      <div class="step-body">
+        <div class="step-title">Verify</div>
+        <div class="step-text">Rerun step 08 with no second argument — confirm the new value stuck.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">11</div>
+      <div class="step-body">
+        <div class="step-title">Clean up (optional)</div>
+        <div class="step-text">If this was one-off access, remove their device from your tailnet: <a href="https://login.tailscale.com/admin/machines" target="_blank">login.tailscale.com/admin/machines</a> → find device → remove.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="part" id="reference">
+    <div class="part-head">
+      <span class="part-tag">Reference</span>
+      <h2>Modem quick reference</h2>
+    </div>
+    <div class="modem-ref">
+      <div class="modem-card">
+        <h3>USB800 — AT&amp;T / FirstNet</h3>
+        <dl>
+          <span class="kv"><dt>Interface: </dt><dd>eth1</dd></span>
+          <span class="kv"><dt>Admin gateway: </dt><dd>Dynamic, via <code>ip route show dev eth1</code></dd></span>
+          <span class="kv"><dt>Host header needed: </dt><dd>att.manager</dd></span>
+          <span class="kv"><dt>Form field: </dt><dd>NetworksProfileAPN</dd></span>
+          <span class="kv"><dt>Script keyword: </dt><dd>usb800</dd></span>
+        </dl>
+      </div>
+      <div class="modem-card">
+        <h3>USB730L — Verizon</h3>
+        <dl>
+          <span class="kv"><dt>Interface: </dt><dd>eth2</dd></span>
+          <span class="kv"><dt>Admin gateway: </dt><dd>192.168.2.1 (fixed)</dd></span>
+          <span class="kv"><dt>Host header needed: </dt><dd>none</dd></span>
+          <span class="kv"><dt>Form field: </dt><dd>NetworksFourGLTEAPN</dd></span>
+          <span class="kv"><dt>Script keyword: </dt><dd>usb730l</dd></span>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="part" id="script">
+    <div class="part-head">
+      <span class="part-tag">Install</span>
+      <h2>Full script — one-shot installer</h2>
+    </div>
+    <p class="part-sub">Paste this entire block as a single paste on the streamer's box. Creates <code class="inline">~/scripts/change-apn.sh</code> and makes it executable.</p>
+    <div class="code-block">
+      <div class="code-top"><span>bash — full installer</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre id="fullscript">mkdir -p ~/scripts
+cat &gt; ~/scripts/change-apn.sh &lt;&lt; 'SCRIPT_EOF'
+#!/bin/bash
+<span class="cmt"># change-apn.sh - Remotely read or change the APN on the Mushbox's USB800 or USB730L modem
+# Usage:
+#   ./change-apn.sh usb800  [new-apn]     # AT&amp;T/FirstNet modem on eth1
+#   ./change-apn.sh usb730l [new-apn]     # Verizon modem on eth2
+# If new-apn is omitted, just prints the current APN without changing anything.</span>
+
+set -e
+
+MODEM="$1"
+NEW_APN="$2"
+
+if [ -z "$MODEM" ]; then
+    echo "Usage: $0 &lt;usb800|usb730l&gt; [new-apn]"
+    exit 1
+fi
+
+case "$MODEM" in
+    usb800)
+        IFACE="eth1"
+        GATEWAY=$(ip route show dev "$IFACE" 2&gt;/dev/null | grep default | awk '{print $3}')
+        LOCAL_IP=$(ip route show dev "$IFACE" 2&gt;/dev/null | grep "src" | awk '{print $NF}')
+        if [ -z "$GATEWAY" ] || [ -z "$LOCAL_IP" ]; then
+            echo "ERROR: Couldn't determine gateway/local IP for $IFACE. Is the modem attached to the network right now?"
+            exit 1
+        fi
+        HOST_HEADER="att.manager"
+        BASE_URL="http://$GATEWAY"
+        FIELD="NetworksProfileAPN"
+        COOKIE_JAR="/tmp/apn_cookies_usb800.txt"
+        PAGE_FILE="/tmp/apn_usb800.html"
+        ;;
+    usb730l)
+        IFACE="eth2"
+        LOCAL_IP=$(ip -4 addr show "$IFACE" 2&gt;/dev/null | grep inet | awk '{print $2}' | cut -d/ -f1)
+        if [ -z "$LOCAL_IP" ]; then
+            echo "ERROR: Couldn't determine local IP for $IFACE. Is the modem attached to the network right now?"
+            exit 1
+        fi
+        GATEWAY="192.168.2.1"
+        HOST_HEADER=""
+        BASE_URL="http://$GATEWAY"
+        FIELD="NetworksFourGLTEAPN"
+        COOKIE_JAR="/tmp/apn_cookies_usb730l.txt"
+        PAGE_FILE="/tmp/apn_usb730l.html"
+        ;;
+    *)
+        echo "ERROR: Unknown modem '$MODEM'. Use 'usb800' or 'usb730l'."
+        exit 1
+        ;;
+esac
+
+echo "Modem:    $MODEM"
+echo "Iface:    $IFACE"
+echo "Local IP: $LOCAL_IP"
+echo "Gateway:  $GATEWAY"
+echo ""
+
+HOST_ARGS=()
+if [ -n "$HOST_HEADER" ]; then
+    HOST_ARGS=(--header="Host: $HOST_HEADER")
+fi
+
+wget -q -T 8 -O "$PAGE_FILE" --save-cookies "$COOKIE_JAR" --keep-session-cookies \
+    --bind-address="$LOCAL_IP" "${HOST_ARGS[@]}" "$BASE_URL/networks/"
+
+TOKEN=$(grep -oP "name=\"gSecureToken\".*?value=\"\K[^\"]+" "$PAGE_FILE" | head -1)
+CURRENT_APN=$(grep -oP "name=\"$FIELD\".*?value=\"\K[^\"]*" "$PAGE_FILE" | head -1)
+
+if [ -z "$TOKEN" ]; then
+    echo "ERROR: Couldn't extract security token. The modem's admin page may be unreachable or its layout changed."
+    exit 1
+fi
+
+echo "Current APN: $CURRENT_APN"
+
+if [ -z "$NEW_APN" ]; then
+    echo "(No new APN given - nothing changed. Pass a value as the 2nd argument to set one.)"
+    exit 0
+fi
+
+echo "Setting APN to: $NEW_APN"
+echo ""
+
+if [ "$MODEM" = "usb800" ]; then
+    RESPONSE=$(wget -q -T 8 -O - --load-cookies "$COOKIE_JAR" --bind-address="$LOCAL_IP" \
+        --header="Host: $HOST_HEADER" --header="Referer: http://$HOST_HEADER/networks/" \
+        --post-data="${FIELD}=${NEW_APN}&amp;NetworksProfileAuthentication=0&amp;NetworksProfileUsername=&amp;NetworksProfilePassword=&amp;gSecureToken=${TOKEN}" \
+        "$BASE_URL/networks/")
+    if echo "$RESPONSE" | grep -q "saved successfully"; then
+        echo "SUCCESS: Changes saved."
+    else
+        echo "WARNING: No success confirmation seen in response. Verify manually."
+    fi
+else
+    RESPONSE=$(wget -q -T 8 -O - --load-cookies "$COOKIE_JAR" --bind-address="$LOCAL_IP" \
+        --header="Referer: $BASE_URL/networks/" \
+        --post-data="${FIELD}=${NEW_APN}&amp;NetworksOtherAPN=&amp;gSecureToken=${TOKEN}" \
+        "$BASE_URL/networks/")
+    echo "$RESPONSE" &gt; "$PAGE_FILE"
+    APPLIED_APN=$(grep -oP "name=\"$FIELD\".*?value=\"\K[^\"]*" "$PAGE_FILE" | head -1)
+    if [ "$APPLIED_APN" = "$NEW_APN" ]; then
+        echo "SUCCESS: APN now shows as '$APPLIED_APN'."
+    else
+        echo "WARNING: Page shows APN as '$APPLIED_APN', expected '$NEW_APN'. Verify manually."
+    fi
+fi
+SCRIPT_EOF
+chmod +x ~/scripts/change-apn.sh</pre>
+    </div>
+  </section>
+
+  <div class="callout">
+    <b>If <code class="inline">~/scripts/change-apn.sh</code> gives "Permission denied"</b> even after <code class="inline">chmod +x</code>, that box's home directory may have <code class="inline">noexec</code> set. Just run it as <code class="inline">bash ~/scripts/change-apn.sh usb800</code> instead — works identically, just invoked through the interpreter directly.
+  </div>
+
+</div>
+
+<footer>
+  mushbox internal — remote apn runbook — last verified against usb800 (att/firstnet) &amp; usb730l (verizon) firmware, aug 2026
+</footer>
+
+<script>
+function copyCode(btn){
+  const block = btn.closest('.code-block');
+  const pre = block.querySelector('pre');
+  const text = pre.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const original = btn.textContent;
+    btn.textContent = 'Copied';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = original;
+      btn.classList.remove('copied');
+    }, 1500);
+  });
+}
+</script>
+
+</body>
+</html>
