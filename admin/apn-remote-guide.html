@@ -282,7 +282,7 @@
   <div class="eyebrow">Mushbox Internal · Field Ops</div>
   <h1>Remote APN Change</h1>
   <p class="lede">
-    Change a streamer's cellular APN over Tailscale, no physical access needed and no laptop required on their end. Works for both the AT&amp;T/FirstNet USB800 and the Verizon USB730L.
+    Change a streamer's cellular APN over Tailscale, no physical access needed and no laptop required on their end. The script auto-detects whatever modem(s) are actually plugged in — one USB800, one USB730L, two of the same, or one of each — so there's no need to know their build's dongle combo ahead of time.
   </p>
   <div class="toc">
     <a href="#part1">1. Message to send</a>
@@ -382,29 +382,28 @@ It'll print a link starting with https://login.tailscale.com/a/... — send me t
     <div class="step">
       <div class="step-num">04</div>
       <div class="step-body">
-        <div class="step-title">Check which modems they actually have</div>
-        <div class="step-text">Some older builds only have the USB730L, or a different mix. Don't assume.</div>
+        <div class="step-title">Check if the script is already installed</div>
         <div class="code-block">
           <div class="code-top"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre>lsusb | grep -i "1410:"</pre>
+          <pre>ls ~/scripts/change-apn-auto.sh</pre>
         </div>
-        <div class="msg-block" style="margin-top:8px;">
-<span class="tag">Reading the output</span>1410:9032 or 1410:9030  →  USB730L present  →  use "usb730l"
-1410:b020               →  USB800 present   →  use "usb800"
-Both lines               →  they have one of each
-No lines at all          →  neither is currently detected — check it's plugged in
-        </div>
+        <div class="step-text">If it exists, skip to step 06. If not, install it — see <a href="#script">full script below</a>, or run the transfer in step 05.</div>
       </div>
     </div>
 
     <div class="step">
       <div class="step-num">05</div>
       <div class="step-body">
-        <div class="step-title">Confirm interface mapping</div>
-        <div class="step-text">Older builds may enumerate <code class="inline">eth1</code>/<code class="inline">eth2</code> differently — worth a sanity check.</div>
+        <div class="step-title">Install the script (only if missing)</div>
+        <div class="step-text">Don't paste the script as a heredoc into an open SSH session — large multi-line pastes (especially ones with backslash line-continuations) reliably get scrambled by both browser-based consoles and PowerShell's paste handling. Instead, download <code class="inline">change-apn-auto.sh</code> from the <a href="#script">Full script</a> section below to your own machine, then copy it over directly — no paste involved:</div>
+        <div class="code-block">
+          <div class="code-top"><span>bash — from your machine</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>scp change-apn-auto.sh user@&lt;their-device-hostname&gt;:/home/user/scripts/change-apn-auto.sh</pre>
+        </div>
+        <div class="step-text">(create the <code class="inline">scripts</code> folder first with <code class="inline">tailscale ssh user@&lt;hostname&gt; "mkdir -p ~/scripts"</code> if it doesn't exist yet). Then SSH in and set the permission:</div>
         <div class="code-block">
           <div class="code-top"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre>dmesg | grep -i "9032\|9030\|b020" | tail -10</pre>
+          <pre>chmod +x ~/scripts/change-apn-auto.sh</pre>
         </div>
       </div>
     </div>
@@ -412,28 +411,29 @@ No lines at all          →  neither is currently detected — check it's plugg
     <div class="step">
       <div class="step-num">06</div>
       <div class="step-body">
-        <div class="step-title">Check if the script is already installed</div>
+        <div class="step-title">Check current APN(s) — read only, nothing changes</div>
+        <div class="step-text">No arguments needed. The script walks every active interface, works out what's plugged into each, and prints the current APN per modem — whatever the combo turns out to be.</div>
         <div class="code-block">
           <div class="code-top"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre>ls ~/scripts/change-apn.sh</pre>
+          <pre><span class="var">~/scripts/change-apn-auto.sh</span></pre>
         </div>
-        <div class="step-text">If it exists, skip to step 08. If not, install it — see <a href="#script">full script below</a>, or run the one-shot installer in step 07.</div>
       </div>
     </div>
 
     <div class="step">
       <div class="step-num">07</div>
       <div class="step-body">
-        <div class="step-title">Install the script (only if missing)</div>
-        <div class="step-text">Don't paste the script as a heredoc into an open SSH session — large multi-line pastes (especially ones with backslash line-continuations) reliably get scrambled by both browser-based consoles and PowerShell's paste handling. Instead, download <code class="inline">change-apn.sh</code> from the <a href="#script">Full script</a> section below to your own machine, then copy it over directly — no paste involved:</div>
+        <div class="step-title">Set the real APN</div>
+        <div class="step-text">Double-check the value before hitting enter — this is a live write. <b style="color:var(--text)">APN values are case-sensitive on some carrier networks</b> — match the carrier's documented casing exactly. Verizon's is lowercase <code class="inline">vzwinternet</code>, even though the modem's own factory default and "Restore Default APN" button use <code class="inline">VZWINTERNET</code>.</div>
+        <div class="step-text">If step 06 showed <b style="color:var(--text)">only one modem model</b> (e.g. dual 730L), a single value applies to all of them:</div>
         <div class="code-block">
-          <div class="code-top"><span>bash — from your machine</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre>scp change-apn.sh user@&lt;their-device-hostname&gt;:/home/user/scripts/change-apn.sh</pre>
+          <div class="code-top"><span>bash — single model on the box</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="var">~/scripts/change-apn-auto.sh </span><span class="str">THEACTUALAPN</span></pre>
         </div>
-        <div class="step-text">(create the <code class="inline">scripts</code> folder first with <code class="inline">tailscale ssh user@&lt;hostname&gt; "mkdir -p ~/scripts"</code> if it doesn't exist yet). Then SSH in and set the permission:</div>
+        <div class="step-text">If step 06 showed <b style="color:var(--text)">one of each</b> (a 730L and an 800), you must pass a value per model — the script refuses a single blanket value here on purpose, since AT&amp;T and Verizon APNs are never the same string and a blind write would misconfigure one of them:</div>
         <div class="code-block">
-          <div class="code-top"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre>chmod +x ~/scripts/change-apn.sh</pre>
+          <div class="code-top"><span>bash — mixed modem box</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre><span class="var">~/scripts/change-apn-auto.sh --usb800=</span><span class="str">ATTAPN</span><span class="var"> --usb730l=</span><span class="str">VZWAPN</span></pre>
         </div>
       </div>
     </div>
@@ -441,37 +441,13 @@ No lines at all          →  neither is currently detected — check it's plugg
     <div class="step">
       <div class="step-num">08</div>
       <div class="step-body">
-        <div class="step-title">Check current APN — read only, nothing changes</div>
-        <div class="code-block">
-          <div class="code-top"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre><span class="var">~/scripts/change-apn.sh usb800</span>
-<span class="var">~/scripts/change-apn.sh usb730l</span></pre>
-        </div>
+        <div class="step-title">Verify</div>
+        <div class="step-text">Rerun step 06 with no arguments — confirm the new value(s) stuck on every modem shown.</div>
       </div>
     </div>
 
     <div class="step">
       <div class="step-num">09</div>
-      <div class="step-body">
-        <div class="step-title">Set the real APN</div>
-        <div class="step-text">Replace <code class="inline">THEACTUALAPN</code> with the real value. Double-check it before hitting enter — this is a live write. <b style="color:var(--text)">APN values are case-sensitive on some carrier networks</b> — match the carrier's documented casing exactly. Verizon's is lowercase <code class="inline">vzwinternet</code>, even though the modem's own factory default and "Restore Default APN" button use <code class="inline">VZWINTERNET</code>.</div>
-        <div class="code-block">
-          <div class="code-top"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre><span class="var">~/scripts/change-apn.sh usb800 </span><span class="str">THEACTUALAPN</span></pre>
-        </div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-num">10</div>
-      <div class="step-body">
-        <div class="step-title">Verify</div>
-        <div class="step-text">Rerun step 08 with no second argument — confirm the new value stuck.</div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-num">11</div>
       <div class="step-body">
         <div class="step-title">Hide the Tailscale interface from belaUI</div>
         <div class="step-text">belaUI has no built-in way to exclude a specific interface from its connections list — it just shows whatever's active. Bringing Tailscale down removes <code class="inline">tailscale0</code> from the system entirely, so it disappears from belaUI right away. Run this in the same SSH session, right before telling the streamer they can close the window:</div>
@@ -484,7 +460,7 @@ No lines at all          →  neither is currently detected — check it's plugg
     </div>
 
     <div class="step">
-      <div class="step-num">12</div>
+      <div class="step-num">10</div>
       <div class="step-body">
         <div class="step-title">Clean up (optional)</div>
         <div class="step-text">If this was one-off access and you don't want the device lingering in your tailnet at all, remove it: <a href="https://login.tailscale.com/admin/machines" target="_blank">login.tailscale.com/admin/machines</a> → find device → remove.</div>
@@ -497,28 +473,32 @@ No lines at all          →  neither is currently detected — check it's plugg
       <span class="part-tag">Reference</span>
       <h2>Modem quick reference</h2>
     </div>
+    <p class="part-sub">The script auto-detects both interface and model — this table is for reference only, you don't need to feed any of it to the script by hand.</p>
     <div class="modem-ref">
       <div class="modem-card">
         <h3>USB800 — AT&amp;T / FirstNet</h3>
         <dl>
-          <span class="kv"><dt>Interface: </dt><dd>eth1</dd></span>
-          <span class="kv"><dt>Admin gateway: </dt><dd>Dynamic, via <code>ip route show dev eth1</code></dd></span>
+          <span class="kv"><dt>Interface: </dt><dd>usually eth1, but auto-detected — not assumed</dd></span>
+          <span class="kv"><dt>Admin gateway: </dt><dd>Dynamic, read from that interface's own default route</dd></span>
           <span class="kv"><dt>Host header needed: </dt><dd>att.manager</dd></span>
           <span class="kv"><dt>Form field: </dt><dd>NetworksProfileAPN</dd></span>
-          <span class="kv"><dt>Script keyword: </dt><dd>usb800</dd></span>
+          <span class="kv"><dt>Per-model flag: </dt><dd>--usb800=&lt;apn&gt;</dd></span>
         </dl>
       </div>
       <div class="modem-card">
         <h3>USB730L — Verizon</h3>
         <dl>
-          <span class="kv"><dt>Interface: </dt><dd>eth2</dd></span>
+          <span class="kv"><dt>Interface: </dt><dd>usually eth2, but auto-detected — not assumed</dd></span>
           <span class="kv"><dt>Admin gateway: </dt><dd>192.168.2.1 (fixed)</dd></span>
           <span class="kv"><dt>Host header needed: </dt><dd>none</dd></span>
           <span class="kv"><dt>Form field: </dt><dd>NetworksFourGLTEAPN</dd></span>
-          <span class="kv"><dt>Script keyword: </dt><dd>usb730l</dd></span>
+          <span class="kv"><dt>Per-model flag: </dt><dd>--usb730l=&lt;apn&gt;</dd></span>
         </dl>
         <p style="font-size:12.5px; color:var(--warn); margin:10px 0 0;"><b>Known quirk:</b> the write is silently ignored/reverted if the modem has an active data session at write time. The script disconnects first, writes, then reconnects to work around this.</p>
       </div>
+    </div>
+    <div class="callout warn" style="margin-top:20px;">
+      <b>Two of the same model (e.g. dual 730L):</b> both modems default to the same gateway IP, <code class="inline">192.168.2.1</code>. The script scopes each modem's traffic to its own interface with per-interface policy routing so they don't cross-talk — no manual steps needed, but worth knowing why the script briefly adds/removes routing rules while it runs.
     </div>
   </section>
 
@@ -527,144 +507,233 @@ No lines at all          →  neither is currently detected — check it's plugg
       <span class="part-tag">Install</span>
       <h2>Full script — one-shot installer</h2>
     </div>
-    <p class="part-sub">Save this as <code class="inline">change-apn.sh</code> on your own machine and transfer it with <code class="inline">scp</code> (see step 07) — don't paste it directly into an open SSH session, large pastes get scrambled.</p>
+    <p class="part-sub">Save this as <code class="inline">change-apn-auto.sh</code> on your own machine and transfer it with <code class="inline">scp</code> (see step 05) — don't paste it directly into an open SSH session, large pastes get scrambled. Auto-detects whatever modem(s) are plugged in; no need to specify a keyword per model.</p>
     <div class="code-block">
-      <div class="code-top"><span>change-apn.sh</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <div class="code-top"><span>change-apn-auto.sh</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
       <pre id="fullscript">#!/bin/bash
-<span class="cmt"># change-apn.sh - Remotely read or change the APN on the Mushbox's USB800 or USB730L modem
+# change-apn-auto.sh
+#
+# Auto-detects ALL cellular modem interfaces on the box (any combo/count of
+# USB800 / USB730L) and reads or changes their APN. No need to know ahead of
+# time which dongles are plugged in, how many, or which interface maps to
+# which physical modem.
+#
+# Handles multiple modems sharing the same default gateway (e.g. two
+# USB730Ls both at 192.168.2.1) by scoping each modem&#x27;s traffic to its own
+# interface with per-interface policy routing, so probes/reads/writes never
+# cross-talk to the wrong dongle.
+#
 # Usage:
-#   ./change-apn.sh usb800  [new-apn]     # AT&amp;T/FirstNet modem on eth1
-#   ./change-apn.sh usb730l [new-apn]     # Verizon modem on eth2
-# If new-apn is omitted, just prints the current APN without changing anything.</span>
+#   ./change-apn-auto.sh                          # read-only: show current APN on all modems
+#   ./change-apn-auto.sh &lt;new_apn&gt;                # apply &lt;new_apn&gt; to ALL detected modems
+#                                                  # (refuses if it finds more than one model —
+#                                                  # AT&amp;T and Verizon APNs are never the same string)
+#   ./change-apn-auto.sh --usb800=&lt;apn&gt; --usb730l=&lt;apn&gt;
+#                                                  # apply a different APN per model — required
+#                                                  # for boxes with one of each
 
-set -e
+set -u
 
-MODEM="$1"
-NEW_APN="$2"
+ROUTE_TABLE_BASE=200
 
-if [ -z "$MODEM" ]; then
-    echo "Usage: $0 &lt;usb800|usb730l&gt; [new-apn]"
+# --- Argument handling ---
+BLANKET_APN=&quot;&quot;
+APN_USB800=&quot;&quot;
+APN_USB730L=&quot;&quot;
+
+for arg in &quot;$@&quot;; do
+    case &quot;$arg&quot; in
+        --usb800=*)  APN_USB800=&quot;${arg#--usb800=}&quot; ;;
+        --usb730l=*) APN_USB730L=&quot;${arg#--usb730l=}&quot; ;;
+        *)           BLANKET_APN=&quot;$arg&quot; ;;
+    esac
+done
+
+IFACES=$(ip -o link show | awk -F&#x27;: &#x27; &#x27;{print $2}&#x27; | grep -E &#x27;^eth[1-9]$&#x27;)
+
+if [ -z &quot;$IFACES&quot; ]; then
+    echo &quot;No candidate modem interfaces found (eth1+).&quot;
     exit 1
 fi
 
-case "$MODEM" in
-    usb800)
-        IFACE="eth1"
-        GATEWAY=$(ip route show dev "$IFACE" 2&gt;/dev/null | grep default | awk '{print $3}')
-        LOCAL_IP=$(ip route show dev "$IFACE" 2&gt;/dev/null | grep "src" | awk '{print $NF}')
-        if [ -z "$GATEWAY" ] || [ -z "$LOCAL_IP" ]; then
-            echo "ERROR: Couldn't determine gateway/local IP for $IFACE. Is the modem attached to the network right now?"
-            exit 1
+# --- Pass 1: detect what&#x27;s actually plugged in (read-only, no writes) ---
+DETECTED_IFACES=()
+DETECTED_MODELS=()
+DETECTED_IPS=()
+DETECTED_GATEWAYS=()
+DISTINCT_MODELS=()
+
+idx=0
+for IFACE in $IFACES; do
+    idx=$((idx + 1))
+    TABLE=$((ROUTE_TABLE_BASE + idx))
+
+    LOCAL_IP=$(ip -4 addr show dev &quot;$IFACE&quot; 2&gt;/dev/null | awk &#x27;/inet /{print $2}&#x27; | cut -d/ -f1 | head -1)
+    if [ -z &quot;$LOCAL_IP&quot; ]; then
+        continue  # interface has no IP, not an active modem
+    fi
+
+    DYN_GATEWAY=$(ip route show dev &quot;$IFACE&quot; 2&gt;/dev/null | grep default | awk &#x27;{print $3}&#x27;)
+    GATEWAY=&quot;${DYN_GATEWAY:-192.168.2.1}&quot;
+
+    ip route add &quot;$GATEWAY&quot;/32 dev &quot;$IFACE&quot; table &quot;$TABLE&quot; 2&gt;/dev/null
+    ip rule add from &quot;$LOCAL_IP&quot; table &quot;$TABLE&quot; priority &quot;$TABLE&quot; 2&gt;/dev/null
+
+    PROBE_FILE=&quot;/tmp/apn_probe_${IFACE}.html&quot;
+
+    wget -q -T 8 -O &quot;$PROBE_FILE&quot; --bind-address=&quot;$LOCAL_IP&quot; \
+        --header=&quot;Host: att.manager&quot; &quot;http://$GATEWAY/networks/&quot; 2&gt;/dev/null
+
+    if grep -q &quot;NetworksProfileAPN&quot; &quot;$PROBE_FILE&quot; 2&gt;/dev/null; then
+        MODEL=&quot;usb800&quot;
+    else
+        wget -q -T 8 -O &quot;$PROBE_FILE&quot; --bind-address=&quot;$LOCAL_IP&quot; \
+            &quot;http://$GATEWAY/networks/&quot; 2&gt;/dev/null
+        if grep -q &quot;NetworksFourGLTEAPN&quot; &quot;$PROBE_FILE&quot; 2&gt;/dev/null; then
+            MODEL=&quot;usb730l&quot;
+        else
+            MODEL=&quot;unknown&quot;
         fi
-        HOST_HEADER="att.manager"
-        BASE_URL="http://$GATEWAY"
-        FIELD="NetworksProfileAPN"
-        COOKIE_JAR="/tmp/apn_cookies_usb800.txt"
-        PAGE_FILE="/tmp/apn_usb800.html"
-        ;;
-    usb730l)
-        IFACE="eth2"
-        LOCAL_IP=$(ip -4 addr show "$IFACE" 2&gt;/dev/null | grep inet | awk '{print $2}' | cut -d/ -f1)
-        if [ -z "$LOCAL_IP" ]; then
-            echo "ERROR: Couldn't determine local IP for $IFACE. Is the modem attached to the network right now?"
-            exit 1
-        fi
-        GATEWAY="192.168.2.1"
-        HOST_HEADER=""
-        BASE_URL="http://$GATEWAY"
-        FIELD="NetworksFourGLTEAPN"
-        COOKIE_JAR="/tmp/apn_cookies_usb730l.txt"
-        PAGE_FILE="/tmp/apn_usb730l.html"
-        ;;
-    *)
-        echo "ERROR: Unknown modem '$MODEM'. Use 'usb800' or 'usb730l'."
-        exit 1
-        ;;
-esac
+    fi
 
-echo "Modem:    $MODEM"
-echo "Iface:    $IFACE"
-echo "Local IP: $LOCAL_IP"
-echo "Gateway:  $GATEWAY"
-echo ""
+    ip rule del from &quot;$LOCAL_IP&quot; table &quot;$TABLE&quot; priority &quot;$TABLE&quot; 2&gt;/dev/null
+    ip route del &quot;$GATEWAY&quot;/32 dev &quot;$IFACE&quot; table &quot;$TABLE&quot; 2&gt;/dev/null
 
-HOST_ARGS=()
-if [ -n "$HOST_HEADER" ]; then
-    HOST_ARGS=(--header="Host: $HOST_HEADER")
-fi
+    echo &quot;$IFACE ($LOCAL_IP) -&gt; gateway $GATEWAY -&gt; detected: $MODEL&quot;
 
-wget -q -T 8 -O "$PAGE_FILE" --save-cookies "$COOKIE_JAR" --keep-session-cookies \
-    --bind-address="$LOCAL_IP" "${HOST_ARGS[@]}" "$BASE_URL/networks/"
+    if [ &quot;$MODEL&quot; = &quot;unknown&quot; ]; then
+        continue
+    fi
 
-TOKEN=$(grep -oP "name=\"gSecureToken\".*?value=\"\K[^\"]+" "$PAGE_FILE" | head -1)
-CURRENT_APN=$(grep -oP "name=\"$FIELD\".*?value=\"\K[^\"]*" "$PAGE_FILE" | head -1)
+    DETECTED_IFACES+=(&quot;$IFACE&quot;)
+    DETECTED_MODELS+=(&quot;$MODEL&quot;)
+    DETECTED_IPS+=(&quot;$LOCAL_IP&quot;)
+    DETECTED_GATEWAYS+=(&quot;$GATEWAY&quot;)
 
-if [ -z "$TOKEN" ]; then
-    echo "ERROR: Couldn't extract security token. The modem's admin page may be unreachable or its layout changed."
+    if [[ ! &quot; ${DISTINCT_MODELS[*]:-} &quot; == *&quot; $MODEL &quot;* ]]; then
+        DISTINCT_MODELS+=(&quot;$MODEL&quot;)
+    fi
+done
+echo
+
+if [ &quot;${#DETECTED_IFACES[@]}&quot; -eq 0 ]; then
+    echo &quot;No modems could be identified. Nothing to do.&quot;
     exit 1
 fi
 
-echo "Current APN: $CURRENT_APN"
-
-if [ -z "$NEW_APN" ]; then
-    echo "(No new APN given - nothing changed. Pass a value as the 2nd argument to set one.)"
-    exit 0
+# --- Safety check: refuse a blanket APN across mixed carrier models ---
+if [ -n &quot;$BLANKET_APN&quot; ] &amp;&amp; [ &quot;${#DISTINCT_MODELS[@]}&quot; -gt 1 ]; then
+    echo &quot;ERROR: This box has more than one modem model (${DISTINCT_MODELS[*]}).&quot;
+    echo &quot;A single APN can&#x27;t be safely applied to both — AT&amp;T and Verizon APNs differ.&quot;
+    echo &quot;Use per-model flags instead, e.g.:&quot;
+    echo &quot;  $0 --usb800=broadband --usb730l=vzwinternet&quot;
+    exit 1
 fi
 
-echo "Setting APN to: $NEW_APN"
-echo ""
+# --- Pass 2: read current APN on each modem, and apply a change if one was given for its model ---
+for i in &quot;${!DETECTED_IFACES[@]}&quot;; do
+    IFACE=&quot;${DETECTED_IFACES[$i]}&quot;
+    MODEL=&quot;${DETECTED_MODELS[$i]}&quot;
+    LOCAL_IP=&quot;${DETECTED_IPS[$i]}&quot;
+    GATEWAY=&quot;${DETECTED_GATEWAYS[$i]}&quot;
+    TABLE=$((ROUTE_TABLE_BASE + i + 1))
+    BASE_URL=&quot;http://$GATEWAY&quot;
+    COOKIE_JAR=&quot;/tmp/apn_cookies_${IFACE}.txt&quot;
+    PAGE_FILE=&quot;/tmp/apn_${IFACE}.html&quot;
 
-if [ "$MODEM" = "usb800" ]; then
-    RESPONSE=$(wget -q -T 8 -O - --load-cookies "$COOKIE_JAR" --bind-address="$LOCAL_IP" \
-        --header="Host: $HOST_HEADER" --header="Referer: http://$HOST_HEADER/networks/" \
-        --post-data="${FIELD}=${NEW_APN}&amp;NetworksProfileAuthentication=0&amp;NetworksProfileUsername=&amp;NetworksProfilePassword=&amp;gSecureToken=${TOKEN}" \
-        "$BASE_URL/networks/")
-    if echo "$RESPONSE" | grep -q "saved successfully"; then
-        echo "SUCCESS: Changes saved."
+    if [ &quot;$MODEL&quot; = &quot;usb800&quot; ]; then
+        HOST_HEADER=&quot;att.manager&quot;
+        FIELD=&quot;NetworksProfileAPN&quot;
+        NEW_APN=&quot;${BLANKET_APN:-$APN_USB800}&quot;
     else
-        echo "WARNING: No success confirmation seen in response. Verify manually."
+        HOST_HEADER=&quot;&quot;
+        FIELD=&quot;NetworksFourGLTEAPN&quot;
+        NEW_APN=&quot;${BLANKET_APN:-$APN_USB730L}&quot;
     fi
-else
-    <span class="cmt"># Disconnect first — the Verizon firmware won't persist an APN
-    # change while the modem has an active data session.</span>
-    echo "Disconnecting active session before write..."
-    wget -q -T 8 -O /dev/null --load-cookies "$COOKIE_JAR" --bind-address="$LOCAL_IP" \
-        "$BASE_URL/srv/disconnect"
-    sleep 3
 
-    RESPONSE=$(wget -q -T 8 -O - --load-cookies "$COOKIE_JAR" --bind-address="$LOCAL_IP" \
-        --header="Referer: $BASE_URL/networks/" \
-        --post-data="NetworksConnectionPreference=0&amp;NetworksPreferredTechnology=31&amp;${FIELD}=${NEW_APN}&amp;NetworksOtherAPN=&amp;gSecureToken=${TOKEN}" \
-        "$BASE_URL/networks/")
-    echo "$RESPONSE" &gt; "$PAGE_FILE"
+    echo &quot;=== $IFACE ($MODEL, $LOCAL_IP) -&gt; gateway $GATEWAY ===&quot;
 
-    echo "Reconnecting..."
-    wget -q -T 8 -O /dev/null --load-cookies "$COOKIE_JAR" --bind-address="$LOCAL_IP" \
-        "$BASE_URL/srv/connect"
-    sleep 3
+    ip route add &quot;$GATEWAY&quot;/32 dev &quot;$IFACE&quot; table &quot;$TABLE&quot; 2&gt;/dev/null
+    ip rule add from &quot;$LOCAL_IP&quot; table &quot;$TABLE&quot; priority &quot;$TABLE&quot; 2&gt;/dev/null
 
-    <span class="cmt"># Re-fetch fresh page to verify actual persisted state (not just the echoed POST response)</span>
-    wget -q -T 8 -O "$PAGE_FILE" --save-cookies "$COOKIE_JAR" --keep-session-cookies \
-        --bind-address="$LOCAL_IP" "$BASE_URL/networks/"
-    APPLIED_APN=$(grep -oP "name=\"$FIELD\".*?value=\"\K[^\"]*" "$PAGE_FILE" | head -1)
-
-    if [ "$APPLIED_APN" = "$NEW_APN" ]; then
-        echo "SUCCESS: APN now shows as '$APPLIED_APN'."
-    else
-        echo "WARNING: Page shows APN as '$APPLIED_APN', expected '$NEW_APN'. Verify manually."
+    HOST_ARGS=()
+    if [ -n &quot;$HOST_HEADER&quot; ]; then
+        HOST_ARGS=(--header=&quot;Host: $HOST_HEADER&quot;)
     fi
-fi</pre>
+
+    wget -q -T 8 -O &quot;$PAGE_FILE&quot; --save-cookies &quot;$COOKIE_JAR&quot; --keep-session-cookies \
+        --bind-address=&quot;$LOCAL_IP&quot; &quot;${HOST_ARGS[@]}&quot; &quot;$BASE_URL/networks/&quot;
+
+    TOKEN=$(grep -oP &quot;name=\&quot;gSecureToken\&quot;.*?value=\&quot;\K[^\&quot;]+&quot; &quot;$PAGE_FILE&quot; | head -1)
+    CURRENT_APN=$(grep -oP &quot;name=\&quot;$FIELD\&quot;.*?value=\&quot;\K[^\&quot;]*&quot; &quot;$PAGE_FILE&quot; | head -1)
+
+    if [ -z &quot;$TOKEN&quot; ]; then
+        echo &quot;ERROR: Couldn&#x27;t extract security token on $IFACE. Admin page may be unreachable or layout changed.&quot;
+        ip rule del from &quot;$LOCAL_IP&quot; table &quot;$TABLE&quot; priority &quot;$TABLE&quot; 2&gt;/dev/null
+        ip route del &quot;$GATEWAY&quot;/32 dev &quot;$IFACE&quot; table &quot;$TABLE&quot; 2&gt;/dev/null
+        echo
+        continue
+    fi
+
+    echo &quot;Current APN: $CURRENT_APN&quot;
+
+    if [ -n &quot;$NEW_APN&quot; ]; then
+        echo &quot;Setting APN to: $NEW_APN&quot;
+
+        if [ &quot;$MODEL&quot; = &quot;usb800&quot; ]; then
+            RESPONSE=$(wget -q -T 8 -O - --load-cookies &quot;$COOKIE_JAR&quot; --bind-address=&quot;$LOCAL_IP&quot; \
+                &quot;${HOST_ARGS[@]}&quot; --header=&quot;Referer: http://$HOST_HEADER/networks/&quot; \
+                --post-data=&quot;${FIELD}=${NEW_APN}&amp;NetworksProfileAuthentication=0&amp;NetworksProfileUsername=&amp;NetworksProfilePassword=&amp;gSecureToken=${TOKEN}&quot; \
+                &quot;$BASE_URL/networks/&quot;)
+            if echo &quot;$RESPONSE&quot; | grep -q &quot;saved successfully&quot;; then
+                echo &quot;SUCCESS: Changes saved on $IFACE.&quot;
+            else
+                echo &quot;WARNING: No success confirmation seen on $IFACE. Verify manually.&quot;
+            fi
+        else
+            echo &quot;Disconnecting active session before write ($IFACE)...&quot;
+            wget -q -T 8 -O /dev/null --load-cookies &quot;$COOKIE_JAR&quot; --bind-address=&quot;$LOCAL_IP&quot; \
+                &quot;$BASE_URL/srv/disconnect&quot;
+            sleep 3
+
+            wget -q -T 8 -O - --load-cookies &quot;$COOKIE_JAR&quot; --bind-address=&quot;$LOCAL_IP&quot; \
+                --header=&quot;Referer: $BASE_URL/networks/&quot; \
+                --post-data=&quot;NetworksConnectionPreference=0&amp;NetworksPreferredTechnology=31&amp;${FIELD}=${NEW_APN}&amp;NetworksOtherAPN=&amp;gSecureToken=${TOKEN}&quot; \
+                &quot;$BASE_URL/networks/&quot; &gt; &quot;$PAGE_FILE&quot;
+
+            echo &quot;Reconnecting ($IFACE)...&quot;
+            wget -q -T 8 -O /dev/null --load-cookies &quot;$COOKIE_JAR&quot; --bind-address=&quot;$LOCAL_IP&quot; \
+                &quot;$BASE_URL/srv/connect&quot;
+            sleep 3
+
+            wget -q -T 8 -O &quot;$PAGE_FILE&quot; --save-cookies &quot;$COOKIE_JAR&quot; --keep-session-cookies \
+                --bind-address=&quot;$LOCAL_IP&quot; &quot;$BASE_URL/networks/&quot;
+            APPLIED_APN=$(grep -oP &quot;name=\&quot;$FIELD\&quot;.*?value=\&quot;\K[^\&quot;]*&quot; &quot;$PAGE_FILE&quot; | head -1)
+
+            if [ &quot;$APPLIED_APN&quot; = &quot;$NEW_APN&quot; ]; then
+                echo &quot;SUCCESS: APN on $IFACE now shows as &#x27;$APPLIED_APN&#x27;.&quot;
+            else
+                echo &quot;WARNING: $IFACE shows APN as &#x27;$APPLIED_APN&#x27;, expected &#x27;$NEW_APN&#x27;. Verify manually.&quot;
+            fi
+        fi
+    fi
+
+    ip rule del from &quot;$LOCAL_IP&quot; table &quot;$TABLE&quot; priority &quot;$TABLE&quot; 2&gt;/dev/null
+    ip route del &quot;$GATEWAY&quot;/32 dev &quot;$IFACE&quot; table &quot;$TABLE&quot; 2&gt;/dev/null
+    echo
+done
+</pre>
     </div>
   </section>
 
   <div class="callout">
-    <b>If <code class="inline">~/scripts/change-apn.sh</code> gives "Permission denied"</b> even after <code class="inline">chmod +x</code>, that box's home directory may have <code class="inline">noexec</code> set. Just run it as <code class="inline">bash ~/scripts/change-apn.sh usb800</code> instead — works identically, just invoked through the interpreter directly.
+    <b>If <code class="inline">~/scripts/change-apn-auto.sh</code> gives "Permission denied"</b> even after <code class="inline">chmod +x</code>, that box's home directory may have <code class="inline">noexec</code> set. Just run it as <code class="inline">bash ~/scripts/change-apn-auto.sh</code> instead — works identically, just invoked through the interpreter directly.
   </div>
 
 </div>
 
 <footer>
-  mushbox internal — remote apn runbook — v2, aug 21 2026 — fixed usb730l silent-revert bug (disconnect/reconnect before write), added user@ vs root@ warning, switched installer to scp transfer after heredoc paste corruption. last verified against usb800 (att/firstnet) &amp; usb730l (verizon) firmware.
+  mushbox internal — remote apn runbook — v3, aug 21 2026 — switched to change-apn-auto.sh: auto-detects modem model + interface per box instead of assuming eth1=usb800/eth2=usb730l, so it works on any combo (single, dual-same-model, or mixed). Adds per-interface policy routing to disambiguate multiple modems sharing a gateway IP (e.g. dual 730L), and refuses a blanket APN write across mixed carrier models — use --usb800=/--usb730l= flags for boxes with one of each. v2 fixed usb730l silent-revert bug (disconnect/reconnect before write), added user@ vs root@ warning, switched installer to scp transfer after heredoc paste corruption. last verified against usb800 (att/firstnet) &amp; usb730l (verizon) firmware.
 </footer>
 
 <script>
