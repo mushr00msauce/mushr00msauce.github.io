@@ -218,6 +218,20 @@
   .beacon .badge{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
     width:6px;height:6px;border-radius:50%;background:var(--amber);
     border:1px solid var(--navy);box-shadow:0 0 4px rgba(245,166,35,.9);z-index:4}
+  /* PARTNER WATCH indicator: viewers >= PARTNER_VIEWER_THRESHOLD on Twitch.
+     A pulsing purple halo ring plus a small trophy badge, layered on top
+     of whatever the beacon is already showing (live/irl/warming) so the
+     platform/category color stays the primary read and this reads as an
+     added flag rather than a replacement. */
+  .beacon .pwring{position:absolute;left:50%;top:50%;width:17px;height:17px;
+    transform:translate(-50%,-50%);border-radius:50%;border:2px solid var(--twitch);
+    opacity:0;pointer-events:none;box-shadow:0 0 9px 1px rgba(145,70,255,.85);z-index:3}
+  .beacon.partnerhot .pwring{opacity:1;animation:partnerPulse 2.2s ease-in-out infinite}
+  .beacon .pwbadge{position:absolute;right:-5px;top:-5px;width:12px;height:12px;
+    border-radius:50%;background:var(--twitch);display:none;align-items:center;justify-content:center;
+    font-size:8px;line-height:1;z-index:5;box-shadow:0 0 6px rgba(145,70,255,.9),0 0 0 1.5px var(--navy)}
+  .beacon.partnerhot .pwbadge{display:flex}
+  @keyframes partnerPulse{0%,100%{opacity:.55;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}
   .off-dot{width:10px;height:10px;border-radius:50%;background:#39507f;
     border:1px solid rgba(120,150,200,.5);box-shadow:0 0 5px rgba(20,40,80,.8);
     transition:background .14s,box-shadow .14s,transform .14s}
@@ -382,6 +396,7 @@
     <span><i class="lg-amber"></i>Mushbox Online</span>
     <span><i class="lg-off"></i>Offline</span>
     <span class="lg-pin">📍 from stream title</span>
+    <span class="lg-pin">🏆 75+ viewers · Partner Watch</span>
   </div>
   <label class="toggle"><input type="checkbox" id="showOff" checked> Show offline home bases</label>
   <label class="toggle"><input type="checkbox" id="soundOn" checked> Sound on new live</label>
@@ -826,14 +841,17 @@
     if(t) trackClick(t.getAttribute('data-login'), t.getAttribute('data-platform'), 'popup');
   });
 
-  function liveIcon(source, off, irl, platform, warming, confirmed){
+  function liveIcon(source, off, irl, platform, warming, confirmed, partnerHot){
     off = off || [0,0];
     var pin = source==='title' ? '<span class="pin">📍</span>' : '';
-    var cls = 'beacon' + (warming?' warming':(irl?' irl':'')) + ((!warming && irl && platform==='kick')?' kick':'');   // amber=warming; IRL: purple=Twitch, green=Kick; blue = just-live
+    var cls = 'beacon' + (warming?' warming':(irl?' irl':'')) + ((!warming && irl && platform==='kick')?' kick':'') + (partnerHot?' partnerhot':'');   // amber=warming; IRL: purple=Twitch, green=Kick; blue = just-live; +partnerhot = 75+ viewers on Twitch
     var badge = confirmed ? '<span class="badge" title="Mushbox confirmed online"></span>' : '';
+    var pw = partnerHot
+      ? '<span class="pwring"></span><span class="pwbadge" title="At/above the Twitch Partner viewer threshold — in Partner Watch">🏆</span>'
+      : '';
     var rings = '<span class="ring"></span><span class="ring r2"></span>';
     return L.divIcon({ className:'', iconSize:[18,18], iconAnchor:[9 - off[0], 9 - off[1]],
-      html:'<div class="'+cls+'">'+pin+rings+'<span class="core"></span>'+badge+'</div>' });
+      html:'<div class="'+cls+'">'+pin+rings+'<span class="core"></span>'+badge+pw+'</div>' });
   }
   function offIcon(off){ off = off || [0,0]; return L.divIcon({ className:'', iconSize:[22,22], iconAnchor:[11 - off[0], 11 - off[1]], html:'<div class="off-hit"><div class="off-dot"></div></div>' }); }
 
@@ -1263,7 +1281,11 @@
 
     items.forEach(function(it){
       var e = it.e, loc = it.loc, off = it.off;
-      var mk = L.marker([loc.lat,loc.lng], { icon:liveIcon(loc.source, off, e.irl, e.platform, e.warming, e.confirmed), zIndexOffset:(e.irl?1000:(e.warming?800:600)), riseOnHover:true });
+      // Same condition used for the sidebar viewer-count flip and the popup
+      // link-out — kept in lockstep so the dot, the row, and the popup
+      // never disagree about who's currently in Partner Watch.
+      var partnerHot = !e.warming && e.platform === 'twitch' && (+e.viewers||0) >= PARTNER_VIEWER_THRESHOLD;
+      var mk = L.marker([loc.lat,loc.lng], { icon:liveIcon(loc.source, off, e.irl, e.platform, e.warming, e.confirmed, partnerHot), zIndexOffset:(e.irl?1000:(e.warming?800:600)), riseOnHover:true });
       // Function content so both the popup and the hover card read AVATARS at
       // open time — the pic appears the instant the roster fetch lands.
       mk.bindPopup((function(ev){ return function(){ return popupHTML(ev); }; })(e),
