@@ -136,6 +136,12 @@
   .mobiletag{display:inline-block;margin:2px 0 0;font-family:var(--mono);font-size:9.5px;
     letter-spacing:.03em;color:var(--amber-soft);background:rgba(245,166,35,.12);
     border:1px solid rgba(245,166,35,.35);border-radius:999px;padding:2px 7px;white-space:nowrap}
+  /* Same footnote-pill treatment as .mobiletag, twitch-purple toned — spells
+     out "Partner Watch" in words next to the name, so the popup/hover card
+     says WHO is flagged, not just an unlabeled dot-badge on the map. */
+  .partnertag{display:inline-block;margin:2px 0 0;font-family:var(--mono);font-size:9.5px;
+    letter-spacing:.03em;color:var(--twitch-soft);background:rgba(145,70,255,.14);
+    border:1px solid rgba(145,70,255,.4);border-radius:999px;padding:2px 7px;white-space:nowrap}
   .row .tel{font-size:10.5px;color:var(--sky);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--mono);opacity:.85}
   .row .vw{font-family:var(--mono);font-size:11px;color:var(--sky);flex:0 0 auto;text-align:right}
   .row .vw small{display:block;color:var(--dim);font-size:9px;letter-spacing:.08em}
@@ -636,12 +642,16 @@
   // just to color/link a live viewer count without waiting on a separate
   // /partner-progress fetch (the two run on independent poll cycles).
   var PARTNER_VIEWER_THRESHOLD = 75;
-  // Note: the sidebar/popup viewer-count highlight below lights up purely
-  // on viewer count — including for logins already excluded from the
-  // Partner Watch panel (ALREADY_PARTNERED in worker.js). That's
-  // intentional: it still clicks through to partner.html, which shows a
-  // distinct "already a Partner" state for them instead of hiding the
-  // highlight entirely.
+  // Logins the worker already considers Partnered — /partner-progress
+  // returns this alongside `progress` (freshly checked against Twitch,
+  // unioned with worker.js's manual ALREADY_PARTNERED override list).
+  // Populated by loadPartnerProgress() below; isPartnerHot() checks it so
+  // someone who's already a Partner never gets flagged as "in Partner
+  // Watch" — they don't need one anymore. Keyed lowercase for a
+  // case-insensitive lookup. Starts empty (nobody excluded) until that
+  // first fetch lands.
+  var ALREADY_PARTNERED_LOGINS = {};
+  var lastAlreadyPartneredKey = null;
   var REFRESH_MS = 60000;
   // Profile pics + display names for the whole roster, fetched once from the
   // Worker's /avatars route (cached daily server-side). Populated on load;
@@ -791,6 +801,7 @@
   }
 
   var liveMarkers = {}, offMarkers = {};
+  var lastLiveArr = null; // most recent parseLive() result, cached so loadPartnerProgress() can trigger a redraw without a second roster fetch
   var didInitialFocus = false; // deep-link (#focus=login) only auto-pans once, on first load
 
   // Kick family logins — watch links point at kick.com, never twitch.tv,
@@ -805,6 +816,22 @@
   function mobileTag(login){
     return PHONE_LOGINS[(login||'').toString().toLowerCase()]
       ? '<span class="mobiletag" title="Streams via phone (OBS + Noalbs), not Mushbox hardware">📱 Phone Streamer</span>' : '';
+  }
+  // Same threshold check used for the beacon halo, the sidebar viewer-count
+  // flip, and the popup progress link — spelled out in words so hovering or
+  // opening a flagged dot says "Partner Watch" by name, not just a badge.
+  // Already-Partnered logins are excluded (see ALREADY_PARTNERED_LOGINS
+  // above) — they don't need a watch anymore.
+  function isPartnerHot(e){
+    if(!e || e.warming || e.platform !== 'twitch') return false;
+    if((+e.viewers||0) < PARTNER_VIEWER_THRESHOLD) return false;
+    var login = (e.login || e.person || '').toString().toLowerCase();
+    if(ALREADY_PARTNERED_LOGINS[login]) return false;
+    return true;
+  }
+  function partnerTag(e){
+    return isPartnerHot(e)
+      ? '<span class="partnertag" title="At/above the Twitch Partner viewer threshold">🏆 Partner Watch</span>' : '';
   }
   function watchURL(login, platform){
     var isKick = platform==='kick' || KICK_LOGINS[(login||'').toString().toLowerCase()];
@@ -912,7 +939,7 @@
     // Twitch-only, at/above the Partner viewer threshold: swap the plain
     // viewer line for a real link out to the progress card (safe here —
     // unlike the sidebar row, this isn't nested inside another <a>).
-    var popupPartnerHot = !e.warming && e.platform === 'twitch' && (+e.viewers||0) >= PARTNER_VIEWER_THRESHOLD;
+    var popupPartnerHot = isPartnerHot(e);
     var viewersLine = e.warming ? '' : (popupPartnerHot
       ? '<a class="pvw partner-hot" href="partner.html?login='+encodeURIComponent(e.login||e.person)+'" target="_blank" rel="noopener" title="At/above the Twitch Partner viewer threshold — tap to see progress">'+fmtViewers(e.viewers)+' watching · 🏆 progress ▸</a>'
       : ('<p class="pvw">'+fmtViewers(e.viewers)+' watching</p>'));
@@ -929,6 +956,7 @@
       +     '<p class="pnm">'+esc(e.name)+'</p>'
       +     '<div class="pcity">'+esc(e.label)+'</div>'
       +     mobileTag(e.login || e.person)
+      +     partnerTag(e)
       +   '</div>'
       + '</div>'
       + altLine
@@ -956,6 +984,7 @@
       + img
       + '<span class="onm">' + esc(disp) + '</span>'
       + '<span class="ost '+ring+'">' + label + '</span>'
+      + partnerTag(e)
       + '</div>';
   }
 
@@ -1093,7 +1122,28 @@
   function loadPartnerProgress(){
     fetch(PARTNER_URL, { cache:'no-store' })
       .then(function(r){ return r.ok ? r.json() : null; })
-      .then(function(d){ if(d) renderPartnerWatch(d.progress || {}); })
+      .then(function(d){
+        if(!d) return;
+        renderPartnerWatch(d.progress || {});
+        // Refresh the already-Partnered lookup isPartnerHot() checks. Keyed
+        // lowercase to match the case-insensitive lookup there.
+        var already = {};
+        (d.alreadyPartnered || []).forEach(function(login){
+          already[(login||'').toString().toLowerCase()] = true;
+        });
+        var key = Object.keys(already).sort().join(',');
+        if(key !== lastAlreadyPartneredKey){
+          lastAlreadyPartneredKey = key;
+          ALREADY_PARTNERED_LOGINS = already;
+          // The set actually changed (including the first successful
+          // fetch) — redraw so any dot/pill/halo already on screen
+          // reflects it immediately, instead of waiting up to
+          // REFRESH_MS for the next independent roster reload. Only
+          // redraw when something changed, so a routine tick with no
+          // change doesn't needlessly close an open popup.
+          if(lastLiveArr) render(lastLiveArr);
+        }
+      })
       .catch(function(){ /* partner watch is a nice-to-have; fail quietly */ });
   }
 
@@ -1284,7 +1334,7 @@
       // Same condition used for the sidebar viewer-count flip and the popup
       // link-out — kept in lockstep so the dot, the row, and the popup
       // never disagree about who's currently in Partner Watch.
-      var partnerHot = !e.warming && e.platform === 'twitch' && (+e.viewers||0) >= PARTNER_VIEWER_THRESHOLD;
+      var partnerHot = isPartnerHot(e);
       var mk = L.marker([loc.lat,loc.lng], { icon:liveIcon(loc.source, off, e.irl, e.platform, e.warming, e.confirmed, partnerHot), zIndexOffset:(e.irl?1000:(e.warming?800:600)), riseOnHover:true });
       // Function content so both the popup and the hover card read AVATARS at
       // open time — the pic appears the instant the roster fetch lands.
@@ -1341,18 +1391,18 @@
       // real nested <a> — the whole row is already one) with its own
       // click listener attached below, right after this row's innerHTML
       // is set.
-      var isPartnerHot = e.platform === 'twitch' && (+e.viewers||0) >= PARTNER_VIEWER_THRESHOLD;
-      var vwNum = isPartnerHot
+      var rowPartnerHot = isPartnerHot(e);
+      var vwNum = rowPartnerHot
         ? '<span class="partner-hot" data-partnerlogin="'+esc(e.login||e.person)+'" title="At/above the Twitch Partner viewer threshold — tap to see progress">'+fmtViewers(e.viewers)+'</span>'
         : fmtViewers(e.viewers);
       row.innerHTML =
         '<span class="beacon-mini"></span>'
-        + '<span class="info"><span class="nm">'+esc(e.name)+'</span>' + mobileTag(e.login || e.person)
+        + '<span class="info"><span class="nm">'+esc(e.name)+'</span>' + mobileTag(e.login || e.person) + partnerTag(e)
         + '<span class="sub">'+pin+esc(e.label) + (e.cat ? ' · '+esc(e.cat) : '') +'</span>'
         + telLine
         + '</span>'
         + '<span class="vw">'+vwNum+'<small>WATCHING</small></span>';
-      if(isPartnerHot){
+      if(rowPartnerHot){
         // Attached directly (row is a fresh element each render, no need
         // for delegation) so stopPropagation reliably runs BEFORE the
         // row's own click listener below — otherwise trackClick() would
@@ -1394,7 +1444,7 @@
     document.getElementById('updated').textContent = 'refreshing…';
     fetch(WORKER, { cache:'no-store' })
       .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-      .then(function(data){ render(parseLive(data)); })
+      .then(function(data){ lastLiveArr = parseLive(data); render(lastLiveArr); })
       .catch(function(err){
         console.error('[mushbox-map] fetch failed:', err);
         document.getElementById('liveList').innerHTML =
