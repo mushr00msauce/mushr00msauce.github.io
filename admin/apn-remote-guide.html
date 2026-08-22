@@ -382,54 +382,47 @@ It'll print a link starting with https://login.tailscale.com/a/... — send me t
     <div class="step">
       <div class="step-num">04</div>
       <div class="step-body">
-        <div class="step-title">Check whether this box has ever pulled the script before</div>
+        <div class="step-title">Check whether this box already has the scripts</div>
         <div class="code-block">
           <div class="code-top"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre>[ -d ~/scripts/.git ] &amp;&amp; echo "already cloned — just needs a pull" || echo "never cloned — needs the full clone"</pre>
+          <pre>ls ~/scripts/change-apn-auto.sh 2&gt;/dev/null &amp;&amp; echo "already installed — re-run step 05 anyway to grab the latest version" || echo "not installed — run step 05"</pre>
         </div>
-        <div class="step-text">This doesn't change whether you run step 05 — you <b style="color:var(--text)">always</b> run it, every session. It just tells you which of the two commands in step 05 applies: the one-time <code class="inline">git clone</code>, or the everyday <code class="inline">git pull</code>. That's the whole point of moving this to GitHub — you're never running a stale copy of the script.</div>
+        <div class="step-text">Run step 05 either way — it's a plain download, safe to re-run any time and it just overwrites with whatever's current. There's no "already up to date, skip it" shortcut the way a real <code class="inline">git pull</code> would give you; this is just <code class="inline">wget</code> re-fetching two files.</div>
       </div>
     </div>
 
     <div class="step">
       <div class="step-num">05</div>
       <div class="step-body">
-        <div class="step-title">Install or update the script (GitHub is now the source of truth)</div>
-        <div class="step-text">The scripts live in a GitHub repo instead of being pasted or scp'd by hand each time. That means fixing a bug once fixes it everywhere — every box just pulls the latest version instead of you having to remember which units are running which copy. Swap in your real repo URL below (this assumes <code class="inline">mushr00msauce/mushbox-apn-scripts</code> — update it if that's not the actual name):</div>
-
-        <div class="step-text"><b style="color:var(--text)">First time on this box</b> — clone it fresh:</div>
+        <div class="step-title">Install or update the scripts</div>
+        <div class="step-text">The scripts live in the <code class="inline">admin/</code> folder of the <code class="inline">mushr00msauce.github.io</code> repo (same repo the site itself runs on). Pulling them via GitHub's raw file server works even though the <code class="inline">admin/</code> path on the actual site is Cloudflare-gated — <code class="inline">raw.githubusercontent.com</code> serves straight from the repo and never touches that gate. (A dedicated separate repo and <code class="inline">git clone</code>/<code class="inline">git pull</code> workflow was tried first and documented in an earlier version of this page — it didn't pan out because the repo didn't actually exist under that name. This wget approach is what's confirmed working.)</div>
         <div class="code-block">
-          <div class="code-top"><span>bash — first-time clone</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre><span class="var">git clone https://github.com/mushr00msauce/mushbox-apn-scripts.git ~/scripts</span>
-chmod +x ~/scripts/change-apn-auto.sh</pre>
+          <div class="code-top"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+          <pre>mkdir -p ~/scripts
+wget -O ~/scripts/change-apn-auto.sh https://raw.githubusercontent.com/mushr00msauce/mushr00msauce.github.io/main/admin/change-apn-auto.sh
+wget -O ~/scripts/change-apn.sh https://raw.githubusercontent.com/mushr00msauce/mushr00msauce.github.io/main/admin/change-apn.sh
+chmod +x ~/scripts/change-apn-auto.sh ~/scripts/change-apn.sh</pre>
         </div>
-
-        <div class="step-text"><b style="color:var(--text)">Every other time</b> — pull whatever's changed since the last visit:</div>
-        <div class="code-block">
-          <div class="code-top"><span>bash — update</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre><span class="var">cd ~/scripts &amp;&amp; git pull</span></pre>
-        </div>
-
-        <div class="step-text">If <code class="inline">~/scripts</code> already exists but isn't a git repo (e.g. it still has the old hand-pasted copy from before this was on GitHub), move the old one aside first so the clone doesn't collide with it:</div>
-        <div class="code-block">
-          <div class="code-top"><span>bash — one-time migration</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre>mv ~/scripts ~/scripts-old &amp;&amp; git clone https://github.com/mushr00msauce/mushbox-apn-scripts.git ~/scripts</pre>
-        </div>
+        <div class="step-text">If the branch isn't <code class="inline">main</code> (check what shows next to the branch dropdown on the repo's GitHub page), swap it into both URLs above.</div>
       </div>
     </div>
 
     <div class="callout">
-      <b>Public vs. private repo:</b> the script itself has no secrets baked in — it grabs each modem's security token live on every run, so there's nothing sensitive to leak by making the repo public. What it does expose is the admin-panel endpoints and form field names for the USB800/USB730L. If you're fine with that being visible, a public repo keeps the <code class="inline">git clone</code> command above exactly as written. If you'd rather keep it private, the clone command needs auth — either <code class="inline">git clone https://&lt;your-github-token&gt;@github.com/mushr00msauce/mushbox-apn-scripts.git ~/scripts</code>, or set up a deploy key on the box ahead of time and use the <code class="inline">git@github.com:...</code> SSH form instead.
+      <b>Repo needs to stay public.</b> <code class="inline">mushr00msauce.github.io</code> already has to be public for GitHub Pages to serve the site at all, so this doesn't change your exposure. The script itself has no secrets baked in — it grabs each modem's security token live on every run — so nothing sensitive leaks by these two files sitting in a public repo. What's technically visible is the admin-panel endpoints and form field names for the USB800/USB730L, same as it always was in this same repo's <code class="inline">admin/</code> folder.
+    </div>
+
+    <div class="callout warn">
+      <b>This script needs <code class="inline">sudo</code>.</b> It adds/removes per-interface routing rules and reads routes that can live outside the main routing table — both need root. Every command below is prefixed with <code class="inline">sudo</code>; if it prompts for a password, that's the <code class="inline">user</code> account's own sudo password (same login as SSH, on most boxes).
     </div>
 
     <div class="step">
       <div class="step-num">06</div>
       <div class="step-body">
         <div class="step-title">Check current APN(s) — read only, nothing changes</div>
-        <div class="step-text">No arguments needed. The script walks every active interface, works out what's plugged into each, and prints the current APN per modem — whatever the combo turns out to be.</div>
+        <div class="step-text">No arguments needed. The script walks every active interface, works out what's plugged into each (including USB730L units running in IP Passthrough mode — see <a href="#reference">reference</a> below), and prints the current APN per modem.</div>
         <div class="code-block">
           <div class="code-top"><span>bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre><span class="var">~/scripts/change-apn-auto.sh</span></pre>
+          <pre><span class="var">sudo ~/scripts/change-apn-auto.sh</span></pre>
         </div>
       </div>
     </div>
@@ -442,12 +435,12 @@ chmod +x ~/scripts/change-apn-auto.sh</pre>
         <div class="step-text">If step 06 showed <b style="color:var(--text)">only one modem model</b> (e.g. dual 730L), a single value applies to all of them:</div>
         <div class="code-block">
           <div class="code-top"><span>bash — single model on the box</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre><span class="var">~/scripts/change-apn-auto.sh </span><span class="str">THEACTUALAPN</span></pre>
+          <pre><span class="var">sudo ~/scripts/change-apn-auto.sh </span><span class="str">THEACTUALAPN</span></pre>
         </div>
         <div class="step-text">If step 06 showed <b style="color:var(--text)">one of each</b> (a 730L and an 800), you must pass a value per model — the script refuses a single blanket value here on purpose, since AT&amp;T and Verizon APNs are never the same string and a blind write would misconfigure one of them:</div>
         <div class="code-block">
           <div class="code-top"><span>bash — mixed modem box</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-          <pre><span class="var">~/scripts/change-apn-auto.sh --usb800=</span><span class="str">ATTAPN</span><span class="var"> --usb730l=</span><span class="str">VZWAPN</span></pre>
+          <pre><span class="var">sudo ~/scripts/change-apn-auto.sh --usb800=</span><span class="str">ATTAPN</span><span class="var"> --usb730l=</span><span class="str">VZWAPN</span></pre>
         </div>
       </div>
     </div>
@@ -487,20 +480,20 @@ chmod +x ~/scripts/change-apn-auto.sh</pre>
       <span class="part-tag">Reference</span>
       <h2>Modem quick reference</h2>
     </div>
-    <p class="part-sub">The script auto-detects both interface and model — this table is for reference only, you don't need to feed any of it to the script by hand.</p>
-    <div class="modem-ref">
+    <p class="part-sub">The script auto-detects interface, gateway, and Host-header pattern automatically — this table is for reference only, you don't need to feed any of it to the script by hand.</p>
+    <div class="modem-ref" style="grid-template-columns:1fr 1fr 1fr;">
       <div class="modem-card">
         <h3>USB800 — AT&amp;T / FirstNet</h3>
         <dl>
           <span class="kv"><dt>Interface: </dt><dd>usually eth1, but auto-detected — not assumed</dd></span>
-          <span class="kv"><dt>Admin gateway: </dt><dd>Dynamic, read from that interface's own default route</dd></span>
+          <span class="kv"><dt>Admin gateway: </dt><dd>Dynamic, read from that interface's own default route (any table, not just main)</dd></span>
           <span class="kv"><dt>Host header needed: </dt><dd>att.manager</dd></span>
           <span class="kv"><dt>Form field: </dt><dd>NetworksProfileAPN</dd></span>
           <span class="kv"><dt>Per-model flag: </dt><dd>--usb800=&lt;apn&gt;</dd></span>
         </dl>
       </div>
       <div class="modem-card">
-        <h3>USB730L — Verizon</h3>
+        <h3>USB730L — standard mode</h3>
         <dl>
           <span class="kv"><dt>Interface: </dt><dd>usually eth2, but auto-detected — not assumed</dd></span>
           <span class="kv"><dt>Admin gateway: </dt><dd>192.168.2.1 (fixed)</dd></span>
@@ -509,6 +502,17 @@ chmod +x ~/scripts/change-apn-auto.sh</pre>
           <span class="kv"><dt>Per-model flag: </dt><dd>--usb730l=&lt;apn&gt;</dd></span>
         </dl>
         <p style="font-size:12.5px; color:var(--warn); margin:10px 0 0;"><b>Known quirk:</b> the write is silently ignored/reverted if the modem has an active data session at write time. The script disconnects first, writes, then reconnects to work around this.</p>
+      </div>
+      <div class="modem-card">
+        <h3>USB730L — IP Passthrough mode</h3>
+        <dl>
+          <span class="kv"><dt>Interface: </dt><dd>auto-detected, same as any other</dd></span>
+          <span class="kv"><dt>Admin gateway: </dt><dd>Dynamic (like USB800) — NOT 192.168.2.1</dd></span>
+          <span class="kv"><dt>Host header needed: </dt><dd>my.usb</dd></span>
+          <span class="kv"><dt>Form field: </dt><dd>NetworksFourGLTEAPN (same field name as standard mode)</dd></span>
+          <span class="kv"><dt>Per-model flag: </dt><dd>--usb730l=&lt;apn&gt; (same flag as standard mode)</dd></span>
+        </dl>
+        <p style="font-size:12.5px; color:var(--warn); margin:10px 0 0;"><b>Confirmed 2026-08-22:</b> the admin page itself says "IP Passthrough is always used. The network IP address is assigned to your computer, not to your USB730L." Hitting its dynamic gateway with no Host header returns a 307 redirect to <code class="inline">http://my.usb</code> that loops forever if followed blindly — sending <code class="inline">Host: my.usb</code> up front gets the real page instead.</p>
       </div>
     </div>
     <div class="callout warn" style="margin-top:20px;">
@@ -521,9 +525,9 @@ chmod +x ~/scripts/change-apn-auto.sh</pre>
       <span class="part-tag">Install</span>
       <h2>Full script — one-shot installer</h2>
     </div>
-    <p class="part-sub">As of this version, <a href="https://github.com/mushr00msauce/mushbox-apn-scripts" target="_blank">the GitHub repo</a> is the actual source of truth — step 05 pulls straight from it, and that's the copy that stays current. What's pasted below is a fallback mirror for the rare case a box can't reach GitHub (e.g. hotel/venue WiFi blocking it) and you need to <code class="inline">scp</code> it over by hand instead: don't paste it directly into an open SSH session, large pastes get scrambled. Auto-detects whatever modem(s) are plugged in; no need to specify a keyword per model.</p>
+    <p class="part-sub">The actual source of truth is the <code class="inline">admin/</code> folder in the <code class="inline">mushr00msauce.github.io</code> repo — step 05 pulls straight from it via <code class="inline">raw.githubusercontent.com</code>, and that's the copy that stays current. What's pasted below is a fallback mirror for the rare case a box can't reach GitHub at all — you'd <code class="inline">scp</code> it over by hand instead: don't paste it directly into an open SSH session, large pastes get scrambled. Auto-detects whatever modem(s) are plugged in, including USB730L units in IP Passthrough mode; no need to specify a keyword per model.</p>
     <div class="callout warn">
-      <b>Keep this in sync manually.</b> This is a copy-paste snapshot, not a live embed — if you update the script in the repo, remember to paste the new version in here too, or this fallback will quietly drift out of date.
+      <b>Keep this in sync manually.</b> This is a copy-paste snapshot, not a live embed — if you update the script in the <code class="inline">admin/</code> folder, remember to paste the new version in here too, or this fallback will quietly drift out of date.
     </div>
     <div class="code-block">
       <div class="code-top"><span>change-apn-auto.sh — fallback scp target: user@&lt;hostname&gt;:/home/user/scripts/change-apn-auto.sh</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
@@ -531,14 +535,44 @@ chmod +x ~/scripts/change-apn-auto.sh</pre>
 # change-apn-auto.sh
 #
 # Auto-detects ALL cellular modem interfaces on the box (any combo/count of
-# USB800 / USB730L) and reads or changes their APN. No need to know ahead of
-# time which dongles are plugged in, how many, or which interface maps to
-# which physical modem.
+# USB800 / USB730L, including USB730L units running in IP Passthrough mode)
+# and reads or changes their APN. No need to know ahead of time which
+# dongles are plugged in, how many, or which interface maps to which
+# physical modem.
 #
-# Handles multiple modems sharing the same default gateway (e.g. two
-# USB730Ls both at 192.168.2.1) by scoping each modem&#x27;s traffic to its own
-# interface with per-interface policy routing, so probes/reads/writes never
-# cross-talk to the wrong dongle.
+# Requires sudo/root — the per-interface policy routing below (ip route/ip
+# rule) needs it, and on some boxes the routes wget needs to actually reach
+# the modem&#x27;s admin page live in a per-interface named table rather than the
+# main table, which also needs root to read reliably. Run as:
+#   sudo ./change-apn-auto.sh ...
+#
+# --- Three known modem/gateway patterns (found the hard way — see below) ---
+#   1. USB800 (AT&amp;T/FirstNet):
+#        gateway = dynamic, discovered from that interface&#x27;s own default
+#                  route (may live in a per-interface named routing table,
+#                  e.g. `table eth1`, not just the main table — the original
+#                  version of this script only checked the main table and
+#                  silently fell back to the wrong gateway as a result)
+#        Host header = att.manager
+#        APN field    = NetworksProfileAPN
+#   2. USB730L, standard mode:
+#        gateway = fixed 192.168.2.1
+#        Host header = none
+#        APN field    = NetworksFourGLTEAPN
+#   3. USB730L, IP Passthrough mode (confirmed on a real unit 2026-08-21/22):
+#        The admin page itself says &quot;IP Passthrough is always used. The
+#        network IP address is assigned to your computer, not to your
+#        USB730L.&quot; In this mode the modem does NOT sit behind the usual
+#        fixed 192.168.2.1 address — it gets its own dynamic carrier-side
+#        gateway (same as a USB800 would). Hitting that gateway on port 80
+#        with no Host header returns a 307 redirect to http://my.usb, and
+#        following that redirect blindly loops forever (my.usb resolves to
+#        a link-local-ish address that isn&#x27;t reachable the way the redirect
+#        implies). The actual fix is to send the Host header it&#x27;s asking
+#        for up front:
+#        gateway = dynamic, same lookup as USB800
+#        Host header = my.usb
+#        APN field    = NetworksFourGLTEAPN (same field name as standard 730L)
 #
 # Usage:
 #   ./change-apn-auto.sh                          # read-only: show current APN on all modems
@@ -578,6 +612,8 @@ DETECTED_IFACES=()
 DETECTED_MODELS=()
 DETECTED_IPS=()
 DETECTED_GATEWAYS=()
+DETECTED_HOST_HEADERS=()
+DETECTED_FIELDS=()
 DISTINCT_MODELS=()
 
 idx=0
@@ -590,33 +626,53 @@ for IFACE in $IFACES; do
         continue  # interface has no IP, not an active modem
     fi
 
-    DYN_GATEWAY=$(ip route show dev &quot;$IFACE&quot; 2&gt;/dev/null | grep default | awk &#x27;{print $3}&#x27;)
+    # Dynamic gateway can live in the main table OR a per-interface named
+    # table (e.g. `default via X dev eth1 table eth1`) — check every table,
+    # not just the main one, or this silently falls back to the wrong
+    # gateway for any interface whose default route isn&#x27;t in the main table.
+    DYN_GATEWAY=$(ip route show table all 2&gt;/dev/null | \
+        awk -v ifc=&quot;$IFACE&quot; &#x27;$1==&quot;default&quot; &amp;&amp; $2==&quot;via&quot; { for(i=1;i&lt;=NF;i++) if($i==&quot;dev&quot; &amp;&amp; $(i+1)==ifc) { print $3; exit } }&#x27;)
     GATEWAY=&quot;${DYN_GATEWAY:-192.168.2.1}&quot;
 
     ip route add &quot;$GATEWAY&quot;/32 dev &quot;$IFACE&quot; table &quot;$TABLE&quot; 2&gt;/dev/null
     ip rule add from &quot;$LOCAL_IP&quot; table &quot;$TABLE&quot; priority &quot;$TABLE&quot; 2&gt;/dev/null
 
     PROBE_FILE=&quot;/tmp/apn_probe_${IFACE}.html&quot;
+    PROBE_COOKIE_JAR=&quot;/tmp/apn_cookies_${IFACE}.txt&quot;
 
-    wget -q -T 8 -O &quot;$PROBE_FILE&quot; --bind-address=&quot;$LOCAL_IP&quot; \
-        --header=&quot;Host: att.manager&quot; &quot;http://$GATEWAY/networks/&quot; 2&gt;/dev/null
+    MODEL=&quot;unknown&quot;
+    HOST_HEADER=&quot;&quot;
+    FIELD=&quot;&quot;
 
+    # --- Combo 1: USB800 — dynamic gateway, Host: att.manager ---
+    wget -q -T 8 --max-redirect=0 -O &quot;$PROBE_FILE&quot; --save-cookies &quot;$PROBE_COOKIE_JAR&quot; --keep-session-cookies \
+        --bind-address=&quot;$LOCAL_IP&quot; --header=&quot;Host: att.manager&quot; &quot;http://$GATEWAY/networks/&quot; 2&gt;/dev/null
     if grep -q &quot;NetworksProfileAPN&quot; &quot;$PROBE_FILE&quot; 2&gt;/dev/null; then
-        MODEL=&quot;usb800&quot;
-    else
-        wget -q -T 8 -O &quot;$PROBE_FILE&quot; --bind-address=&quot;$LOCAL_IP&quot; \
-            &quot;http://$GATEWAY/networks/&quot; 2&gt;/dev/null
+        MODEL=&quot;usb800&quot;; HOST_HEADER=&quot;att.manager&quot;; FIELD=&quot;NetworksProfileAPN&quot;
+    fi
+
+    # --- Combo 2: USB730L, IP Passthrough mode — dynamic gateway, Host: my.usb ---
+    if [ &quot;$MODEL&quot; = &quot;unknown&quot; ]; then
+        wget -q -T 8 --max-redirect=0 -O &quot;$PROBE_FILE&quot; --save-cookies &quot;$PROBE_COOKIE_JAR&quot; --keep-session-cookies \
+            --bind-address=&quot;$LOCAL_IP&quot; --header=&quot;Host: my.usb&quot; &quot;http://$GATEWAY/networks/&quot; 2&gt;/dev/null
         if grep -q &quot;NetworksFourGLTEAPN&quot; &quot;$PROBE_FILE&quot; 2&gt;/dev/null; then
-            MODEL=&quot;usb730l&quot;
-        else
-            MODEL=&quot;unknown&quot;
+            MODEL=&quot;usb730l&quot;; HOST_HEADER=&quot;my.usb&quot;; FIELD=&quot;NetworksFourGLTEAPN&quot;
+        fi
+    fi
+
+    # --- Combo 3: USB730L, standard mode — fixed gateway 192.168.2.1, no Host header ---
+    if [ &quot;$MODEL&quot; = &quot;unknown&quot; ]; then
+        wget -q -T 8 --max-redirect=0 -O &quot;$PROBE_FILE&quot; --save-cookies &quot;$PROBE_COOKIE_JAR&quot; --keep-session-cookies \
+            --bind-address=&quot;$LOCAL_IP&quot; &quot;http://$GATEWAY/networks/&quot; 2&gt;/dev/null
+        if grep -q &quot;NetworksFourGLTEAPN&quot; &quot;$PROBE_FILE&quot; 2&gt;/dev/null; then
+            MODEL=&quot;usb730l&quot;; HOST_HEADER=&quot;&quot;; FIELD=&quot;NetworksFourGLTEAPN&quot;
         fi
     fi
 
     ip rule del from &quot;$LOCAL_IP&quot; table &quot;$TABLE&quot; priority &quot;$TABLE&quot; 2&gt;/dev/null
     ip route del &quot;$GATEWAY&quot;/32 dev &quot;$IFACE&quot; table &quot;$TABLE&quot; 2&gt;/dev/null
 
-    echo &quot;$IFACE ($LOCAL_IP) -&gt; gateway $GATEWAY -&gt; detected: $MODEL&quot;
+    echo &quot;$IFACE ($LOCAL_IP) -&gt; gateway $GATEWAY -&gt; detected: $MODEL${HOST_HEADER:+ (Host: $HOST_HEADER)}&quot;
 
     if [ &quot;$MODEL&quot; = &quot;unknown&quot; ]; then
         continue
@@ -626,6 +682,8 @@ for IFACE in $IFACES; do
     DETECTED_MODELS+=(&quot;$MODEL&quot;)
     DETECTED_IPS+=(&quot;$LOCAL_IP&quot;)
     DETECTED_GATEWAYS+=(&quot;$GATEWAY&quot;)
+    DETECTED_HOST_HEADERS+=(&quot;$HOST_HEADER&quot;)
+    DETECTED_FIELDS+=(&quot;$FIELD&quot;)
 
     if [[ ! &quot; ${DISTINCT_MODELS[*]:-} &quot; == *&quot; $MODEL &quot;* ]]; then
         DISTINCT_MODELS+=(&quot;$MODEL&quot;)
@@ -653,22 +711,20 @@ for i in &quot;${!DETECTED_IFACES[@]}&quot;; do
     MODEL=&quot;${DETECTED_MODELS[$i]}&quot;
     LOCAL_IP=&quot;${DETECTED_IPS[$i]}&quot;
     GATEWAY=&quot;${DETECTED_GATEWAYS[$i]}&quot;
+    HOST_HEADER=&quot;${DETECTED_HOST_HEADERS[$i]}&quot;
+    FIELD=&quot;${DETECTED_FIELDS[$i]}&quot;
     TABLE=$((ROUTE_TABLE_BASE + i + 1))
     BASE_URL=&quot;http://$GATEWAY&quot;
     COOKIE_JAR=&quot;/tmp/apn_cookies_${IFACE}.txt&quot;
     PAGE_FILE=&quot;/tmp/apn_${IFACE}.html&quot;
 
     if [ &quot;$MODEL&quot; = &quot;usb800&quot; ]; then
-        HOST_HEADER=&quot;att.manager&quot;
-        FIELD=&quot;NetworksProfileAPN&quot;
         NEW_APN=&quot;${BLANKET_APN:-$APN_USB800}&quot;
     else
-        HOST_HEADER=&quot;&quot;
-        FIELD=&quot;NetworksFourGLTEAPN&quot;
         NEW_APN=&quot;${BLANKET_APN:-$APN_USB730L}&quot;
     fi
 
-    echo &quot;=== $IFACE ($MODEL, $LOCAL_IP) -&gt; gateway $GATEWAY ===&quot;
+    echo &quot;=== $IFACE ($MODEL, $LOCAL_IP) -&gt; gateway $GATEWAY${HOST_HEADER:+ (Host: $HOST_HEADER)} ===&quot;
 
     ip route add &quot;$GATEWAY&quot;/32 dev &quot;$IFACE&quot; table &quot;$TABLE&quot; 2&gt;/dev/null
     ip rule add from &quot;$LOCAL_IP&quot; table &quot;$TABLE&quot; priority &quot;$TABLE&quot; 2&gt;/dev/null
@@ -699,7 +755,7 @@ for i in &quot;${!DETECTED_IFACES[@]}&quot;; do
 
         if [ &quot;$MODEL&quot; = &quot;usb800&quot; ]; then
             RESPONSE=$(wget -q -T 8 -O - --load-cookies &quot;$COOKIE_JAR&quot; --bind-address=&quot;$LOCAL_IP&quot; \
-                &quot;${HOST_ARGS[@]}&quot; --header=&quot;Referer: http://$HOST_HEADER/networks/&quot; \
+                &quot;${HOST_ARGS[@]}&quot; --header=&quot;Referer: http://${HOST_HEADER:-$GATEWAY}/networks/&quot; \
                 --post-data=&quot;${FIELD}=${NEW_APN}&amp;NetworksProfileAuthentication=0&amp;NetworksProfileUsername=&amp;NetworksProfilePassword=&amp;gSecureToken=${TOKEN}&quot; \
                 &quot;$BASE_URL/networks/&quot;)
             if echo &quot;$RESPONSE&quot; | grep -q &quot;saved successfully&quot;; then
@@ -708,23 +764,27 @@ for i in &quot;${!DETECTED_IFACES[@]}&quot;; do
                 echo &quot;WARNING: No success confirmation seen on $IFACE. Verify manually.&quot;
             fi
         else
+            # Covers both USB730L variants (standard fixed-gateway and IP
+            # Passthrough dynamic-gateway) — same disconnect/write/reconnect
+            # dance either way, just with HOST_ARGS applied when the
+            # passthrough variant&#x27;s Host header is set (empty for standard).
             echo &quot;Disconnecting active session before write ($IFACE)...&quot;
             wget -q -T 8 -O /dev/null --load-cookies &quot;$COOKIE_JAR&quot; --bind-address=&quot;$LOCAL_IP&quot; \
-                &quot;$BASE_URL/srv/disconnect&quot;
+                &quot;${HOST_ARGS[@]}&quot; &quot;$BASE_URL/srv/disconnect&quot;
             sleep 3
 
             wget -q -T 8 -O - --load-cookies &quot;$COOKIE_JAR&quot; --bind-address=&quot;$LOCAL_IP&quot; \
-                --header=&quot;Referer: $BASE_URL/networks/&quot; \
+                &quot;${HOST_ARGS[@]}&quot; --header=&quot;Referer: $BASE_URL/networks/&quot; \
                 --post-data=&quot;NetworksConnectionPreference=0&amp;NetworksPreferredTechnology=31&amp;${FIELD}=${NEW_APN}&amp;NetworksOtherAPN=&amp;gSecureToken=${TOKEN}&quot; \
                 &quot;$BASE_URL/networks/&quot; &gt; &quot;$PAGE_FILE&quot;
 
             echo &quot;Reconnecting ($IFACE)...&quot;
             wget -q -T 8 -O /dev/null --load-cookies &quot;$COOKIE_JAR&quot; --bind-address=&quot;$LOCAL_IP&quot; \
-                &quot;$BASE_URL/srv/connect&quot;
+                &quot;${HOST_ARGS[@]}&quot; &quot;$BASE_URL/srv/connect&quot;
             sleep 3
 
             wget -q -T 8 -O &quot;$PAGE_FILE&quot; --save-cookies &quot;$COOKIE_JAR&quot; --keep-session-cookies \
-                --bind-address=&quot;$LOCAL_IP&quot; &quot;$BASE_URL/networks/&quot;
+                --bind-address=&quot;$LOCAL_IP&quot; &quot;${HOST_ARGS[@]}&quot; &quot;$BASE_URL/networks/&quot;
             APPLIED_APN=$(grep -oP &quot;name=\&quot;$FIELD\&quot;.*?value=\&quot;\K[^\&quot;]*&quot; &quot;$PAGE_FILE&quot; | head -1)
 
             if [ &quot;$APPLIED_APN&quot; = &quot;$NEW_APN&quot; ]; then
@@ -750,7 +810,7 @@ done
 </div>
 
 <footer>
-  mushbox internal — remote apn runbook — v4, aug 21 2026 — moved change-apn-auto.sh + change-apn.sh to a GitHub repo (mushr00msauce/mushbox-apn-scripts) as the source of truth; step 05 now git clone (first visit) / git pull (every visit after) instead of scp, so every box always runs the latest version and a fix only needs to be made once. scp install kept as documented fallback for boxes that can't reach GitHub. Embedded script in the "Full script" section is now a manually-synced mirror, not the live copy — update it by hand if the repo changes. v3 switched to change-apn-auto.sh: auto-detects modem model + interface per box instead of assuming eth1=usb800/eth2=usb730l, so it works on any combo (single, dual-same-model, or mixed). Adds per-interface policy routing to disambiguate multiple modems sharing a gateway IP (e.g. dual 730L), and refuses a blanket APN write across mixed carrier models — use --usb800=/--usb730l= flags for boxes with one of each. v2 fixed usb730l silent-revert bug (disconnect/reconnect before write), added user@ vs root@ warning, switched installer to scp transfer after heredoc paste corruption. last verified against usb800 (att/firstnet) &amp; usb730l (verizon) firmware.
+  mushbox internal — remote apn runbook — v5, aug 22 2026 — added third detection pattern: USB730L units running in IP Passthrough mode use a dynamic gateway (like USB800) instead of the fixed 192.168.2.1, and require Host: my.usb or the admin page 307-redirect-loops forever. Fixed gateway lookup to check all routing tables (ip route show table all), not just main — some interfaces' default routes live in a per-interface named table (e.g. table eth1) and were being silently missed, causing a bogus fallback to 192.168.2.1 and a hung/timed-out probe. Script now requires sudo (policy routing + reading non-main routing tables need root) — all step 06/07 commands updated accordingly. Confirmed against a real unit ("hammer") the night of aug 21/22. v4 moved change-apn-auto.sh + change-apn.sh to a GitHub repo as the intended source of truth, but the repo (mushbox-apn-scripts) turned out not to exist / wasn't reachable via git clone in practice — actual working install method (step 05) is now wget against the admin/ folder inside the mushr00msauce.github.io repo via raw.githubusercontent.com, which works regardless of any Cloudflare Access gate on the site's own domain since it bypasses that path entirely. v3 switched to change-apn-auto.sh: auto-detects modem model + interface per box instead of assuming eth1=usb800/eth2=usb730l, so it works on any combo (single, dual-same-model, or mixed). Adds per-interface policy routing to disambiguate multiple modems sharing a gateway IP (e.g. dual 730L), and refuses a blanket APN write across mixed carrier models — use --usb800=/--usb730l= flags for boxes with one of each. v2 fixed usb730l silent-revert bug (disconnect/reconnect before write), added user@ vs root@ warning, switched installer to scp transfer after heredoc paste corruption. last verified against usb800 (att/firstnet), usb730l standard mode, and usb730l IP passthrough mode (verizon) firmware.
 </footer>
 
 <script>
