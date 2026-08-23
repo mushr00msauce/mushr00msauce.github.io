@@ -218,6 +218,15 @@
   .badge.kick{ background: var(--kick); }
   .badge.encoder{ background: var(--encoder); }
 
+  .tele-badge{
+    position:absolute; top:6px; right:6px; z-index:2;
+    font-size:10px; letter-spacing:.02em;
+    padding: 3px 7px; border-radius: 4px; font-weight:600;
+    color: var(--encoder); background: rgba(5,7,10,.72);
+    border: 1px solid rgba(255,180,84,.4);
+    white-space:nowrap;
+  }
+
   /* ---------- footer / expand strip ---------- */
   footer{
     padding: 10px 20px 18px; display:flex; justify-content:center;
@@ -355,6 +364,22 @@
     return String(n);
   }
 
+  // Same telemetry the map shows for a confirmed-online Belabox encoder
+  // (bitrate + SoC temp) — used both for the "warming up" placeholder
+  // tile and, when a login is already live on Twitch/Kick AND its
+  // encoder is separately confirmed on, a small badge on that tile too.
+  function fmtBitrate(kbps){
+    if (kbps == null) return "";
+    return kbps >= 1000 ? (kbps/1000).toFixed(1) + " Mbps" : kbps + " Kbps";
+  }
+  function telemetryText(t){
+    if (!t) return "";
+    const parts = [];
+    if (t.tempF != null) parts.push(t.tempF + "°F");
+    if (t.bitrateKbps != null) parts.push(fmtBitrate(t.bitrateKbps));
+    return parts.join(" · ");
+  }
+
   function twitchSrc(login, muted){
     const params = new URLSearchParams();
     params.set("channel", login);
@@ -425,14 +450,10 @@
     if (entry.platform === "encoder"){
       const ph = document.createElement("div");
       ph.className = "placeholder";
-      const t = entry.telemetry;
       ph.innerHTML =
         '<div class="spin"></div>' +
         '<div>encoder online — waiting for stream…</div>' +
-        (t ? '<div class="tele">' +
-              (t.bitrateKbps != null ? t.bitrateKbps + " Kbps" : "") +
-              (t.tempF != null ? " · " + t.tempF + "°F" : "") +
-              '</div>' : "");
+        '<div class="tele">' + telemetryText(entry.telemetry) + '</div>';
       frameWrap.appendChild(ph);
     } else {
       const iframe = document.createElement("iframe");
@@ -442,6 +463,17 @@
         ? kickSrc(entry.login, entry.login !== audioFocusLogin)
         : twitchSrc(entry.login, entry.login !== audioFocusLogin);
       frameWrap.appendChild(iframe);
+
+      // Live on a platform AND the Belabox encoder is separately
+      // confirmed on (encoderConfirmed) — show its bitrate/temp the same
+      // way the map does, as a small corner badge rather than replacing
+      // the video.
+      if (entry.encoderConfirmed && entry.telemetry){
+        const tele = document.createElement("div");
+        tele.className = "tele-badge";
+        tele.textContent = telemetryText(entry.telemetry);
+        frameWrap.appendChild(tele);
+      }
     }
     wrap.appendChild(frameWrap);
 
@@ -536,28 +568,47 @@
 
     gridEl.style.gridTemplateColumns = "repeat(" + computeColumns(visible.length) + ", 1fr)";
 
-    // Add any new tiles; leave existing ones exactly as they are.
-    const existing = new Set(
-      Array.from(gridEl.querySelectorAll(".tile")).map(t => t.dataset.login)
-    );
-    // Rebuild in correct order only when the order actually changed in a
-    // way that matters for layout — simplest correct approach: re-append
-    // in rank order (moves nodes, doesn't recreate them, so iframes are
-    // untouched).
-    visible.forEach(login => {
+    // Rank changes (viewer counts shift constantly) are applied purely
+    // via the CSS `order` property below, NOT by moving DOM nodes.
+    // Moving an already-attached iframe with appendChild — even to
+    // reorder it among siblings it's already sitting next to — makes
+    // some browsers treat it as a detach+reattach and reload it, which
+    // was stopping every playing stream on each 60s poll. A brand-new
+    // tile is still appended once, normally, since nothing is playing in
+    // it yet.
+    visible.forEach((login, idx) => {
       let tile = gridEl.querySelector('.tile[data-login="' + cssEscape(login) + '"]');
+      const entry = liveByLogin.get(login);
       if (!tile){
-        tile = tileTemplate(liveByLogin.get(login));
+        tile = tileTemplate(entry);
+        gridEl.appendChild(tile);
       } else {
-        // Update the bits that change every poll (viewer count, title)
-        // without touching the iframe.
-        const entry = liveByLogin.get(login);
+        // Update only the bits that change every poll (viewer count,
+        // title, encoder telemetry) — never the iframe, never the node's
+        // position in the DOM.
         const vnum = tile.querySelector(".vnum");
         if (vnum) vnum.textContent = fmtViewers(entry.viewers || 0);
         const titleEl = tile.querySelector(".title");
         if (titleEl && entry.title) titleEl.textContent = entry.title;
+
+        if (entry.platform === "encoder"){
+          const teleEl = tile.querySelector(".placeholder .tele");
+          if (teleEl) teleEl.textContent = telemetryText(entry.telemetry);
+        } else {
+          let teleBadge = tile.querySelector(".tele-badge");
+          if (entry.encoderConfirmed && entry.telemetry){
+            if (!teleBadge){
+              teleBadge = document.createElement("div");
+              teleBadge.className = "tele-badge";
+              tile.querySelector(".frame-wrap").appendChild(teleBadge);
+            }
+            teleBadge.textContent = telemetryText(entry.telemetry);
+          } else if (teleBadge){
+            teleBadge.remove();
+          }
+        }
       }
-      gridEl.appendChild(tile);
+      tile.style.order = idx;
     });
 
     emptyEl.classList.toggle("show", order.length === 0);
