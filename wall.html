@@ -534,7 +534,11 @@
       }
       const r = tile.getBoundingClientRect();
       const norm = Math.max(-1, Math.min(1, ((r.left + r.width / 2) - centerX) / halfW));
-      tile.style.transform = "translateZ(" + SIDE_ADVANCE_PX + "px) rotateY(" + (norm * MAX_TILT_DEG).toFixed(2) + "deg)";
+      // Negated: a tile's edge NEAREST the center should angle toward the
+      // viewer (like a curved desk array wrapping around them), not away
+      // from it — the un-negated sign turned the outer edges forward
+      // instead, which read as curving the wrong way.
+      tile.style.transform = "translateZ(" + SIDE_ADVANCE_PX + "px) rotateY(" + (-norm * MAX_TILT_DEG).toFixed(2) + "deg)";
     });
   }
 
