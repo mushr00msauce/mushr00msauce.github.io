@@ -163,9 +163,19 @@
   #empty.show{ display:flex; }
   #empty .glyph{ color: var(--sky); opacity:.55; }
 
+  /* A plain (non-3D) flex box that just holds #grid and is what the
+     corrective "shrink to fit the tilt's bulge" scale (see
+     fitTiltedGridToBounds) is applied to — NOT #grid itself, since
+     scaling the same element that also establishes `perspective` for
+     its children composes those two transforms in a way that doesn't
+     behave like a simple uniform shrink. Keeping them on separate
+     elements sidesteps that entirely. */
+  #gridStage{
+    flex:1; min-height:0; display:flex;
+  }
   #grid{
     display:grid; gap:12px;
-    flex:1; min-height:0;
+    flex:1; min-height:0; width:100%;
     justify-content:center; align-content:center;
     perspective: 950px; /* shared vanishing point for the desk-curve tilt below */
     /* grid-template-columns / grid-auto-rows are set in px by JS
@@ -192,7 +202,17 @@
     transition: transform .5s ease;
     animation: tileIn .3s ease;
   }
-  @keyframes tileIn{ from{ opacity:0; transform: scale(.97);} to{opacity:1; transform:scale(1);} }
+  /* Opacity only — NOT transform. `.tile`'s transform is exclusively
+     JS-controlled (see applyDeskTilt) for the desk-tilt effect, and a
+     CSS keyframe animation targeting the same property overrides
+     inline style.transform for as long as the animation runs, no
+     matter what JS sets it to. That silently ate the very first tilt
+     application on every newly created tile (the whole first ~0.3s),
+     during which fitTiltedGridToBounds() measured an untitled,
+     un-bulged box and decided no corrective shrink was needed — only
+     for the real (tilted) geometry to pop in once this animation
+     finished and blow past the safe bounds it had just approved.  */
+  @keyframes tileIn{ from{ opacity:0; } to{ opacity:1; } }
 
   /* The one big tile in the middle — #1 by viewer count — set slightly
      back from the rest (see applyDeskTilt), like the flat center panel
@@ -379,7 +399,7 @@
     <div style="letter-spacing:.14em; font-size:11px; color:var(--text-dim);">NO SIGNAL</div>
     <div>No mushboxes are live right now.</div>
   </div>
-  <div id="grid"></div>
+  <div id="gridStage"><div id="grid"></div></div>
 </main>
 
 <footer id="wallFooter">
@@ -450,6 +470,7 @@
 
   const $ = (sel) => document.querySelector(sel);
   const gridEl = $("#grid");
+  const gridStageEl = $("#gridStage");
   const emptyEl = $("#empty");
   const bannerEl = $("#banner");
   const moreBtn = $("#moreBtn");
@@ -520,6 +541,20 @@
   function applyDeskTilt(heroLogin){
     const tiles = Array.from(gridEl.querySelectorAll(".tile"));
     if (!tiles.length) return;
+    // .tile has a `transition: transform .5s ease` (for smooth hero swaps
+    // and resizes). That's a problem here: fitTiltedGridToBounds(), called
+    // right after this function, measures getBoundingClientRect() on these
+    // same tiles to decide whether a corrective shrink is needed — and if
+    // the transform change is still mid-transition at that moment, it
+    // measures a PARTIALLY tilted position, not the final one. That
+    // undersizes the measured union and lets the fully-settled (post
+    // transition) tilt bulge past the safe box a few hundred ms later,
+    // which is exactly the clipping this function exists to prevent.
+    // Suppress the transition for this tilt+measure pass so the new
+    // transform applies instantly and reflects the true final geometry,
+    // then restore it so later changes (next render's tilt, a resize)
+    // still animate smoothly.
+    tiles.forEach(t => { t.style.transition = "none"; });
     // Clear transforms before measuring so rects reflect pure grid
     // layout, not whatever tilt was applied on the previous pass.
     tiles.forEach(t => { t.style.transform = "none"; });
@@ -540,6 +575,18 @@
       // instead, which read as curving the wrong way.
       tile.style.transform = "translateZ(" + SIDE_ADVANCE_PX + "px) rotateY(" + (-norm * MAX_TILT_DEG).toFixed(2) + "deg)";
     });
+    // Force the (transition-less) transform above to actually commit
+    // before fitTiltedGridToBounds measures it.
+    void gridEl.offsetHeight;
+  }
+
+  // Re-enables the transform transition on all tiles after a tilt+measure
+  // pass has committed its final geometry (see applyDeskTilt). Deferred to
+  // the next frame so restoring it can never itself be seen as a snap.
+  function restoreTileTransitions(){
+    requestAnimationFrame(() => {
+      gridEl.querySelectorAll(".tile").forEach(t => { t.style.transition = ""; });
+    });
   }
 
   function layoutGrid(visibleLogins){
@@ -548,7 +595,12 @@
     const count = visibleLogins.length;
     if (!count) return;
 
-    const rect = gridEl.getBoundingClientRect();
+    // A previous pass may have left a corrective scale() on #gridStage (see
+    // fitTiltedGridToBounds below) — clear it before measuring, or this
+    // read sees an already-shrunk box and undersizes everything, which
+    // then throws off the overflow math on the next pass too.
+    gridStageEl.style.transform = "";
+    const rect = gridStageEl.getBoundingClientRect();
     const wantHero = count >= HERO_MIN_COUNT;
     let best = wantHero ? computeBestGrid(rect.width, rect.height, count, HERO_EXTRA_SLOTS) : null;
     const heroActive = !!best;
@@ -576,6 +628,65 @@
     });
 
     applyDeskTilt(heroLogin);
+    fitTiltedGridToBounds();
+    restoreTileTransitions();
+  }
+
+  // The desk tilt above makes the outer edges of angled tiles bulge
+  // toward the viewer (translateZ + rotateY), which can visually push
+  // them past #grid's own box and get clipped by the viewport or a
+  // clipping ancestor — the fit-to-screen sizing upstream has no way to
+  // predict that bulge since it's a 3D compositing effect, not a layout
+  // change. Rather than guess a safe margin, measure what actually got
+  // painted (post-tilt) and scale the whole grid down just enough to
+  // bring it back inside its own untransformed box, if needed.
+  //
+  // The corrective scale is applied to #gridStage, NOT #grid itself:
+  // #grid establishes `perspective` for its tilted tile children, and
+  // scaling the same element that also sets perspective composes the
+  // two transforms in a way that does not behave like a simple uniform
+  // 2D shrink of what's visually painted (the measured union barely
+  // moved even after a scale() was applied directly to #grid). #gridStage
+  // is a plain flex wrapper with no perspective/transform of its own, so
+  // scaling it shrinks the already-projected 3D scene as expected.
+  function fitTiltedGridToBounds(){
+    gridStageEl.style.transform = "";
+    const tiles = Array.from(gridEl.querySelectorAll(".tile"));
+    if (!tiles.length) return;
+    const safe = gridStageEl.getBoundingClientRect();
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    tiles.forEach(t => {
+      const r = t.getBoundingClientRect();
+      if (r.left < minX) minX = r.left;
+      if (r.top < minY) minY = r.top;
+      if (r.right > maxX) maxX = r.right;
+      if (r.bottom > maxY) maxY = r.bottom;
+    });
+    if (maxX <= minX || maxY <= minY || safe.width <= 0 || safe.height <= 0) return;
+    // A CSS scale() transform shrinks around its transform-origin, which
+    // defaults to #gridStage's own center — NOT the tile union's center.
+    // The tile union isn't reliably centered inside #gridStage (an odd
+    // column/row count, or the hero tile's off-center placement, can
+    // shift it), so comparing raw union width/height to safe's box isn't
+    // enough: a point that's e.g. 40px right of center before scaling is
+    // still 40px*scale right of that SAME center point after, regardless
+    // of how the opposite edge behaves. Measure each edge's distance from
+    // the origin independently and make sure the worst-case one still
+    // lands inside the safe box post-scale.
+    const originX = safe.left + safe.width / 2;
+    const originY = safe.top + safe.height / 2;
+    const maxAbsX = Math.max(Math.abs(minX - originX), Math.abs(maxX - originX));
+    const maxAbsY = Math.max(Math.abs(minY - originY), Math.abs(maxY - originY));
+    if (maxAbsX <= 0 || maxAbsY <= 0) return;
+    // A small safety shrink (not just clamping to exactly 1:1) so
+    // sub-pixel rounding from the measurement pass never leaves a
+    // tile's edge a hair past the boundary.
+    const scale = Math.min(1, (safe.width / 2 / maxAbsX) * 0.995, (safe.height / 2 / maxAbsY) * 0.995);
+    if (scale < 0.999){
+      gridStageEl.style.transform = "scale(" + scale.toFixed(4) + ")";
+    } else {
+      gridStageEl.style.transform = "";
+    }
   }
 
   let resizeRAF = null;
