@@ -105,6 +105,21 @@
 
   select.btn{ padding-right:6px; }
 
+  .btn.toggle{ user-select:none; }
+  .btn.toggle input{
+    appearance:none; -webkit-appearance:none;
+    width:14px; height:14px; margin:0; flex-shrink:0;
+    border:1px solid var(--panel-border); border-radius:3px;
+    background: #05070a; cursor:pointer; position:relative;
+  }
+  .btn.toggle input:checked{ background: var(--accent); border-color: var(--accent); }
+  .btn.toggle input:checked::after{
+    content:""; position:absolute; left:4px; top:1px;
+    width:4px; height:8px; border:solid #05070a;
+    border-width:0 2px 2px 0; transform:rotate(45deg);
+  }
+  .btn.toggle:has(input:checked){ border-color: var(--accent-dim); color: var(--accent); }
+
   /* ---------- error / status banner ---------- */
   #banner{
     display:none; padding:8px 20px; font-size:12px;
@@ -238,6 +253,9 @@
   <div class="stat"><b id="liveCount">–</b>live now</div>
   <div class="stat"><b id="shownCount">–</b>on wall</div>
 
+  <label class="btn toggle" id="irlToggleLabel" title="Show only IRL/mobile streams">
+    <input type="checkbox" id="irlOnly"> IRL only
+  </label>
   <select id="gridSize" class="btn" title="Wall size"></select>
   <button id="refreshBtn" class="btn" title="Refresh now">⟳ Refresh</button>
 </header>
@@ -289,10 +307,34 @@
   let liveByLogin = new Map();   // login -> live entry from the worker
   let avatars = {};
   let names = {};
-  let order = [];                // logins, in wall order (viewer count desc)
+  let fullOrder = [];             // ALL live logins, viewer count desc (unfiltered)
+  let order = [];                // logins actually eligible for the wall (after IRL filter)
   let visibleCount = TIERS[0];
   let audioFocusLogin = null;    // which tile (if any) currently has sound
   let refreshTimer = null;
+  let irlOnly = false;
+
+  try { irlOnly = localStorage.getItem("mushbox_irlOnly") === "1"; } catch(e){}
+
+  // A stream counts as "IRL" if its game/category name contains "IRL"
+  // (Twitch's IRL category, and Kick's equivalent, both come through the
+  // worker's `game` field literally named that way — same text the map
+  // page already reads for its "IRL · Twitch IRL · Kick Live" labels).
+  // Encoder-only "warming up" entries have no game/category yet — since
+  // the encoder itself (Belabox) is inherently a mobile/IRL rig, those
+  // always count as IRL rather than being filtered out before they even
+  // have a chance to report a category.
+  function isIRL(entry){
+    if (!entry) return false;
+    if (entry.platform === "encoder") return true;
+    return (entry.game || "").toLowerCase().includes("irl");
+  }
+
+  function applyFilter(){
+    order = irlOnly
+      ? fullOrder.filter(l => isIRL(liveByLogin.get(l)))
+      : fullOrder.slice();
+  }
 
   const $ = (sel) => document.querySelector(sel);
   const gridEl = $("#grid");
@@ -521,7 +563,7 @@
     emptyEl.classList.toggle("show", order.length === 0);
     gridEl.style.display = order.length === 0 ? "none" : "grid";
 
-    $("#liveCount").textContent = order.length;
+    $("#liveCount").textContent = fullOrder.length;
     $("#shownCount").textContent = visible.length;
 
     // "Up next" chips + Show more button.
@@ -573,7 +615,8 @@
       const live = await fetchLive();
       live.sort((a,b) => (b.viewers||0) - (a.viewers||0));
       liveByLogin = new Map(live.map(e => [e.login, e]));
-      order = live.map(e => e.login);
+      fullOrder = live.map(e => e.login);
+      applyFilter();
       clearBanner();
     } catch(err){
       showBanner("Couldn't reach the live worker (" + (err && err.message ? err.message : err) + "). Retrying…");
@@ -592,6 +635,16 @@
   }
 
   // ---- wiring ---------------------------------------------------------
+  const irlCheckbox = $("#irlOnly");
+  irlCheckbox.checked = irlOnly;
+  irlCheckbox.addEventListener("change", () => {
+    irlOnly = irlCheckbox.checked;
+    try { localStorage.setItem("mushbox_irlOnly", irlOnly ? "1" : "0"); } catch(e){}
+    applyFilter();
+    rebuildGridSizeOptions();
+    render();
+  });
+
   gridSizeSel.addEventListener("change", () => {
     visibleCount = parseInt(gridSizeSel.value, 10) || 4;
     render();
