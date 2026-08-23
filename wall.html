@@ -167,27 +167,72 @@
     display:grid; gap:12px;
     flex:1; min-height:0;
     justify-content:center; align-content:center;
+    perspective: 950px; /* shared vanishing point for the desk-curve tilt below */
     /* grid-template-columns / grid-auto-rows are set in px by JS
        (layoutGrid) so every tile is sized to actually fit the
        available space — see the script below. */
   }
 
+  /* `.tile` is the physical bezel — thick plastic frame, like a real
+     monitor housing. The actual picture lives in the nested `.screen`
+     (below), which is what gets clipped to rounded "glass" corners. */
   .tile{
     position:relative;
-    background:#000;
-    border:1px solid var(--panel-border);
-    border-radius: 10px;
-    overflow:hidden;
+    background: linear-gradient(155deg, #262c3d 0%, #131826 55%, #090c14 100%);
+    padding: 8px 8px 12px;
+    border-radius: 15px;
+    border: 1px solid #333c54;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.07),
+      inset 0 -3px 6px rgba(0,0,0,.55),
+      0 12px 30px -14px rgba(0,0,0,.85);
     display:flex; flex-direction:column;
     min-height:0;
-    box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.8);
+    transform-style: preserve-3d;
+    transition: transform .5s ease;
     animation: tileIn .3s ease;
   }
   @keyframes tileIn{ from{ opacity:0; transform: scale(.97);} to{opacity:1; transform:scale(1);} }
-  .tile.audio-focus{ border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), 0 8px 24px -12px rgba(0,0,0,.8); }
+
+  /* The one big tile in the middle — #1 by viewer count — set slightly
+     back from the rest (see applyDeskTilt), like the flat center panel
+     of a curved desk monitor array. */
+  .tile.hero{ z-index:2; }
+  .tile.hero .screen{
+    box-shadow:
+      inset 0 0 0 1px rgba(0,0,0,.7),
+      0 0 0 2px var(--accent),
+      0 0 34px rgba(30,111,255,.4);
+  }
+
+  /* Small "power LED" on the bottom bezel — purely cosmetic hardware
+     detail, lit whenever the feed is actually live. */
+  .tile .led{
+    position:absolute; left:50%; bottom:4px; transform:translateX(-50%);
+    width:5px; height:5px; border-radius:50%;
+    background: var(--sky); box-shadow: 0 0 4px var(--sky);
+    opacity:.85; z-index:1;
+  }
+
+  .tile .screen{
+    position:relative; flex:1; min-height:0;
+    background:#000; border-radius:6px; overflow:hidden;
+    display:flex; flex-direction:column;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.6);
+  }
+  .tile.audio-focus .screen{
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.6), 0 0 0 2px var(--accent), 0 0 18px rgba(30,111,255,.55);
+  }
 
   .tile .frame-wrap{ flex:1; position:relative; background:#000; }
   .tile iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+  /* Faint glass sheen across the picture, like the glossy coating in the
+     reference monitor-wall photo. A real element (not ::after) since the
+     corner-reticle brackets below already use frame-wrap's ::before/::after. */
+  .tile .sheen{
+    position:absolute; inset:0; z-index:1; pointer-events:none;
+    background: linear-gradient(115deg, rgba(255,255,255,.05) 0%, transparent 26%);
+  }
 
   .tile .placeholder{
     position:absolute; inset:0; display:flex; flex-direction:column;
@@ -421,13 +466,22 @@
   const TILE_ASPECT = 16 / 9;   // video area only — the bar below is fixed-height
   const TILE_BAR_H = 36;        // must match .tile .bar's CSS height
   const GRID_GAP = 12;          // must match #grid's CSS gap
-  let lastVisibleCount = 0;
+  const HERO_MIN_COUNT = 3;     // need at least this many tiles before a 2x2 hero makes sense
+  const HERO_EXTRA_SLOTS = 3;   // a 2x2 span = 4 cells for 1 tile, i.e. 3 "extra" over a normal 1x1
+  let lastVisible = [];         // logins in rank order, from the most recent render()
 
-  function computeBestGrid(containerW, containerH, count){
+  // heroExtra > 0 asks for enough room to also fit one 2x2 spanning tile
+  // among `count` total tiles (see layoutGrid). Returns null if nothing
+  // fits at all; the hero-aware caller falls back to heroExtra:0 itself.
+  function computeBestGrid(containerW, containerH, count, heroExtra){
     if (count <= 0 || containerW <= 0 || containerH <= 0) return null;
+    heroExtra = heroExtra || 0;
+    const effective = count + heroExtra;
     let best = null;
     for (let cols = 1; cols <= count; cols++){
-      const rows = Math.ceil(count / cols);
+      if (heroExtra > 0 && cols < 2) continue; // hero needs 2 columns to span
+      const rows = Math.ceil(effective / cols);
+      if (heroExtra > 0 && rows < 2) continue; // hero needs 2 rows to span
       const tileW = (containerW - GRID_GAP * (cols - 1)) / cols;
       if (tileW <= 0) continue;
       const tileH = tileW / TILE_ASPECT + TILE_BAR_H;
@@ -437,6 +491,7 @@
       }
     }
     if (best) return best;
+    if (heroExtra > 0) return null; // let the caller retry without a hero
     // Nothing fit height-wise even with one tile per row (a very short
     // viewport) — fall back to exactly one row and shrink tiles to
     // whatever height is actually available, then re-check width.
@@ -451,15 +506,72 @@
     return { cols, rows, tileW, tileH };
   }
 
-  function layoutGrid(count){
-    if (count == null) count = lastVisibleCount;
-    lastVisibleCount = count;
-    if (!count){ return; }
+  // ---- desk-setup 3D tilt ----------------------------------------------
+  // The #1 tile (hero) sits flat and slightly RECEDED, like the flat
+  // center panel of a curved multi-monitor desk mount; the rest tilt
+  // toward the viewer the further they are from center, like the angled
+  // side panels of that same mount. Measures actual post-layout
+  // positions rather than predicting CSS Grid's placement, so it works
+  // regardless of how dense auto-flow packed things.
+  const MAX_TILT_DEG = 17;
+  const HERO_RECEDE_PX = 46;
+  const SIDE_ADVANCE_PX = 16;
+
+  function applyDeskTilt(heroLogin){
+    const tiles = Array.from(gridEl.querySelectorAll(".tile"));
+    if (!tiles.length) return;
+    // Clear transforms before measuring so rects reflect pure grid
+    // layout, not whatever tilt was applied on the previous pass.
+    tiles.forEach(t => { t.style.transform = "none"; });
+    void gridEl.offsetHeight; // force a reflow
+    const gridRect = gridEl.getBoundingClientRect();
+    const centerX = gridRect.left + gridRect.width / 2;
+    const halfW = (gridRect.width / 2) || 1;
+    tiles.forEach(tile => {
+      if (heroLogin && tile.dataset.login === heroLogin){
+        tile.style.transform = "translateZ(-" + HERO_RECEDE_PX + "px)";
+        return;
+      }
+      const r = tile.getBoundingClientRect();
+      const norm = Math.max(-1, Math.min(1, ((r.left + r.width / 2) - centerX) / halfW));
+      tile.style.transform = "translateZ(" + SIDE_ADVANCE_PX + "px) rotateY(" + (norm * MAX_TILT_DEG).toFixed(2) + "deg)";
+    });
+  }
+
+  function layoutGrid(visibleLogins){
+    if (visibleLogins == null) visibleLogins = lastVisible;
+    lastVisible = visibleLogins;
+    const count = visibleLogins.length;
+    if (!count) return;
+
     const rect = gridEl.getBoundingClientRect();
-    const best = computeBestGrid(rect.width, rect.height, count);
+    const wantHero = count >= HERO_MIN_COUNT;
+    let best = wantHero ? computeBestGrid(rect.width, rect.height, count, HERO_EXTRA_SLOTS) : null;
+    const heroActive = !!best;
+    if (!best) best = computeBestGrid(rect.width, rect.height, count, 0);
     if (!best) return;
+
+    const heroLogin = heroActive ? visibleLogins[0] : null;
+    gridEl.style.gridAutoFlow = heroActive ? "dense" : "row";
     gridEl.style.gridTemplateColumns = "repeat(" + best.cols + ", " + best.tileW.toFixed(1) + "px)";
     gridEl.style.gridAutoRows = best.tileH.toFixed(1) + "px";
+
+    const heroColStart = heroActive ? Math.max(1, Math.floor((best.cols - 2) / 2) + 1) : null;
+    const heroRowStart = heroActive ? Math.max(1, Math.floor((best.rows - 2) / 2) + 1) : null;
+
+    gridEl.querySelectorAll(".tile").forEach(tile => {
+      const isHero = heroActive && tile.dataset.login === heroLogin;
+      tile.classList.toggle("hero", isHero);
+      if (isHero){
+        tile.style.gridColumn = heroColStart + " / span 2";
+        tile.style.gridRow = heroRowStart + " / span 2";
+      } else {
+        tile.style.gridColumn = "";
+        tile.style.gridRow = "";
+      }
+    });
+
+    applyDeskTilt(heroLogin);
   }
 
   let resizeRAF = null;
@@ -550,16 +662,31 @@
     wrap.className = "tile";
     wrap.dataset.login = entry.login;
 
+    // The bezel (`.tile` itself) is just plastic-colored chrome; all the
+    // actual screen content sits in this nested `.screen` — same trick a
+    // real monitor uses (bezel frame vs. the glass inside it), and it's
+    // what gets the rounded "glass" corners instead of the outer bezel.
+    const screen = document.createElement("div");
+    screen.className = "screen";
+    wrap.appendChild(screen);
+
+    const led = document.createElement("div");
+    led.className = "led";
+    wrap.appendChild(led);
+
     const badge = document.createElement("div");
     badge.className = "badge " + entry.platform;
     badge.textContent = entry.platform;
-    wrap.appendChild(badge);
+    screen.appendChild(badge);
 
     const frameWrap = document.createElement("div");
     frameWrap.className = "frame-wrap";
     const reticleR = document.createElement("div");
     reticleR.className = "reticle-r";
     frameWrap.appendChild(reticleR);
+    const sheen = document.createElement("div");
+    sheen.className = "sheen";
+    frameWrap.appendChild(sheen);
 
     if (entry.platform === "encoder"){
       const ph = document.createElement("div");
@@ -589,7 +716,7 @@
         frameWrap.appendChild(tele);
       }
     }
-    wrap.appendChild(frameWrap);
+    screen.appendChild(frameWrap);
 
     const bar = document.createElement("div");
     bar.className = "bar";
@@ -639,7 +766,7 @@
     });
     bar.appendChild(openBtn);
 
-    wrap.appendChild(bar);
+    screen.appendChild(bar);
     return wrap;
   }
 
@@ -725,7 +852,7 @@
 
     emptyEl.classList.toggle("show", order.length === 0);
     gridEl.style.display = order.length === 0 ? "none" : "grid";
-    layoutGrid(visible.length);
+    layoutGrid(visible);
 
     $("#liveCount").textContent = fullOrder.length;
     $("#shownCount").textContent = visible.length;
@@ -761,7 +888,7 @@
     // Collapsing/expanding the footer changes how much height the grid
     // actually has — re-run the fit once more after layout settles.
     if (typeof requestAnimationFrame === "function"){
-      requestAnimationFrame(() => layoutGrid(visible.length));
+      requestAnimationFrame(() => layoutGrid(visible));
     }
   }
 
