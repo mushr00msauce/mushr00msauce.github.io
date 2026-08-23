@@ -28,28 +28,45 @@
 -->
 <style>
   :root{
-    --bg: #05070a;
-    --bg-grid: #0a0e14;
-    --panel: #0d1219;
-    --panel-border: #1c2530;
-    --text: #d7e2ea;
-    --text-dim: #7a8a99;
-    --text-faint: #4a5866;
-    --accent: #39ff9d;
-    --accent-dim: #1c8f5c;
-    --twitch: #a970ff;
+    /* Pulled straight from themushbox.com's own stylesheet (--navy,
+       --royal, --sky, --card, --card-edge, --text, --twitch below all
+       match its real values exactly) rather than guessed. */
+    --bg: #04081A;        /* --ink on the main site */
+    --bg-deep: #060D24;   /* --navy-deep */
+    --panel: #0E1B42;     /* --card */
+    --panel-border: #1B2C5E; /* --card-edge */
+    --text: #D7E3FF;
+    --text-dim: #8FA3CC;
+    --text-faint: #55688f;
+    --accent: #1E6FFF;    /* --royal — the actual "Mushbox blue" */
+    --accent-dim: #163f8f;
+    --sky: #4DB8FF;       /* lighter secondary blue used for glows/hovers site-wide */
+    --twitch: #9146FF;
     --kick: #53fc18;
-    --encoder: #ffb454;
-    --danger: #ff5f6d;
-    --focus-ring: #39ff9d;
+    --encoder: #FFC24D;   /* matches the site's own amber accent (encoder/telemetry icon) */
+    --danger: #FF3B4E;    /* matches the site's own "LIVE" pulse-dot red */
+    --focus-ring: #4DB8FF;
     font-family: "JetBrains Mono", "SF Mono", "Consolas", ui-monospace, monospace;
   }
   *{ box-sizing: border-box; }
   html,body{
     margin:0; padding:0; height:100%;
     background:
-      radial-gradient(ellipse at top, #0b1119 0%, var(--bg) 60%);
+      radial-gradient(900px 480px at 50% -10%, rgba(30,111,255,.22), transparent 60%),
+      radial-gradient(700px 420px at 85% 100%, rgba(77,184,255,.08), transparent 55%),
+      var(--bg);
     color: var(--text);
+  }
+  /* Faint CRT scanlines over the whole page — part of the security-monitor
+     read, kept subtle enough not to fight legibility. Never intercepts
+     clicks. */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:1000; pointer-events:none;
+    background: repeating-linear-gradient(
+      to bottom, rgba(77,184,255,.035) 0px, rgba(77,184,255,.035) 1px,
+      transparent 1px, transparent 3px
+    );
+    mix-blend-mode: overlay;
   }
   body{
     display:flex; flex-direction:column;
@@ -60,20 +77,24 @@
   header{
     display:flex; align-items:center; gap:16px;
     padding: 14px 20px;
-    background: linear-gradient(180deg, rgba(13,18,25,.95), rgba(13,18,25,.75));
-    border-bottom: 1px solid var(--panel-border);
+    background: linear-gradient(180deg, rgba(10,21,53,.95), rgba(6,13,36,.85));
+    border-bottom: 1px solid rgba(77,184,255,.3);
     position: sticky; top:0; z-index: 50;
     flex-wrap: wrap;
     flex-shrink:0;
   }
   .brand{ display:flex; align-items:center; gap:10px; margin-right:auto; }
   .brand .dot{
-    width:10px; height:10px; border-radius:50%;
-    background: var(--accent);
-    box-shadow: 0 0 8px 2px var(--accent);
-    animation: pulse 2s ease-in-out infinite;
+    width:9px; height:9px; border-radius:50%;
+    background: var(--danger);
+    animation: livePulse 1.8s ease-out infinite;
   }
-  @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.35} }
+  /* Same pulsing-ring the site's own map badges use for a live indicator. */
+  @keyframes livePulse{
+    0%{ box-shadow: 0 0 0 0 rgba(255,59,78,.7); }
+    70%{ box-shadow: 0 0 0 8px rgba(255,59,78,0); }
+    100%{ box-shadow: 0 0 0 0 rgba(255,59,78,0); }
+  }
   .brand h1{
     font-size: 15px; letter-spacing: .12em; margin:0;
     text-transform: uppercase; color: var(--text);
@@ -98,9 +119,9 @@
     display:flex; align-items:center; gap:6px;
     transition: border-color .15s, color .15s, background .15s;
   }
-  .btn:hover{ border-color: var(--accent); color: var(--accent); }
+  .btn:hover{ border-color: var(--sky); color: var(--sky); background:#10204E; }
   .btn:active{ transform: translateY(1px); }
-  .btn.primary{ border-color: var(--accent-dim); color: var(--accent); }
+  .btn.primary{ border-color: var(--accent); color: var(--sky); }
   .btn:disabled{ opacity:.35; cursor:default; }
   .btn:disabled:hover{ border-color:var(--panel-border); color:var(--text); }
 
@@ -111,12 +132,12 @@
     appearance:none; -webkit-appearance:none;
     width:14px; height:14px; margin:0; flex-shrink:0;
     border:1px solid var(--panel-border); border-radius:3px;
-    background: #05070a; cursor:pointer; position:relative;
+    background: var(--bg); cursor:pointer; position:relative;
   }
   .btn.toggle input:checked{ background: var(--accent); border-color: var(--accent); }
   .btn.toggle input:checked::after{
     content:""; position:absolute; left:4px; top:1px;
-    width:4px; height:8px; border:solid #05070a;
+    width:4px; height:8px; border:solid var(--bg);
     border-width:0 2px 2px 0; transform:rotate(45deg);
   }
   .btn.toggle:has(input:checked){ border-color: var(--accent-dim); color: var(--accent); }
@@ -124,8 +145,8 @@
   /* ---------- error / status banner ---------- */
   #banner{
     display:none; padding:8px 20px; font-size:12px;
-    background: rgba(255,95,109,.12); color:#ff9aa2;
-    border-bottom: 1px solid rgba(255,95,109,.3);
+    background: rgba(255,59,78,.12); color:#ff9aa8;
+    border-bottom: 1px solid rgba(255,59,78,.3);
   }
   #banner.show{ display:block; }
   #banner{ flex-shrink:0; }
@@ -140,7 +161,7 @@
     display:none; flex-direction:column; gap:8px; align-items:center;
   }
   #empty.show{ display:flex; }
-  #empty .glyph{ font-size:40px; opacity:.5; }
+  #empty .glyph{ color: var(--sky); opacity:.55; }
 
   #grid{
     display:grid; gap:12px;
@@ -172,7 +193,7 @@
     position:absolute; inset:0; display:flex; flex-direction:column;
     align-items:center; justify-content:center; gap:8px;
     color: var(--text-dim); text-align:center; padding: 0 12px;
-    background: repeating-linear-gradient(135deg, #0a0e14 0 10px, #0c1017 10px 20px);
+    background: repeating-linear-gradient(135deg, #081130 0 10px, #0a1538 10px 20px);
   }
   .tile .placeholder .spin{
     width:22px; height:22px; border-radius:50%;
@@ -192,7 +213,7 @@
   }
   .tile .avatar{
     width:22px; height:22px; border-radius:50%;
-    object-fit:cover; flex-shrink:0; background:#1c2530;
+    object-fit:cover; flex-shrink:0; background: var(--panel-border);
     border:1px solid var(--panel-border);
   }
   .tile .who{ display:flex; flex-direction:column; min-width:0; flex:1; }
@@ -208,7 +229,7 @@
   }
   .tile .viewers .liveDot{
     width:6px; height:6px; border-radius:50%; background: var(--danger);
-    box-shadow: 0 0 6px 1px var(--danger);
+    animation: livePulse 1.8s ease-out infinite;
   }
   .tile .icon-btn{
     background:none; border:0; color: var(--text-dim); cursor:pointer;
@@ -216,22 +237,44 @@
   }
   .tile .icon-btn:hover{ color: var(--accent); }
 
+  /* HUD-style camera tag rather than a solid marketing-color pill — a
+     small colored status dot carries the platform, the tag itself stays
+     in the monitor-wall's own dark/blue chrome. */
   .badge{
     position:absolute; top:6px; left:6px; z-index:2;
-    font-size:9px; letter-spacing:.06em; text-transform:uppercase;
-    padding: 3px 7px; border-radius: 4px; font-weight:700;
-    color:#05070a;
+    display:flex; align-items:center; gap:5px;
+    font-size:9px; letter-spacing:.08em; text-transform:uppercase;
+    padding: 3px 7px 3px 6px; border-radius: 3px; font-weight:700;
+    color: var(--text); background: rgba(4,8,26,.75);
+    border: 1px solid rgba(77,184,255,.3);
+    backdrop-filter: blur(3px);
   }
-  .badge.twitch{ background: var(--twitch); }
-  .badge.kick{ background: var(--kick); }
-  .badge.encoder{ background: var(--encoder); }
+  .badge::before{
+    content:""; width:6px; height:6px; border-radius:50%; flex-shrink:0;
+  }
+  .badge.twitch::before{ background: var(--twitch); box-shadow:0 0 5px var(--twitch); }
+  .badge.kick::before{ background: var(--kick); box-shadow:0 0 5px var(--kick); }
+  .badge.encoder::before{ background: var(--encoder); box-shadow:0 0 5px var(--encoder); }
+
+  /* Corner reticle brackets on every tile — the one purely decorative
+     "security monitor" cue, kept subtle and click-through. */
+  .tile .frame-wrap::before, .tile .frame-wrap::after,
+  .tile .reticle-r::before, .tile .reticle-r::after{
+    content:""; position:absolute; width:14px; height:14px; z-index:3;
+    pointer-events:none; border: 1.5px solid rgba(77,184,255,.45);
+  }
+  .tile .frame-wrap::before{ top:4px; left:4px; border-right:none; border-bottom:none; }
+  .tile .frame-wrap::after{ bottom:4px; left:4px; border-right:none; border-top:none; }
+  .tile .reticle-r{ position:absolute; inset:0; z-index:3; pointer-events:none; }
+  .tile .reticle-r::before{ top:4px; right:4px; left:auto; border-left:none; border-bottom:none; }
+  .tile .reticle-r::after{ bottom:4px; right:4px; left:auto; border-left:none; border-top:none; }
 
   .tele-badge{
     position:absolute; top:6px; right:6px; z-index:2;
     font-size:10px; letter-spacing:.02em;
     padding: 3px 7px; border-radius: 4px; font-weight:600;
-    color: var(--encoder); background: rgba(5,7,10,.72);
-    border: 1px solid rgba(255,180,84,.4);
+    color: var(--encoder); background: rgba(4,8,26,.75);
+    border: 1px solid rgba(255,194,77,.4);
     white-space:nowrap;
   }
 
@@ -283,7 +326,12 @@
 
 <main>
   <div id="empty">
-    <div class="glyph">🍄</div>
+    <svg class="glyph" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="2.5" y="5.5" width="14" height="11" rx="1.5"/>
+      <path d="M19.5 9.5 22 8v8l-2.5-1.5"/>
+      <path d="M2.5 2.5 21.5 21.5"/>
+    </svg>
+    <div style="letter-spacing:.14em; font-size:11px; color:var(--text-dim);">NO SIGNAL</div>
     <div>No mushboxes are live right now.</div>
   </div>
   <div id="grid"></div>
@@ -509,6 +557,9 @@
 
     const frameWrap = document.createElement("div");
     frameWrap.className = "frame-wrap";
+    const reticleR = document.createElement("div");
+    reticleR.className = "reticle-r";
+    frameWrap.appendChild(reticleR);
 
     if (entry.platform === "encoder"){
       const ph = document.createElement("div");
