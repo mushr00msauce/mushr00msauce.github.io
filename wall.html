@@ -53,7 +53,7 @@
   }
   body{
     display:flex; flex-direction:column;
-    min-height:100vh;
+    height:100vh; overflow:hidden; /* no page scroll — tiles shrink to fit instead */
   }
 
   /* ---------- header ---------- */
@@ -64,6 +64,7 @@
     border-bottom: 1px solid var(--panel-border);
     position: sticky; top:0; z-index: 50;
     flex-wrap: wrap;
+    flex-shrink:0;
   }
   .brand{ display:flex; align-items:center; gap:10px; margin-right:auto; }
   .brand .dot{
@@ -127,10 +128,12 @@
     border-bottom: 1px solid rgba(255,95,109,.3);
   }
   #banner.show{ display:block; }
+  #banner{ flex-shrink:0; }
 
   /* ---------- main grid ---------- */
   main{
-    flex:1; padding: 18px; display:flex; flex-direction:column; gap:14px;
+    flex:1; min-height:0; padding: 18px; display:flex; flex-direction:column; gap:14px;
+    overflow:hidden;
   }
   #empty{
     margin:auto; text-align:center; color: var(--text-dim);
@@ -141,7 +144,11 @@
 
   #grid{
     display:grid; gap:12px;
-    grid-auto-rows: 1fr;
+    flex:1; min-height:0;
+    justify-content:center; align-content:center;
+    /* grid-template-columns / grid-auto-rows are set in px by JS
+       (layoutGrid) so every tile is sized to actually fit the
+       available space — see the script below. */
   }
 
   .tile{
@@ -150,8 +157,8 @@
     border:1px solid var(--panel-border);
     border-radius: 10px;
     overflow:hidden;
-    aspect-ratio: 16/9;
     display:flex; flex-direction:column;
+    min-height:0;
     box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.8);
     animation: tileIn .3s ease;
   }
@@ -177,7 +184,8 @@
 
   .tile .bar{
     display:flex; align-items:center; gap:8px;
-    padding: 6px 8px;
+    height:36px; flex-shrink:0; box-sizing:border-box;
+    padding: 0 8px;
     background: var(--panel);
     border-top: 1px solid var(--panel-border);
     font-size: 11px;
@@ -229,8 +237,10 @@
 
   /* ---------- footer / expand strip ---------- */
   footer{
-    padding: 10px 20px 18px; display:flex; justify-content:center;
+    padding: 10px 20px 14px; display:flex; justify-content:center;
+    flex-shrink:0; max-height:130px; overflow-y:auto;
   }
+  footer.empty{ display:none; }
   .up-next{
     display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
     margin-top: 8px; max-width: 900px;
@@ -279,7 +289,7 @@
   <div id="grid"></div>
 </main>
 
-<footer>
+<footer id="wallFooter">
   <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
     <button id="moreBtn" class="btn primary" style="display:none;">Show more</button>
     <div id="upNext" class="up-next"></div>
@@ -352,6 +362,63 @@
   const moreBtn = $("#moreBtn");
   const upNextEl = $("#upNext");
   const gridSizeSel = $("#gridSize");
+  const footerEl = $("#wallFooter");
+
+  // ---- fit-to-screen layout -------------------------------------------
+  // Sizes every tile so the whole wall fits inside the viewport with no
+  // page scrolling, instead of stretching tiles to a fixed aspect ratio
+  // and letting the extra rows run off the bottom of the screen. Picks
+  // whichever uniform column count yields the LARGEST tile that still
+  // fits — same idea as Zoom/Discord "gallery view" sizing.
+  const TILE_ASPECT = 16 / 9;   // video area only — the bar below is fixed-height
+  const TILE_BAR_H = 36;        // must match .tile .bar's CSS height
+  const GRID_GAP = 12;          // must match #grid's CSS gap
+  let lastVisibleCount = 0;
+
+  function computeBestGrid(containerW, containerH, count){
+    if (count <= 0 || containerW <= 0 || containerH <= 0) return null;
+    let best = null;
+    for (let cols = 1; cols <= count; cols++){
+      const rows = Math.ceil(count / cols);
+      const tileW = (containerW - GRID_GAP * (cols - 1)) / cols;
+      if (tileW <= 0) continue;
+      const tileH = tileW / TILE_ASPECT + TILE_BAR_H;
+      const totalH = tileH * rows + GRID_GAP * (rows - 1);
+      if (totalH <= containerH + 0.5 && (!best || tileW > best.tileW)){
+        best = { cols, rows, tileW, tileH };
+      }
+    }
+    if (best) return best;
+    // Nothing fit height-wise even with one tile per row (a very short
+    // viewport) — fall back to exactly one row and shrink tiles to
+    // whatever height is actually available, then re-check width.
+    const rows = 1, cols = count;
+    let tileH = Math.max(TILE_BAR_H + 20, (containerH - GRID_GAP * (rows - 1)) / rows);
+    let tileW = (tileH - TILE_BAR_H) * TILE_ASPECT;
+    const neededW = tileW * cols + GRID_GAP * (cols - 1);
+    if (neededW > containerW){
+      tileW = (containerW - GRID_GAP * (cols - 1)) / cols;
+      tileH = tileW / TILE_ASPECT + TILE_BAR_H;
+    }
+    return { cols, rows, tileW, tileH };
+  }
+
+  function layoutGrid(count){
+    if (count == null) count = lastVisibleCount;
+    lastVisibleCount = count;
+    if (!count){ return; }
+    const rect = gridEl.getBoundingClientRect();
+    const best = computeBestGrid(rect.width, rect.height, count);
+    if (!best) return;
+    gridEl.style.gridTemplateColumns = "repeat(" + best.cols + ", " + best.tileW.toFixed(1) + "px)";
+    gridEl.style.gridAutoRows = best.tileH.toFixed(1) + "px";
+  }
+
+  let resizeRAF = null;
+  window.addEventListener("resize", () => {
+    if (resizeRAF) cancelAnimationFrame(resizeRAF);
+    resizeRAF = requestAnimationFrame(() => layoutGrid());
+  });
 
   function showBanner(msg){
     bannerEl.textContent = msg;
@@ -429,10 +496,6 @@
   // touched) unless the audio focus changes for it — that's what keeps a
   // playing stream from stuttering every time the 60s poll runs or the
   // wall is expanded.
-  function computeColumns(count){
-    if (count <= 1) return 1;
-    return Math.min(6, Math.ceil(Math.sqrt(count)));
-  }
 
   function tileTemplate(entry){
     const wrap = document.createElement("div");
@@ -566,8 +629,6 @@
       if (!visibleSet.has(tile.dataset.login)) tile.remove();
     });
 
-    gridEl.style.gridTemplateColumns = "repeat(" + computeColumns(visible.length) + ", 1fr)";
-
     // Rank changes (viewer counts shift constantly) are applied purely
     // via the CSS `order` property below, NOT by moving DOM nodes.
     // Moving an already-attached iframe with appendChild — even to
@@ -613,6 +674,7 @@
 
     emptyEl.classList.toggle("show", order.length === 0);
     gridEl.style.display = order.length === 0 ? "none" : "grid";
+    layoutGrid(visible.length);
 
     $("#liveCount").textContent = fullOrder.length;
     $("#shownCount").textContent = visible.length;
@@ -640,6 +702,16 @@
       chip.appendChild(document.createTextNode(fmtViewers(entry.viewers || 0)));
       upNextEl.appendChild(chip);
     });
+
+    // Nothing to show below the wall? Collapse the footer entirely so
+    // its (empty) space doesn't eat into the grid's available height.
+    const footerHasContent = remaining.length > 0;
+    footerEl.classList.toggle("empty", !footerHasContent);
+    // Collapsing/expanding the footer changes how much height the grid
+    // actually has — re-run the fit once more after layout settles.
+    if (typeof requestAnimationFrame === "function"){
+      requestAnimationFrame(() => layoutGrid(visible.length));
+    }
   }
 
   function rebuildGridSizeOptions(){
