@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mushbox Command Center</title>
+<!--
+  Mushbox Command Center — live monitor wall
+  ============================================================
+  Static page, no build step. Drop this next to map.html / stats.html
+  on the same site (themushbox.com, mushboxes.com, or the GitHub Pages
+  mirror) so it's served from one of the origins the worker and Twitch's
+  own embed check already allow — see ALLOWED_ORIGINS in worker.txt.
+
+  Data source: the same Cloudflare Worker that powers map.html
+  (GET / for live status, GET /avatars for pics+names). No new worker
+  routes or KV needed — this page only reads what already exists and
+  reuses the existing POST /click beacon (source: "wall") for outbound
+  click tracking, same pattern as the map's popup/sidebar clicks.
+
+  Default view: top 4 by viewer count (the worker already returns
+  `live` sorted by viewers descending). A "Show more" control expands
+  the wall in tiers (4 → 9 → 16 → all currently live) without ever
+  reloading a tile that's already on screen, so an expand never
+  interrupts a stream already playing.
+
+  Config: just the one constant below.
+-->
+<style>
+  :root{
+    --bg: #05070a;
+    --bg-grid: #0a0e14;
+    --panel: #0d1219;
+    --panel-border: #1c2530;
+    --text: #d7e2ea;
+    --text-dim: #7a8a99;
+    --text-faint: #4a5866;
+    --accent: #39ff9d;
+    --accent-dim: #1c8f5c;
+    --twitch: #a970ff;
+    --kick: #53fc18;
+    --encoder: #ffb454;
+    --danger: #ff5f6d;
+    --focus-ring: #39ff9d;
+    font-family: "JetBrains Mono", "SF Mono", "Consolas", ui-monospace, monospace;
+  }
+  *{ box-sizing: border-box; }
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:
+      radial-gradient(ellipse at top, #0b1119 0%, var(--bg) 60%);
+    color: var(--text);
+  }
+  body{
+    display:flex; flex-direction:column;
+    min-height:100vh;
+  }
+
+  /* ---------- header ---------- */
+  header{
+    display:flex; align-items:center; gap:16px;
+    padding: 14px 20px;
+    background: linear-gradient(180deg, rgba(13,18,25,.95), rgba(13,18,25,.75));
+    border-bottom: 1px solid var(--panel-border);
+    position: sticky; top:0; z-index: 50;
+    flex-wrap: wrap;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; margin-right:auto; }
+  .brand .dot{
+    width:10px; height:10px; border-radius:50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px 2px var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.35} }
+  .brand h1{
+    font-size: 15px; letter-spacing: .12em; margin:0;
+    text-transform: uppercase; color: var(--text);
+    font-weight: 700;
+  }
+  .brand h1 span{ color: var(--accent); }
+  .brand small{
+    display:block; color: var(--text-dim); font-size:10px; letter-spacing:.08em;
+  }
+
+  .stat{
+    display:flex; flex-direction:column; align-items:flex-end;
+    font-size:10px; color:var(--text-dim); letter-spacing:.06em; line-height:1.5;
+  }
+  .stat b{ color:var(--text); font-size:13px; }
+
+  .btn{
+    appearance:none; border:1px solid var(--panel-border);
+    background: var(--panel); color: var(--text);
+    font-family: inherit; font-size: 11px; letter-spacing:.06em;
+    padding: 8px 12px; border-radius: 6px; cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  .btn:hover{ border-color: var(--accent); color: var(--accent); }
+  .btn:active{ transform: translateY(1px); }
+  .btn.primary{ border-color: var(--accent-dim); color: var(--accent); }
+  .btn:disabled{ opacity:.35; cursor:default; }
+  .btn:disabled:hover{ border-color:var(--panel-border); color:var(--text); }
+
+  select.btn{ padding-right:6px; }
+
+  /* ---------- error / status banner ---------- */
+  #banner{
+    display:none; padding:8px 20px; font-size:12px;
+    background: rgba(255,95,109,.12); color:#ff9aa2;
+    border-bottom: 1px solid rgba(255,95,109,.3);
+  }
+  #banner.show{ display:block; }
+
+  /* ---------- main grid ---------- */
+  main{
+    flex:1; padding: 18px; display:flex; flex-direction:column; gap:14px;
+  }
+  #empty{
+    margin:auto; text-align:center; color: var(--text-dim);
+    display:none; flex-direction:column; gap:8px; align-items:center;
+  }
+  #empty.show{ display:flex; }
+  #empty .glyph{ font-size:40px; opacity:.5; }
+
+  #grid{
+    display:grid; gap:12px;
+    grid-auto-rows: 1fr;
+  }
+
+  .tile{
+    position:relative;
+    background:#000;
+    border:1px solid var(--panel-border);
+    border-radius: 10px;
+    overflow:hidden;
+    aspect-ratio: 16/9;
+    display:flex; flex-direction:column;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.8);
+    animation: tileIn .3s ease;
+  }
+  @keyframes tileIn{ from{ opacity:0; transform: scale(.97);} to{opacity:1; transform:scale(1);} }
+  .tile.audio-focus{ border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), 0 8px 24px -12px rgba(0,0,0,.8); }
+
+  .tile .frame-wrap{ flex:1; position:relative; background:#000; }
+  .tile iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+
+  .tile .placeholder{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:8px;
+    color: var(--text-dim); text-align:center; padding: 0 12px;
+    background: repeating-linear-gradient(135deg, #0a0e14 0 10px, #0c1017 10px 20px);
+  }
+  .tile .placeholder .spin{
+    width:22px; height:22px; border-radius:50%;
+    border: 2px solid var(--encoder); border-top-color: transparent;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg);} }
+  .tile .placeholder .tele{ font-size:10px; color: var(--text-faint); }
+
+  .tile .bar{
+    display:flex; align-items:center; gap:8px;
+    padding: 6px 8px;
+    background: var(--panel);
+    border-top: 1px solid var(--panel-border);
+    font-size: 11px;
+  }
+  .tile .avatar{
+    width:22px; height:22px; border-radius:50%;
+    object-fit:cover; flex-shrink:0; background:#1c2530;
+    border:1px solid var(--panel-border);
+  }
+  .tile .who{ display:flex; flex-direction:column; min-width:0; flex:1; }
+  .tile .who b{
+    font-size:12px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .tile .who .title{
+    font-size:10px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .tile .viewers{
+    display:flex; align-items:center; gap:4px;
+    font-size:11px; color: var(--danger); font-weight:600; flex-shrink:0;
+  }
+  .tile .viewers .liveDot{
+    width:6px; height:6px; border-radius:50%; background: var(--danger);
+    box-shadow: 0 0 6px 1px var(--danger);
+  }
+  .tile .icon-btn{
+    background:none; border:0; color: var(--text-dim); cursor:pointer;
+    font-size:13px; padding:2px 4px; flex-shrink:0; line-height:1;
+  }
+  .tile .icon-btn:hover{ color: var(--accent); }
+
+  .badge{
+    position:absolute; top:6px; left:6px; z-index:2;
+    font-size:9px; letter-spacing:.06em; text-transform:uppercase;
+    padding: 3px 7px; border-radius: 4px; font-weight:700;
+    color:#05070a;
+  }
+  .badge.twitch{ background: var(--twitch); }
+  .badge.kick{ background: var(--kick); }
+  .badge.encoder{ background: var(--encoder); }
+
+  /* ---------- footer / expand strip ---------- */
+  footer{
+    padding: 10px 20px 18px; display:flex; justify-content:center;
+  }
+  .up-next{
+    display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
+    margin-top: 8px; max-width: 900px;
+  }
+  .chip{
+    display:flex; align-items:center; gap:6px;
+    background: var(--panel); border:1px solid var(--panel-border);
+    border-radius: 999px; padding: 4px 10px 4px 4px; font-size:11px;
+    color: var(--text-dim);
+  }
+  .chip img{ width:16px; height:16px; border-radius:50%; }
+  .chip b{ color: var(--text); }
+
+  ::-webkit-scrollbar{ width:8px; height:8px; }
+  ::-webkit-scrollbar-thumb{ background: var(--panel-border); border-radius:4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="dot"></span>
+    <div>
+      <h1>MUSH<span>BOX</span> // COMMAND CENTER</h1>
+      <small id="updatedAt">connecting…</small>
+    </div>
+  </div>
+
+  <div class="stat"><b id="liveCount">–</b>live now</div>
+  <div class="stat"><b id="shownCount">–</b>on wall</div>
+
+  <select id="gridSize" class="btn" title="Wall size"></select>
+  <button id="refreshBtn" class="btn" title="Refresh now">⟳ Refresh</button>
+</header>
+
+<div id="banner"></div>
+
+<main>
+  <div id="empty">
+    <div class="glyph">🍄</div>
+    <div>No mushboxes are live right now.</div>
+  </div>
+  <div id="grid"></div>
+</main>
+
+<footer>
+  <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+    <button id="moreBtn" class="btn primary" style="display:none;">Show more</button>
+    <div id="upNext" class="up-next"></div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---- config -------------------------------------------------------
+  // The Cloudflare Worker behind map.html / stats.html. Its CORS
+  // allowlist (ALLOWED_ORIGINS in worker.txt) is themushbox.com,
+  // www.themushbox.com, mushboxes.com, www.mushboxes.com and
+  // mushr00msauce.github.io — this page only works when served from one
+  // of those. If you ever move the worker, update this one line.
+  const WORKER_BASE = "https://mushbox-live.wkennedy74.workers.dev";
+
+  // Same list, used as Twitch's required `parent` values so the embed
+  // works no matter which of those domains this file ends up served
+  // from (Twitch checks the real hosting domain against every `parent`
+  // you pass, so it's safe to just list them all).
+  const TWITCH_PARENTS = [
+    "themushbox.com", "www.themushbox.com",
+    "mushboxes.com", "www.mushboxes.com",
+    "mushr00msauce.github.io"
+  ];
+
+  const POLL_MS = 60_000;       // matches the worker's own 60s edge cache
+  const AVATAR_POLL_MS = 10 * 60_000; // avatars/names change rarely
+  const TIERS = [4, 9, 16, 25];  // "Show more" steps before "all"
+
+  // ---- state ----------------------------------------------------------
+  let liveByLogin = new Map();   // login -> live entry from the worker
+  let avatars = {};
+  let names = {};
+  let order = [];                // logins, in wall order (viewer count desc)
+  let visibleCount = TIERS[0];
+  let audioFocusLogin = null;    // which tile (if any) currently has sound
+  let refreshTimer = null;
+
+  const $ = (sel) => document.querySelector(sel);
+  const gridEl = $("#grid");
+  const emptyEl = $("#empty");
+  const bannerEl = $("#banner");
+  const moreBtn = $("#moreBtn");
+  const upNextEl = $("#upNext");
+  const gridSizeSel = $("#gridSize");
+
+  function showBanner(msg){
+    bannerEl.textContent = msg;
+    bannerEl.classList.add("show");
+  }
+  function clearBanner(){ bannerEl.classList.remove("show"); }
+
+  function fmtViewers(n){
+    if (n >= 1000) return (n/1000).toFixed(n >= 10000 ? 0 : 1) + "K";
+    return String(n);
+  }
+
+  function twitchSrc(login, muted){
+    const params = new URLSearchParams();
+    params.set("channel", login);
+    params.set("muted", muted ? "true" : "false");
+    params.set("autoplay", "true");
+    let qs = params.toString();
+    TWITCH_PARENTS.forEach(p => { qs += "&parent=" + encodeURIComponent(p); });
+    return "https://player.twitch.tv/?" + qs;
+  }
+  function kickSrc(login, muted){
+    return "https://player.kick.com/" + encodeURIComponent(login) +
+      "?muted=" + (muted ? "true" : "false") + "&autoplay=true";
+  }
+  function channelUrl(login, platform){
+    return platform === "kick"
+      ? "https://kick.com/" + login
+      : "https://twitch.tv/" + login;
+  }
+
+  function beaconClick(login, platform){
+    try{
+      const payload = JSON.stringify({ login, platform, source: "wall", ts: Date.now() });
+      if (navigator.sendBeacon){
+        navigator.sendBeacon(WORKER_BASE + "/click", payload);
+      } else {
+        fetch(WORKER_BASE + "/click", { method:"POST", body: payload, keepalive:true });
+      }
+    } catch(e){ /* best-effort only */ }
+  }
+
+  // ---- data fetching ---------------------------------------------------
+  async function fetchLive(){
+    const r = await fetch(WORKER_BASE + "/", { cache: "no-store" });
+    const j = await r.json();
+    if (j.error && (!j.live || !j.live.length)) throw new Error(j.error);
+    return j.live || [];
+  }
+  async function fetchAvatars(){
+    const r = await fetch(WORKER_BASE + "/avatars", { cache: "no-store" });
+    const j = await r.json();
+    return { avatars: j.avatars || {}, names: j.names || {} };
+  }
+
+  // ---- rendering --------------------------------------------------------
+  // Builds/updates DOM tiles. Crucially, a tile whose login is already on
+  // screen is left alone (never re-created, never has its iframe src
+  // touched) unless the audio focus changes for it — that's what keeps a
+  // playing stream from stuttering every time the 60s poll runs or the
+  // wall is expanded.
+  function computeColumns(count){
+    if (count <= 1) return 1;
+    return Math.min(6, Math.ceil(Math.sqrt(count)));
+  }
+
+  function tileTemplate(entry){
+    const wrap = document.createElement("div");
+    wrap.className = "tile";
+    wrap.dataset.login = entry.login;
+
+    const badge = document.createElement("div");
+    badge.className = "badge " + entry.platform;
+    badge.textContent = entry.platform;
+    wrap.appendChild(badge);
+
+    const frameWrap = document.createElement("div");
+    frameWrap.className = "frame-wrap";
+
+    if (entry.platform === "encoder"){
+      const ph = document.createElement("div");
+      ph.className = "placeholder";
+      const t = entry.telemetry;
+      ph.innerHTML =
+        '<div class="spin"></div>' +
+        '<div>encoder online — waiting for stream…</div>' +
+        (t ? '<div class="tele">' +
+              (t.bitrateKbps != null ? t.bitrateKbps + " Kbps" : "") +
+              (t.tempF != null ? " · " + t.tempF + "°F" : "") +
+              '</div>' : "");
+      frameWrap.appendChild(ph);
+    } else {
+      const iframe = document.createElement("iframe");
+      iframe.allow = "autoplay; fullscreen";
+      iframe.allowFullscreen = true;
+      iframe.src = entry.platform === "kick"
+        ? kickSrc(entry.login, entry.login !== audioFocusLogin)
+        : twitchSrc(entry.login, entry.login !== audioFocusLogin);
+      frameWrap.appendChild(iframe);
+    }
+    wrap.appendChild(frameWrap);
+
+    const bar = document.createElement("div");
+    bar.className = "bar";
+
+    const av = document.createElement("img");
+    av.className = "avatar";
+    av.loading = "lazy";
+    av.src = avatars[entry.login] || "";
+    av.alt = "";
+    bar.appendChild(av);
+
+    const who = document.createElement("div");
+    who.className = "who";
+    const nameEl = document.createElement("b");
+    nameEl.textContent = names[entry.login] || entry.name || entry.login;
+    who.appendChild(nameEl);
+    if (entry.title){
+      const titleEl = document.createElement("div");
+      titleEl.className = "title";
+      titleEl.textContent = entry.title;
+      who.appendChild(titleEl);
+    }
+    bar.appendChild(who);
+
+    if (entry.platform !== "encoder"){
+      const viewers = document.createElement("div");
+      viewers.className = "viewers";
+      viewers.innerHTML = '<span class="liveDot"></span><span class="vnum"></span>';
+      viewers.querySelector(".vnum").textContent = fmtViewers(entry.viewers || 0);
+      bar.appendChild(viewers);
+
+      const soundBtn = document.createElement("button");
+      soundBtn.className = "icon-btn sound-btn";
+      soundBtn.title = "Toggle audio focus";
+      soundBtn.textContent = entry.login === audioFocusLogin ? "🔊" : "🔇";
+      soundBtn.addEventListener("click", () => setAudioFocus(entry.login));
+      bar.appendChild(soundBtn);
+    }
+
+    const openBtn = document.createElement("button");
+    openBtn.className = "icon-btn";
+    openBtn.title = "Open channel";
+    openBtn.textContent = "↗";
+    openBtn.addEventListener("click", () => {
+      beaconClick(entry.login, entry.platform);
+      window.open(channelUrl(entry.login, entry.platform), "_blank", "noopener");
+    });
+    bar.appendChild(openBtn);
+
+    wrap.appendChild(bar);
+    return wrap;
+  }
+
+  function setAudioFocus(login){
+    audioFocusLogin = (audioFocusLogin === login) ? null : login;
+    // Only the tiles whose focus state actually changed need their
+    // iframe reloaded with a new `muted` param — everyone else stays put.
+    order.slice(0, visibleCount).forEach(l => {
+      const entry = liveByLogin.get(l);
+      if (!entry || entry.platform === "encoder") return;
+      const tile = gridEl.querySelector('.tile[data-login="' + cssEscape(l) + '"]');
+      if (!tile) return;
+      const shouldBeUnmuted = (l === audioFocusLogin);
+      tile.classList.toggle("audio-focus", shouldBeUnmuted);
+      const iframe = tile.querySelector("iframe");
+      const btn = tile.querySelector(".sound-btn");
+      const currentlyUnmuted = iframe && iframe.src.indexOf("muted=false") !== -1;
+      if (iframe && shouldBeUnmuted !== !!currentlyUnmuted){
+        iframe.src = entry.platform === "kick"
+          ? kickSrc(l, !shouldBeUnmuted)
+          : twitchSrc(l, !shouldBeUnmuted);
+      }
+      if (btn) btn.textContent = shouldBeUnmuted ? "🔊" : "🔇";
+    });
+  }
+
+  function cssEscape(s){
+    return String(s).replace(/[^a-zA-Z0-9_-]/g, m => "\\" + m);
+  }
+
+  function render(){
+    const visible = order.slice(0, visibleCount);
+    const visibleSet = new Set(visible);
+
+    // Remove tiles that fell off the wall (went offline, or pushed past
+    // the current tier).
+    gridEl.querySelectorAll(".tile").forEach(tile => {
+      if (!visibleSet.has(tile.dataset.login)) tile.remove();
+    });
+
+    gridEl.style.gridTemplateColumns = "repeat(" + computeColumns(visible.length) + ", 1fr)";
+
+    // Add any new tiles; leave existing ones exactly as they are.
+    const existing = new Set(
+      Array.from(gridEl.querySelectorAll(".tile")).map(t => t.dataset.login)
+    );
+    // Rebuild in correct order only when the order actually changed in a
+    // way that matters for layout — simplest correct approach: re-append
+    // in rank order (moves nodes, doesn't recreate them, so iframes are
+    // untouched).
+    visible.forEach(login => {
+      let tile = gridEl.querySelector('.tile[data-login="' + cssEscape(login) + '"]');
+      if (!tile){
+        tile = tileTemplate(liveByLogin.get(login));
+      } else {
+        // Update the bits that change every poll (viewer count, title)
+        // without touching the iframe.
+        const entry = liveByLogin.get(login);
+        const vnum = tile.querySelector(".vnum");
+        if (vnum) vnum.textContent = fmtViewers(entry.viewers || 0);
+        const titleEl = tile.querySelector(".title");
+        if (titleEl && entry.title) titleEl.textContent = entry.title;
+      }
+      gridEl.appendChild(tile);
+    });
+
+    emptyEl.classList.toggle("show", order.length === 0);
+    gridEl.style.display = order.length === 0 ? "none" : "grid";
+
+    $("#liveCount").textContent = order.length;
+    $("#shownCount").textContent = visible.length;
+
+    // "Up next" chips + Show more button.
+    const remaining = order.slice(visibleCount);
+    moreBtn.style.display = remaining.length ? "inline-flex" : "none";
+    const nextTier = TIERS.find(t => t > visibleCount) || null;
+    moreBtn.textContent = nextTier
+      ? "Show more (" + Math.min(nextTier, order.length) + " of " + order.length + ")"
+      : "Show all " + order.length;
+
+    upNextEl.innerHTML = "";
+    remaining.slice(0, 12).forEach(login => {
+      const entry = liveByLogin.get(login);
+      const chip = document.createElement("div");
+      chip.className = "chip";
+      const img = document.createElement("img");
+      img.src = avatars[login] || "";
+      img.alt = "";
+      chip.appendChild(img);
+      const b = document.createElement("b");
+      b.textContent = names[login] || login;
+      chip.appendChild(b);
+      chip.appendChild(document.createTextNode(fmtViewers(entry.viewers || 0)));
+      upNextEl.appendChild(chip);
+    });
+  }
+
+  function rebuildGridSizeOptions(){
+    const total = order.length;
+    const opts = TIERS.filter(t => t < total);
+    opts.push(total);
+    const wasValue = visibleCount;
+    gridSizeSel.innerHTML = "";
+    opts.forEach(n => {
+      const o = document.createElement("option");
+      o.value = n;
+      o.textContent = "Top " + n;
+      gridSizeSel.appendChild(o);
+    });
+    if (!opts.includes(visibleCount)){
+      visibleCount = opts.includes(4) ? 4 : (opts[0] || 0);
+    }
+    gridSizeSel.value = String(visibleCount);
+  }
+
+  // ---- polling ------------------------------------------------------
+  async function refreshLive(){
+    try{
+      const live = await fetchLive();
+      live.sort((a,b) => (b.viewers||0) - (a.viewers||0));
+      liveByLogin = new Map(live.map(e => [e.login, e]));
+      order = live.map(e => e.login);
+      clearBanner();
+    } catch(err){
+      showBanner("Couldn't reach the live worker (" + (err && err.message ? err.message : err) + "). Retrying…");
+    }
+    rebuildGridSizeOptions();
+    render();
+    $("#updatedAt").textContent = "updated " + new Date().toLocaleTimeString();
+  }
+
+  async function refreshAvatars(){
+    try{
+      const a = await fetchAvatars();
+      avatars = a.avatars; names = a.names;
+      render();
+    } catch(err){ /* non-fatal; names/logins still show */ }
+  }
+
+  // ---- wiring ---------------------------------------------------------
+  gridSizeSel.addEventListener("change", () => {
+    visibleCount = parseInt(gridSizeSel.value, 10) || 4;
+    render();
+  });
+  moreBtn.addEventListener("click", () => {
+    const nextTier = TIERS.find(t => t > visibleCount);
+    visibleCount = nextTier ? Math.min(nextTier, order.length) : order.length;
+    gridSizeSel.value = String(visibleCount);
+    render();
+  });
+  $("#refreshBtn").addEventListener("click", () => { refreshLive(); });
+
+  refreshAvatars();
+  refreshLive();
+  refreshTimer = setInterval(refreshLive, POLL_MS);
+  setInterval(refreshAvatars, AVATAR_POLL_MS);
+})();
+</script>
+</body>
+</html>
