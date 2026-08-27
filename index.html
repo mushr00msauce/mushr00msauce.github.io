@@ -30,7 +30,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&family=Rajdhani:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600&display=swap" rel="stylesheet">
 
 <style>
   :root{
@@ -93,16 +93,12 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 3;
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    font-size: clamp(14px, 3vw, 18px);
-    color: var(--white);
+    height: clamp(20px, 4vw, 32px);
+    width: auto;
     opacity: 0;
     animation: fadeIn 0.8s ease 0.2s forwards;
-    text-shadow: 0 0 20px rgba(30,111,255,0.6);
+    filter: drop-shadow(0 0 16px rgba(30,111,255,0.55));
   }
-  .wordmark span{ color: var(--sky); }
 
   .progress-track{
     position: absolute;
@@ -183,7 +179,7 @@
 
   <div class="glow"></div>
 
-  <div class="wordmark">MUSH<span>BOX</span></div>
+  <img class="wordmark" src="assets/img/mushbox-logo.png" alt="Mushbox">
 
   <div class="controls">
     <button id="soundBtn" class="ctrl" aria-label="Mute video">🔊 Sound</button>

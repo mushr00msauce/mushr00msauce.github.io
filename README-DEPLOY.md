@@ -8,6 +8,7 @@ its own file (`home.html`) that the splash redirects to once the video ends.
 - `index.html` — the new splash page (full-screen video, skip button, sound toggle)
 - `assets/videos/mushbox-cage-reveal.mp4` — your uploaded reveal video
 - `assets/videos/mushbox-cage-reveal-poster.jpg` — a still frame shown while the video loads
+- `assets/img/mushbox-logo.png` — your real logo, background removed, ready for a dark backdrop
 
 ## Steps (in `mushr00msauce/mushr00msauce.github.io`)
 
@@ -20,6 +21,7 @@ its own file (`home.html`) that the splash redirects to once the video ends.
    - `index.html` (from this package — replaces the one you just renamed away)
    - `assets/videos/mushbox-cage-reveal.mp4`
    - `assets/videos/mushbox-cage-reveal-poster.jpg`
+   - `assets/img/mushbox-logo.png`
 
 3. **Check internal links inside `home.html`** for anything pointing back to
    `index.html` or `/` (e.g. your logo, a "Home" nav link, `og:url`/`canonical`
@@ -29,7 +31,7 @@ its own file (`home.html`) that the splash redirects to once the video ends.
 
 4. **Commit and push:**
    ```
-   git add index.html home.html assets/videos/mushbox-cage-reveal.mp4 assets/videos/mushbox-cage-reveal-poster.jpg
+   git add index.html home.html assets/videos/mushbox-cage-reveal.mp4 assets/videos/mushbox-cage-reveal-poster.jpg assets/img/mushbox-logo.png
    git commit -m "Add reveal video splash before homepage"
    git push
    ```
