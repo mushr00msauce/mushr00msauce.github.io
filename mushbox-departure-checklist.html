@@ -419,6 +419,57 @@
   button:hover { filter: brightness(1.06); }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
+  /* ---------- Celebration ---------- */
+  #confettiCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 40;
+  }
+
+  .celebration-banner {
+    position: fixed;
+    left: 50%;
+    top: 38%;
+    transform: translate(-50%, -50%) scale(0.85);
+    background: var(--surface);
+    border: 2px solid var(--accent);
+    border-radius: 14px;
+    padding: 20px 30px;
+    box-shadow: var(--shadow);
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 60;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+
+  .celebration-banner.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .celebration-banner .title {
+    display: block;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: clamp(20px, 4.5vw, 30px);
+    color: var(--accent);
+    letter-spacing: 0.01em;
+  }
+
+  .celebration-banner .sub {
+    display: block;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    letter-spacing: 0.02em;
+  }
+
   @media print {
     body { padding: 0; background: white; }
     .admin-bar, .progress-block { position: static; box-shadow: none; }
@@ -613,6 +664,19 @@
   </div>
 </div>
 
+<canvas id="confettiCanvas"></canvas>
+<div class="celebration-banner" id="celebrationBanner">
+  <span class="title">You Did It!</span>
+  <span class="sub">Every item packed &mdash; safe travels, JayneRio.</span>
+</div>
+<!--
+  Celebration sound: plays mushbox-victory.mp3 when the checklist hits 100%.
+  To use your own audio, drop an mp3 with that exact filename in the same
+  folder as this page on your site. No file there yet, so it falls back to
+  a short built-in chime.
+-->
+<audio id="celebrationAudio" preload="none" src="mushbox-victory.mp3"></audio>
+
 <script>
 (function () {
   var STORAGE_KEY = "jaynerio-manifest-mb-irl-0042";
@@ -639,15 +703,21 @@
 
   var fill = document.getElementById("progressFill");
   var count = document.getElementById("progressCount");
+  var wasComplete = false;
 
   function updateProgress() {
     var checked = boxes.filter(function (cb) { return cb.checked; }).length;
     var pct = totalItems ? Math.round((checked / totalItems) * 100) : 0;
     fill.style.width = pct + "%";
     count.textContent = checked + " / " + totalItems + " packed";
+
+    var isComplete = totalItems > 0 && checked === totalItems;
+    if (isComplete && !wasComplete) celebrate();
+    wasComplete = isComplete;
   }
 
   updateProgress();
+  wasComplete = totalItems > 0 && boxes.every(function (cb) { return cb.checked; });
 
   document.getElementById("printBtn").addEventListener("click", function () {
     window.print();
@@ -658,8 +728,126 @@
     state = {};
     save();
     boxes.forEach(function (cb) { cb.checked = false; });
+    wasComplete = false;
     updateProgress();
   });
+
+  /* ---------- Celebration: confetti + banner + sound at 100% ---------- */
+  function celebrate() {
+    showBanner();
+    burstConfetti();
+    playCelebrationSound();
+  }
+
+  function showBanner() {
+    var banner = document.getElementById("celebrationBanner");
+    banner.classList.add("show");
+    window.clearTimeout(showBanner._t);
+    showBanner._t = window.setTimeout(function () {
+      banner.classList.remove("show");
+    }, 3200);
+  }
+
+  function burstConfetti() {
+    var canvas = document.getElementById("confettiCanvas");
+    var ctx = canvas.getContext("2d");
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    var colors = ["#1E6FFF", "#4DB8FF", "#1F9D6C", "#FFB35C", "#FFFFFF"];
+    var pieces = [];
+    var count = 140;
+    for (var i = 0; i < count; i++) {
+      pieces.push({
+        x: Math.random() * window.innerWidth,
+        y: -20 - Math.random() * window.innerHeight * 0.4,
+        w: 6 + Math.random() * 5,
+        h: 9 + Math.random() * 7,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rot: Math.random() * Math.PI * 2,
+        vRot: (Math.random() - 0.5) * 0.3,
+        vy: 2.5 + Math.random() * 3,
+        vx: (Math.random() - 0.5) * 2.5,
+        drift: Math.random() * Math.PI * 2
+      });
+    }
+
+    var start = null;
+    var duration = 3000;
+
+    function frame(ts) {
+      if (!start) start = ts;
+      var elapsed = ts - start;
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+      pieces.forEach(function (p) {
+        p.x += p.vx + Math.sin((elapsed / 400) + p.drift) * 0.6;
+        p.y += p.vy;
+        p.rot += p.vRot;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      });
+
+      if (elapsed < duration) {
+        window.requestAnimationFrame(frame);
+      } else {
+        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      }
+    }
+
+    window.requestAnimationFrame(frame);
+  }
+
+  function playSynthJingle() {
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      var ctx = new Ctx();
+      var notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6 — original arpeggio
+      var t = ctx.currentTime;
+      notes.forEach(function (freq, i) {
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = "triangle";
+        osc.frequency.value = freq;
+        var noteStart = t + i * 0.14;
+        var noteEnd = noteStart + 0.32;
+        gain.gain.setValueAtTime(0, noteStart);
+        gain.gain.linearRampToValueAtTime(0.22, noteStart + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, noteEnd);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(noteStart);
+        osc.stop(noteEnd + 0.05);
+      });
+      window.setTimeout(function () {
+        try { ctx.close(); } catch (e) {}
+      }, 1200);
+    } catch (e) { /* audio unsupported — celebrate visually only */ }
+  }
+
+  function playCelebrationSound() {
+    var audioEl = document.getElementById("celebrationAudio");
+    var usedFallback = false;
+    function fallback() {
+      if (usedFallback) return;
+      usedFallback = true;
+      playSynthJingle();
+    }
+    audioEl.addEventListener("error", fallback, { once: true });
+    try {
+      audioEl.currentTime = 0;
+    } catch (e) {}
+    var p = audioEl.play();
+    if (p && typeof p.catch === "function") p.catch(fallback);
+  }
 
   /* ---------- Owner edit mode (add ?edit to the URL to reveal it) ---------- */
   var adminBar = document.getElementById("adminBar");
@@ -713,7 +901,7 @@
         var url = URL.createObjectURL(blob);
         var a = document.createElement("a");
         a.href = url;
-        a.download = "jaynerio-departure-manifest.html";
+        a.download = "mushbox-departure-checklist.html";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -724,7 +912,7 @@
         window.claude.use("downloads").then(function (downloads) {
           if (!downloads) { fallbackDownload(); return; }
           downloads.save({
-            filename: "jaynerio-departure-manifest.html",
+            filename: "mushbox-departure-checklist.html",
             data: new Blob([html], { type: "text/html" })
           }).catch(function () { /* viewer declined or it failed — nothing more to do */ });
         }).catch(fallbackDownload);
