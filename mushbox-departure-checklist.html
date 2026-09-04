@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JayneRio Departure Manifest</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #F4F6FB;
+    --surface: #FFFFFF;
+    --surface-2: #EDF1FA;
+    --border: #D7DEEE;
+    --text: #0A1535;
+    --text-muted: #5A6584;
+    --accent: #1E6FFF;
+    --accent-strong: #0A4FCF;
+    --accent-soft: #E4EDFF;
+    --done: #1F9D6C;
+    --done-soft: #E1F7EC;
+    --warn: #B5590A;
+    --warn-soft: #FBEADA;
+    --edit: #B5590A;
+    --edit-soft: #FBEADA;
+    --shadow: 0 1px 2px rgba(10, 21, 53, 0.06), 0 8px 24px rgba(10, 21, 53, 0.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #060810;
+      --surface: #0A1535;
+      --surface-2: #101B44;
+      --border: #1E2A55;
+      --text: #F4F7FF;
+      --text-muted: #8B98C0;
+      --accent: #4DB8FF;
+      --accent-strong: #7FCCFF;
+      --accent-soft: rgba(77, 184, 255, 0.14);
+      --done: #35D68F;
+      --done-soft: rgba(53, 214, 143, 0.14);
+      --warn: #FFB35C;
+      --warn-soft: rgba(255, 179, 92, 0.14);
+      --edit: #FFB35C;
+      --edit-soft: rgba(255, 179, 92, 0.14);
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 28px rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #060810;
+    --surface: #0A1535;
+    --surface-2: #101B44;
+    --border: #1E2A55;
+    --text: #F4F7FF;
+    --text-muted: #8B98C0;
+    --accent: #4DB8FF;
+    --accent-strong: #7FCCFF;
+    --accent-soft: rgba(77, 184, 255, 0.14);
+    --done: #35D68F;
+    --done-soft: rgba(53, 214, 143, 0.14);
+    --warn: #FFB35C;
+    --warn-soft: rgba(255, 179, 92, 0.14);
+    --edit: #FFB35C;
+    --edit-soft: rgba(255, 179, 92, 0.14);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 28px rgba(0, 0, 0, 0.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    margin: 0;
+    padding: 40px 20px 80px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .sheet {
+    width: 100%;
+    max-width: 720px;
+  }
+
+  /* ---------- Admin / edit bar ---------- */
+  .admin-bar {
+    display: none;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: var(--edit-soft);
+    border: 1px solid var(--edit);
+    border-radius: 9px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+  }
+
+  .admin-bar.visible { display: flex; }
+
+  .admin-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--edit);
+  }
+
+  .admin-actions { display: flex; gap: 8px; }
+
+  body.edit-mode .editable {
+    outline: 1.5px dashed var(--edit);
+    outline-offset: 3px;
+    border-radius: 3px;
+    cursor: text;
+  }
+
+  body.edit-mode .editable:focus {
+    outline: 1.5px solid var(--edit);
+    background: var(--edit-soft);
+  }
+
+  /* ---------- Header ---------- */
+  .letterhead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 14px;
+    margin-bottom: 22px;
+  }
+
+  .brand {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  .doc-id {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  header.hero {
+    margin-bottom: 28px;
+  }
+
+  h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: clamp(26px, 5vw, 36px);
+    letter-spacing: 0.01em;
+    text-wrap: balance;
+    margin: 0 0 8px;
+    line-height: 1.15;
+  }
+
+  .subtitle {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 17px;
+    color: var(--text-muted);
+    letter-spacing: 0.01em;
+  }
+
+  .meta-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .meta-field {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .meta-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 3px;
+  }
+
+  .meta-value {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  /* ---------- Progress ---------- */
+  .progress-block {
+    position: sticky;
+    top: 12px;
+    z-index: 5;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+    margin-bottom: 26px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .progress-track {
+    flex: 1;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--done));
+    border-radius: 999px;
+    transition: width 0.35s ease;
+  }
+
+  .progress-count {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    min-width: 92px;
+    text-align: right;
+  }
+
+  /* ---------- Sections ---------- */
+  section.category {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px 8px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow);
+  }
+
+  .category-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+
+  .section-code {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    border: 1px solid var(--accent-soft);
+    background: var(--accent-soft);
+    padding: 2px 8px;
+    border-radius: 5px;
+  }
+
+  .category-head h2 {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .category-note {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0 14px;
+    max-width: 60ch;
+  }
+
+  .items { list-style: none; margin: 0; padding: 0; }
+
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 11px 4px;
+    border-top: 1px solid var(--border);
+    cursor: pointer;
+  }
+
+  .items .item:first-child { border-top: none; }
+
+  .item input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    flex: none;
+    margin-top: 1px;
+    border: 2px solid var(--border);
+    border-radius: 5px;
+    background: var(--surface-2);
+    cursor: pointer;
+    display: grid;
+    place-content: center;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  .item input[type="checkbox"]::after {
+    content: "";
+    width: 10px;
+    height: 6px;
+    border-left: 2.5px solid white;
+    border-bottom: 2.5px solid white;
+    transform: rotate(-45deg) translateY(-1px);
+    opacity: 0;
+  }
+
+  .item input[type="checkbox"]:checked {
+    background: var(--done);
+    border-color: var(--done);
+  }
+
+  .item input[type="checkbox"]:checked::after { opacity: 1; }
+
+  .item input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .item-text { flex: 1; }
+
+  .item-title {
+    font-size: 14.5px;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .item input[type="checkbox"]:checked ~ .item-text .item-title .item-label {
+    color: var(--text-muted);
+    text-decoration: line-through;
+    text-decoration-color: var(--done);
+    text-decoration-thickness: 1.5px;
+  }
+
+  .flag {
+    display: inline-block;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--warn);
+    background: var(--warn-soft);
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  /* ---------- Footer controls ---------- */
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 30px;
+    padding-top: 18px;
+    border-top: 2px solid var(--border);
+  }
+
+  .stamp {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+  }
+
+  .btn-group { display: flex; gap: 10px; }
+
+  button {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: 7px;
+    padding: 9px 14px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
+  }
+
+  button.edit-btn {
+    background: var(--edit);
+    border-color: var(--edit);
+    color: #1a1200;
+  }
+
+  button:hover { filter: brightness(1.06); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  @media print {
+    body { padding: 0; background: white; }
+    .admin-bar, .progress-block { position: static; box-shadow: none; }
+    .admin-bar, .controls { display: none; }
+    section.category { box-shadow: none; break-inside: avoid; }
+  }
+
+  @media (max-width: 520px) {
+    .meta-row { grid-template-columns: 1fr; }
+    .controls { flex-direction: column; align-items: stretch; }
+    .btn-group { justify-content: stretch; }
+    .btn-group button { flex: 1; }
+    .admin-bar { flex-direction: column; align-items: stretch; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="admin-bar" id="adminBar">
+    <span class="admin-label">Owner tools</span>
+    <div class="admin-actions">
+      <button id="editToggleBtn" class="edit-btn" type="button">Edit Page</button>
+      <button id="exportBtn" type="button">Export HTML</button>
+    </div>
+  </div>
+
+  <div class="letterhead">
+    <span class="brand editable">Mushbox &mdash; Field Ops</span>
+    <span class="doc-id editable">Manifest No. MB-IRL-0042</span>
+  </div>
+
+  <header class="hero">
+    <h1 class="editable">Departure Manifest</h1>
+    <div class="subtitle editable">Prepared for JayneRio &middot; International IRL Stream Trip</div>
+    <div class="meta-row">
+      <div class="meta-field">
+        <div class="meta-label">Traveler</div>
+        <div class="meta-value editable">JayneRio</div>
+      </div>
+      <div class="meta-field">
+        <div class="meta-label">Trip Type</div>
+        <div class="meta-value editable">International &middot; IRL Bonded Stream</div>
+      </div>
+      <div class="meta-field">
+        <div class="meta-label">Rig</div>
+        <div class="meta-value editable">Mushbox Unit (Rock 5A / BELABOX)</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="progress-block">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-count" id="progressCount">0 / 22 packed</div>
+  </div>
+
+  <section class="category">
+    <div class="category-head"><span class="section-code">Section A</span><h2>Core Streaming Rig</h2></div>
+    <p class="category-note editable">The bonding setup itself and what points it at your face.</p>
+    <ul class="items">
+      <li class="item">
+        <input type="checkbox" id="a1">
+        <label class="item-text" for="a1"><div class="item-title"><span class="item-label editable">Mushbox (Rock 5A / BELABOX)</span></div></label>
+      </li>
+      <li class="item">
+        <input type="checkbox" id="a3">
+        <label class="item-text" for="a3"><div class="item-title"><span class="item-label editable">Chat phone, charged and logged into stream apps</span><span class="flag editable">Redundancy</span></div></label>
+      </li>
+      <li class="item">
+        <input type="checkbox" id="a4">
+        <label class="item-text" for="a4"><div class="item-title"><span class="item-label editable">Camera and its mount</span></div></label>
+      </li>
+      <li class="item">
+        <input type="checkbox" id="a5">
+        <label class="item-text" for="a5"><div class="item-title"><span class="item-label editable">Mic + windscreen (or lav + receiver)</span></div></label>
+      </li>
+      <li class="item">
+        <input type="checkbox" id="a6">
+        <label class="item-text" for="a6"><div class="item-title"><span class="item-label editable">Chest mount, tested and tightened</span></div></label>
+      </li>
+    </ul>
+  </section>
+
+  <section class="category">
+    <div class="category-head"><span class="section-code">Section B</span><h2>Power</h2></div>
+    <p class="category-note editable">Enough capacity to outlast a full stream day, plus a real backup.</p>
+    <ul class="items">
+      <li class="item">
+        <input type="checkbox" id="b1">
+        <label class="item-text" for="b1"><div class="item-title"><span class="item-label editable">2x INIU power banks, charged to 100%</span></div></label>
+      </li>
+      <li class="item">
+        <input type="checkbox" id="b2">
+        <label class="item-text" for="b2"><div class="item-title"><span class="item-label editable">INIU charging cables &mdash; at least one spare per device</span></div></label>
+      </li>
+      <li class="item">
+        <input type="checkbox" id="b4">
+        <label class="item-text" for="b4"><div class="item-title"><span class="item-label editable">Multi-port wall charger (covers phone, unit, and camera at once)</span></div></label>
+      </li>
+      <li class="item">
+        <input type="checkbox" id="b5">
+        <label class="item-text" for="b5"><div class="item-title"><span class="item-label editable">Spare batteries within your airline's Wh limit</span><span class="flag editable">See Section E</span></div></label>
+      </li>
+    </ul>
+  </section>
+
+  <section class="category">
+    <div class="category-head"><span class="section-code">Section C</span><h2>Connectivity (International)</h2></div>
+    <p class="category-note editable">Bonding lives or dies on data. Line up more than one source before wheels-up.</p>
+    <ul class="items">
+      <li class="item">
+        <input type="checkbox" id="c1">
+        <label class="item-text" for="c1"><div class="item-title"><span class="item-label editable">SIM cards (2&ndash;4) activated for your destination</span></div></label>
+      </li>
+      <li class="item">
+        <input type="checkbox" id="c2">
+        <label class="item-text" for="c2"><div class="item-title"><span class="item-label editable">International eSIM for chat phone confirmed active</span></div></label>
+      </li>
+      <li class="item">
+        <input type="checkbox" id="c4">
+        <label class="item-text" for="c4"><div class="item-title"><span class="item-label editable">Orange Puck Hotspot</span></div></label>
+      </li>
+      <li class="item">
+        <input type="checkbox" id="c6">
+        <label class="item-text" for="c6"><div class="item-title"><span class="item-label editable">GL.iNet (white modem)</span></div></label>
+      </li>
+    </ul>
+  </section>
+
+  <section class="category">
+    <div class="category-head"><span class="section-code">Section D</span><h2>Cables, Mounts &amp; Adapters</h2></div>
+    <p class="category-note editable">The small stuff that ends a stream when it's missing.</p>
+    <ul class="items">
+      <li class="item">
+        <input type="checkbox" id="d1">
+        <label class="item-text" for="d1"><div class="item-title"><span class="item-label editable">Spare cables: USB-C to C and USB-A to C</span></div></label>
+      </li>
+      <li class="item">
+        <input type="checkbox" id="d2">
+        <label class="item-text" for="d2"><div class="item-title"><span class="item-label editable">Plug adapter for your destination country</span></div></label>
+      </li>
+      <li class="item">
+        <input type="checkbox" id="d4">
+        <label class="item-text" for="d4"><div class="item-title"><span class="item-label editable">Weatherproof cover for backpack</span></div></label>
+      </li>
+    </ul>
+  </section>
+
+  <section class="category">
+    <div class="category-head"><span class="section-code">Section E</span><h2>Airline &amp; Battery Compliance</h2></div>
+    <p class="category-note editable">Lithium batteries are the one category that can get gear pulled at the gate.</p>
+    <ul class="items">
+      <li class="item">
+        <input type="checkbox" id="e1">
+        <label class="item-text" for="e1"><div class="item-title"><span class="item-label editable">Total spare battery capacity confirmed under your airline's Wh limit</span><span class="flag editable">Check before packing</span></div></label>
+      </li>
+      <li class="item">
+        <input type="checkbox" id="e2">
+        <label class="item-text" for="e2"><div class="item-title"><span class="item-label editable">All spare batteries and power banks packed in carry-on, not checked luggage</span></div></label>
+      </li>
+    </ul>
+  </section>
+
+  <section class="category">
+    <div class="category-head"><span class="section-code">Section F</span><h2>Final Pre-Flight Checks</h2></div>
+    <p class="category-note editable">The last pass, done the night before &mdash; not at the gate.</p>
+    <ul class="items">
+      <li class="item">
+        <input type="checkbox" id="f1">
+        <label class="item-text" for="f1"><div class="item-title"><span class="item-label editable">Every device charged to 100% before leaving for the airport</span></div></label>
+      </li>
+      <li class="item">
+        <input type="checkbox" id="f3">
+        <label class="item-text" for="f3"><div class="item-title"><span class="item-label editable">PC running OBS open, NOALBS running error free</span></div></label>
+      </li>
+      <li class="item">
+        <input type="checkbox" id="f5">
+        <label class="item-text" for="f5"><div class="item-title"><span class="item-label editable">Stream keys and configs sent to Mushroom in case of emergency</span></div></label>
+      </li>
+      <li class="item">
+        <input type="checkbox" id="f6">
+        <label class="item-text" for="f6"><div class="item-title"><span class="item-label editable">Passport, ID, and travel documents in your carry-on</span></div></label>
+      </li>
+    </ul>
+  </section>
+
+  <div class="controls">
+    <div class="stamp">Checked items save automatically to this device.</div>
+    <div class="btn-group">
+      <button id="printBtn" type="button">Print</button>
+      <button id="resetBtn" class="primary" type="button">Reset Checklist</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var STORAGE_KEY = "jaynerio-manifest-mb-irl-0042";
+  var state = {};
+  try {
+    state = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+  } catch (e) { state = {}; }
+
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.items input[type="checkbox"]'));
+  var totalItems = boxes.length;
+
+  boxes.forEach(function (checkbox) {
+    checkbox.checked = !!state[checkbox.id];
+    checkbox.addEventListener("change", function () {
+      state[checkbox.id] = checkbox.checked;
+      save();
+      updateProgress();
+    });
+  });
+
+  var fill = document.getElementById("progressFill");
+  var count = document.getElementById("progressCount");
+
+  function updateProgress() {
+    var checked = boxes.filter(function (cb) { return cb.checked; }).length;
+    var pct = totalItems ? Math.round((checked / totalItems) * 100) : 0;
+    fill.style.width = pct + "%";
+    count.textContent = checked + " / " + totalItems + " packed";
+  }
+
+  updateProgress();
+
+  document.getElementById("printBtn").addEventListener("click", function () {
+    window.print();
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", function () {
+    if (!window.confirm("Uncheck every item on this manifest?")) return;
+    state = {};
+    save();
+    boxes.forEach(function (cb) { cb.checked = false; });
+    updateProgress();
+  });
+
+  /* ---------- Owner edit mode (add ?edit to the URL to reveal it) ---------- */
+  var adminBar = document.getElementById("adminBar");
+  var editToggleBtn = document.getElementById("editToggleBtn");
+  var exportBtn = document.getElementById("exportBtn");
+  var editables = Array.prototype.slice.call(document.querySelectorAll(".editable"));
+  var labels = Array.prototype.slice.call(document.querySelectorAll(".item-text"));
+  var editMode = false;
+
+  var editModeAvailable = /[?&]edit(=|&|$)/.test(window.location.search);
+  if (editModeAvailable) {
+    adminBar.classList.add("visible");
+  }
+
+  function setEditMode(on) {
+    editMode = on;
+    document.body.classList.toggle("edit-mode", on);
+    editables.forEach(function (el) { el.contentEditable = on ? "true" : "false"; });
+    labels.forEach(function (label) {
+      if (on) {
+        if (label.getAttribute("for")) {
+          label.dataset.forId = label.getAttribute("for");
+          label.removeAttribute("for");
+        }
+      } else if (label.dataset.forId) {
+        label.setAttribute("for", label.dataset.forId);
+        delete label.dataset.forId;
+      }
+    });
+    editToggleBtn.textContent = on ? "Done Editing" : "Edit Page";
+  }
+
+  if (editModeAvailable) {
+    editToggleBtn.addEventListener("click", function () {
+      setEditMode(!editMode);
+    });
+
+    exportBtn.addEventListener("click", function () {
+      var wasEditing = editMode;
+      if (wasEditing) setEditMode(false);
+
+      var html = "<!doctype html>\n<html lang=\"en\">\n<head>\n"
+        + "<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
+        + document.head.innerHTML
+        + "\n</head>\n<body>\n"
+        + document.body.innerHTML
+        + "\n</body>\n</html>";
+
+      function fallbackDownload() {
+        var blob = new Blob([html], { type: "text/html" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = "jaynerio-departure-manifest.html";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      if (window.claude && typeof window.claude.use === "function") {
+        window.claude.use("downloads").then(function (downloads) {
+          if (!downloads) { fallbackDownload(); return; }
+          downloads.save({
+            filename: "jaynerio-departure-manifest.html",
+            data: new Blob([html], { type: "text/html" })
+          }).catch(function () { /* viewer declined or it failed — nothing more to do */ });
+        }).catch(fallbackDownload);
+      } else {
+        fallbackDownload();
+      }
+
+      if (wasEditing) setEditMode(true);
+    });
+  }
+})();
+</script>
+</body>
+</html>
