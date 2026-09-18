@@ -1,0 +1,14 @@
+/* Mushbox site-wide background artwork
+   Applies the brand background image behind every page's own content/cards. */
+html{
+  background-color:#04081A;
+  background-image:url('/assets/img/mushbox-bg.webp');
+  background-repeat:no-repeat;
+  background-position:center center;
+  background-size:cover;
+  background-attachment:fixed;
+  min-height:100%;
+}
+body{
+  background-color:transparent !important;
+}
