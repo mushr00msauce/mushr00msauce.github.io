@@ -1,0 +1,99 @@
+/* ============================================================
+   Mushbox — shared site chrome (header / nav / footer)
+   Palette matches home.html exactly. Loaded on every page except
+   home.html and index.html, which already carry their own chrome.
+   This file intentionally does NOT touch page body styles — only
+   the .mbx-site-* header/nav/footer classes below — so it is safe
+   to drop into any page regardless of that page's own CSS.
+   ============================================================ */
+
+.mbx-site-header{
+  position:sticky; top:0; z-index:100;
+  background:rgba(6,13,36,.88);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(77,184,255,.18);
+}
+.mbx-site-header-inner{
+  max-width:1160px; margin:0 auto;
+  display:flex; align-items:center; gap:18px;
+  padding:10px 18px;
+}
+.mbx-brand{
+  display:flex; align-items:center; gap:9px;
+  text-decoration:none; flex:0 0 auto;
+}
+.mbx-brand-logo{ width:26px; height:26px; border-radius:6px; display:block; }
+.mbx-brand-name{
+  font-family:'Orbitron',-apple-system,sans-serif;
+  font-weight:900; font-size:14px; letter-spacing:.08em;
+  color:#FFFFFF;
+}
+.mbx-nav-toggle{
+  display:none; margin-left:auto; flex:0 0 auto;
+  width:36px; height:32px; border-radius:8px;
+  background:transparent; border:1px solid rgba(77,184,255,.3);
+  cursor:pointer; padding:0;
+  flex-direction:column; align-items:center; justify-content:center; gap:4px;
+}
+.mbx-nav-toggle span{
+  width:16px; height:2px; background:#D7E3FF; border-radius:2px;
+}
+.mbx-site-nav{
+  display:flex; flex-wrap:wrap; align-items:center; gap:4px 4px;
+  margin-left:auto;
+}
+.mbx-site-nav a{
+  font-family:'Rajdhani',-apple-system,sans-serif;
+  font-weight:600; font-size:14px; letter-spacing:.02em;
+  color:#8FA3CC; text-decoration:none;
+  padding:7px 10px; border-radius:8px;
+  transition:color .12s ease, background .12s ease;
+  white-space:nowrap;
+}
+.mbx-site-nav a:hover,
+.mbx-site-nav a:focus-visible{ color:#FFFFFF; background:rgba(77,184,255,.12); }
+.mbx-site-nav a.is-current{ color:#4DB8FF; background:rgba(77,184,255,.14); }
+
+@media (max-width: 720px){
+  .mbx-nav-toggle{ display:flex; }
+  .mbx-site-nav{
+    flex-basis:100%; margin-left:0;
+    max-height:0; overflow:hidden;
+    flex-direction:column; align-items:flex-start; gap:2px;
+    transition:max-height .18s ease;
+  }
+  .mbx-site-header.is-open .mbx-site-nav{ max-height:420px; padding-top:6px; }
+  .mbx-site-nav a{ width:100%; padding:9px 10px; }
+}
+
+.mbx-site-footer{
+  margin-top:56px;
+  border-top:1px solid rgba(77,184,255,.16);
+  background:rgba(4,8,26,.55);
+}
+.mbx-site-footer-inner{
+  max-width:1160px; margin:0 auto;
+  padding:26px 18px 30px;
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  text-align:center;
+}
+.mbx-site-footer .mbx-brand-name{ color:#D7E3FF; }
+.mbx-site-footer p{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:13px; color:#8FA3CC; margin:0;
+}
+.mbx-site-footer p a{ color:#4DB8FF; text-decoration:none; font-weight:700; }
+.mbx-site-footer p a:hover{ text-decoration:underline; }
+.mbx-site-footer p.mbx-credit{ font-size:11.5px; color:#5E6E96; }
+.mbx-site-footer p.mbx-credit a{ color:#8FA3CC; font-weight:600; }
+.mbx-site-footer p.mbx-credit a:hover{ color:#4DB8FF; }
+.mbx-site-footer-nav{
+  display:flex; flex-wrap:wrap; justify-content:center; gap:2px 4px;
+  font-family:'Rajdhani',-apple-system,sans-serif;
+}
+.mbx-site-footer-nav a{
+  font-size:13px; font-weight:600; color:#8FA3CC; text-decoration:none;
+  padding:4px 9px; border-radius:6px;
+}
+.mbx-site-footer-nav a:hover{ color:#FFFFFF; }
+.mbx-site-footer-nav span{ color:#3A4A73; }
