@@ -276,8 +276,56 @@
       </div>
 
       <div class="field">
-        <label for="referrer">Who sent you? <span class="hint">Optional — the streamer or friend who referred you</span></label>
-        <input type="text" id="referrer" name="Referred by" placeholder="e.g. @theirhandle">
+        <label for="referrer">Who sent you? <span class="req">*</span></label>
+        <select id="referrer" name="Referred by" required>
+          <option value="">Select one…</option>
+          <option>Nobody — found it myself</option>
+          <option>AfrazExplores</option>
+          <option>AllDayNYC</option>
+          <option>Aprylanonymous</option>
+          <option>Barktok</option>
+          <option>Bigbonelife</option>
+          <option>Chefmaki</option>
+          <option>DianaTheDogGroomer</option>
+          <option>DTMDrewski</option>
+          <option>Eatage</option>
+          <option>Edventures</option>
+          <option>EmmDeeFit</option>
+          <option>FalconElite</option>
+          <option>Fi1es</option>
+          <option>friskyalien</option>
+          <option>Hamandlizgaming</option>
+          <option>JayneRio</option>
+          <option>JDCharisma</option>
+          <option>jtengland</option>
+          <option>KardTrick</option>
+          <option>Katana1988</option>
+          <option>KelleyCakes</option>
+          <option>Kozybean</option>
+          <option>LDSylvr</option>
+          <option>Miekii</option>
+          <option>MissyAlcazarMusic</option>
+          <option>mocomade</option>
+          <option>MorwenXo</option>
+          <option>MrTelesir</option>
+          <option>NeverbeenHappiertTV</option>
+          <option>OptimusKale</option>
+          <option>PapaSmaxe</option>
+          <option>potentialbliss</option>
+          <option>redivivus</option>
+          <option>RefurberSteve</option>
+          <option>Renz</option>
+          <option>SBMel</option>
+          <option>SFTortLife</option>
+          <option>Shumba</option>
+          <option>SneakyBeagle</option>
+          <option>tikitacotony</option>
+          <option>UluMaika</option>
+          <option>UncleJPop</option>
+          <option>WoodrowJenkins</option>
+          <option value="Other">Other (not listed)</option>
+        </select>
+        <input type="text" id="referrerOther" name="Referred by (other)" placeholder="Their name or handle" style="display:none;margin-top:8px">
       </div>
 
       <div class="field">
@@ -307,6 +355,15 @@
     const form = document.getElementById('mbxForm');
     const btn  = document.getElementById('submitBtn');
     const done = document.getElementById('doneBox');
+
+    const referrerSel   = document.getElementById('referrer');
+    const referrerOther = document.getElementById('referrerOther');
+    referrerSel.addEventListener('change', () => {
+      const isOther = referrerSel.value === 'Other';
+      referrerOther.style.display = isOther ? 'block' : 'none';
+      referrerOther.required = isOther;
+      if (!isOther) referrerOther.value = '';
+    });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
