@@ -82,6 +82,9 @@
     display:flex;
     align-items:center;
     gap:10px;
+    flex-wrap:wrap;
+    pointer-events:auto;
+    justify-content:flex-end;
   }
 
   .sound-toggle{
@@ -136,6 +139,27 @@
     color:#04070f;
   }
   .mode-toggle button:focus-visible{ outline:2px solid var(--sky); outline-offset:2px; }
+
+  .skip-btn{
+    appearance:none;
+    border:1px solid var(--line);
+    background:rgba(10,21,53,0.7);
+    color:var(--ink-dim);
+    font-family:'Rajdhani',sans-serif;
+    font-weight:600;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    padding:9px 16px;
+    border-radius:999px;
+    cursor:pointer;
+    backdrop-filter:blur(8px);
+    flex:none;
+    transition:border-color 0.2s, color 0.2s;
+  }
+  .skip-btn:hover{ border-color:var(--sky); color:var(--ink); }
+  .skip-btn:focus-visible{ outline:2px solid var(--sky); outline-offset:2px; }
+  .skip-btn:disabled{ opacity:0.4; cursor:default; }
 
   .beat-copy{
     position:fixed;
@@ -325,6 +349,7 @@
       <button id="modeAuto" class="active" type="button">Auto-play</button>
       <button id="modeScroll" type="button">Scroll / Tap</button>
     </div>
+    <button class="skip-btn" id="skipBtn" type="button" aria-label="Skip to end — for repeat viewers">Skip ▸▸</button>
   </div>
 </header>
 
@@ -385,6 +410,7 @@
   var soundToggle = document.getElementById('soundToggle');
   var soundIconOff = document.getElementById('soundIconOff');
   var soundIconOn = document.getElementById('soundIconOn');
+  var skipBtn = document.getElementById('skipBtn');
 
   var dots = [];
   for (var i=0;i<N;i++){
@@ -1085,6 +1111,17 @@
       cancelReturnHome();
     }
   }
+
+  // "Skip" — for anyone who has already seen the reveal, cut straight to
+  // home rather than making them sit through (or scrub past) the whole thing
+  skipBtn.addEventListener('click', function () {
+    cancelReturnHome();
+    skipBtn.disabled = true;
+    endFade.classList.add('active');
+    navigateTimer = setTimeout(function () {
+      window.location.href = HOME_URL;
+    }, 450);
+  });
 
   /* ---------- render loop ---------- */
   var clock = new THREE.Clock();
