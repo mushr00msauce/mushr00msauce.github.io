@@ -1000,18 +1000,22 @@
     thumpGain.connect(master);
     thump.start();
 
-    // hero chord — three detuned voices forming a minor triad for the finale swell
+    // hero chord — three detuned voices forming a minor triad for the finale swell.
+    // Was 'sawtooth' through a fairly open 1800Hz lowpass — sawtooth is the buzziest
+    // of the basic waveforms (a full harsh harmonic stack), which is what people were
+    // hearing as "buzzing." Switched to 'triangle' (odd harmonics only, much smoother)
+    // and tightened the lowpass to 1100Hz to cut the rest of the edge.
     var chordFreqs = [110, 130.8, 164.8]; // A2, C3, E3 — A minor
     var chordGain = ctx.createGain();
     chordGain.gain.value = 0;
     var chordFilter = ctx.createBiquadFilter();
     chordFilter.type = 'lowpass';
-    chordFilter.frequency.value = 1800;
+    chordFilter.frequency.value = 1100;
     chordFilter.connect(chordGain);
     chordGain.connect(master);
     var chordOscs = chordFreqs.map(function (f, i) {
       var o = ctx.createOscillator();
-      o.type = 'sawtooth';
+      o.type = 'triangle';
       o.frequency.value = f;
       o.detune.value = (i - 1) * 6;
       o.connect(chordFilter);
@@ -1037,30 +1041,37 @@
     var n = Audio_.nodes, c = Audio_.current, r = 0.12;
 
     // drone: present from the very start, deepens through the build
-    c.drone = approach(c.drone || 0, lerp(0.05, 0.16, clamp01(P / 4)), r);
+    // (peak trimmed 0.16 -> 0.11, and the filter no longer opens as bright —
+    // 900Hz -> 650Hz — as part of the overall "too loud / buzzy" pass below)
+    c.drone = approach(c.drone || 0, lerp(0.04, 0.11, clamp01(P / 4)), r);
     n.droneGain.gain.value = c.drone;
-    n.droneFilter.frequency.value = lerp(300, 900, clamp01(P / 4.5));
+    n.droneFilter.frequency.value = lerp(300, 650, clamp01(P / 4.5));
 
     // riser: swells across the assembly chapter, released once the plates land
-    var riserTarget = 0.22 * Math.max(0, 1 - Math.abs(P - 1.3) / 1.1);
+    // (peak trimmed 0.22 -> 0.15)
+    var riserTarget = 0.15 * Math.max(0, 1 - Math.abs(P - 1.3) / 1.1);
     c.riser = approach(c.riser || 0, riserTarget, r);
     n.noiseGain.gain.value = c.riser;
     n.noiseFilter.frequency.value = lerp(200, 1400, clamp01((P - 0.4) / 1.4));
 
     // snap-latch thump, same pulse windows that drive the visual flash
-    var thumpTarget = 0.5 * Math.max(
+    // (peak trimmed 0.5 -> 0.32 — this one was the loudest single element)
+    var thumpTarget = 0.32 * Math.max(
       Math.max(0, 1 - Math.abs(P - 1.62) / 0.16),
       Math.max(0, 1 - Math.abs(P - 5.9) / 0.16)
     );
     c.thump = approach(c.thump || 0, thumpTarget, 0.5);
     n.thumpGain.gain.value = c.thump;
 
-    // hero swell for the finale
-    var chordTarget = clamp01((P - 3.6) / 1.1) * 0.14;
+    // hero swell for the finale (peak trimmed 0.14 -> 0.10, on top of the
+    // sawtooth->triangle + tighter lowpass change above)
+    var chordTarget = clamp01((P - 3.6) / 1.1) * 0.10;
     c.chord = approach(c.chord || 0, chordTarget, 0.06);
     n.chordGain.gain.value = c.chord;
 
-    n.master.gain.value = approach(n.master.gain.value, 1, 0.2);
+    // Overall ceiling pulled down from 1.0 to 0.6 — the biggest lever on
+    // "too loud" complaints, independent of which element is playing.
+    n.master.gain.value = approach(n.master.gain.value, 0.6, 0.2);
   }
 
   soundToggle.addEventListener('click', function () {
