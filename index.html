@@ -942,9 +942,15 @@
   modeScrollBtn.addEventListener('click', function(){ if (mode!=='scroll') setMode('scroll'); });
 
   /* ---------- original score, synthesized in the browser (Web Audio) ----------
-     No audio file is loaded — every sound here is generated on the fly and
-     driven continuously by P, the same timeline value that drives the 3D
-     scene, so it scrubs cleanly with scroll/tap and stays in sync in auto mode. */
+     No audio file is loaded — every sound here is generated on the fly. The
+     ambient layers (drone, riser, snap-latch thump) are driven continuously
+     by P, the same timeline value that drives the 3D scene, so they scrub
+     cleanly with scroll/tap and stay in sync in auto mode. The Chapter-5
+     reveal chord is the one exception — a one-shot piano-style hit, fired
+     once when P crosses into that chapter and then left to ring out and
+     decay naturally, the way an actual struck chord would (see
+     playPianoNote/triggerPianoReveal below), rather than being faded in and
+     out with scroll position like the rest of the piece. */
   var Audio_ = { ctx:null, ready:false, enabled:false, nodes:null, current:{} };
 
   function buildAudioGraph(){
@@ -1000,36 +1006,86 @@
     thumpGain.connect(master);
     thump.start();
 
-    // hero chord — three detuned voices forming a minor triad for the finale swell.
-    // Was 'sawtooth' through a fairly open 1800Hz lowpass — sawtooth is the buzziest
-    // of the basic waveforms (a full harsh harmonic stack), which is what people were
-    // hearing as "buzzing." Switched to 'triangle' (odd harmonics only, much smoother)
-    // and tightened the lowpass to 1100Hz to cut the rest of the edge.
-    var chordFreqs = [110, 130.8, 164.8]; // A2, C3, E3 — A minor
-    var chordGain = ctx.createGain();
-    chordGain.gain.value = 0;
-    var chordFilter = ctx.createBiquadFilter();
-    chordFilter.type = 'lowpass';
-    chordFilter.frequency.value = 1100;
-    chordFilter.connect(chordGain);
-    chordGain.connect(master);
-    var chordOscs = chordFreqs.map(function (f, i) {
-      var o = ctx.createOscillator();
-      o.type = 'triangle';
-      o.frequency.value = f;
-      o.detune.value = (i - 1) * 6;
-      o.connect(chordFilter);
-      o.start();
-      return o;
-    });
+    // Reveal chord — was a continuously-running sustained triad (three detuned
+    // oscillators, gain driven straight off scroll position). Replaced with a
+    // one-shot piano-style rolled chord: a bus that individual struck notes
+    // get scheduled onto (see playPianoNote/triggerPianoReveal below), which
+    // reads as an actual piano hit — fast attack, natural decay — instead of
+    // a synth pad swelling in and out with the scroll.
+    var pianoBus = ctx.createGain();
+    pianoBus.gain.value = 1;
+    pianoBus.connect(master);
 
     return {
       ctx: ctx, master: master,
       droneGain: droneGain, droneFilter: droneFilter,
       noiseGain: noiseGain, noiseFilter: noiseFilter,
       thumpGain: thumpGain, thump: thump,
-      chordGain: chordGain
+      pianoBus: pianoBus
     };
+  }
+
+  // One struck piano-ish note: a fundamental plus a few quickly-decaying
+  // harmonics (real piano tone is bright and inharmonic-ish right at the
+  // attack, then settles and darkens), each with its own short exponential
+  // decay, all through a lowpass that closes down over the note's life so
+  // the tail sounds warmer than the attack — the same "ping -> thud" shape
+  // an actual struck string has, without needing a sample.
+  function playPianoNote(ctx, bus, freq, startTime, velocity){
+    var partials = [
+      { mult: 1,    gain: 0.55, decay: 1.6 },
+      { mult: 2,    gain: 0.22, decay: 0.9 },
+      { mult: 3,    gain: 0.10, decay: 0.55 },
+      { mult: 4.02, gain: 0.05, decay: 0.35 } // very slightly detuned — real
+                                                // piano strings aren't
+                                                // perfectly harmonic either
+    ];
+    var noteGain = ctx.createGain();
+    noteGain.gain.value = 0;
+    var noteFilter = ctx.createBiquadFilter();
+    noteFilter.type = 'lowpass';
+    noteFilter.frequency.setValueAtTime(5200, startTime);
+    noteFilter.frequency.exponentialRampToValueAtTime(900, startTime + 1.4);
+    noteGain.connect(noteFilter);
+    noteFilter.connect(bus);
+
+    // fast attack, then exponential decay per partial (exponentialRamp can't
+    // target 0 directly, so ramp to a hair above silence)
+    noteGain.gain.setValueAtTime(0, startTime);
+    noteGain.gain.linearRampToValueAtTime(velocity, startTime + 0.006);
+    noteGain.gain.exponentialRampToValueAtTime(Math.max(velocity * 0.0015, 0.0001), startTime + 2.0);
+
+    partials.forEach(function (p) {
+      var o = ctx.createOscillator();
+      o.type = 'sine';
+      o.frequency.value = freq * p.mult;
+      var pg = ctx.createGain();
+      pg.gain.setValueAtTime(p.gain, startTime);
+      pg.gain.exponentialRampToValueAtTime(Math.max(p.gain * 0.002, 0.0001), startTime + p.decay);
+      o.connect(pg);
+      pg.connect(noteGain);
+      o.start(startTime);
+      o.stop(startTime + 2.2);
+    });
+  }
+
+  // The reveal itself: a gentle rolled A-major-add9 chord (brighter than a
+  // plain minor triad, reads as "ta-da" rather than tense/ominous), low note
+  // first and each next note a beat later like a harp/piano glissando, then
+  // the notes ring out and decay naturally instead of being held/faded by
+  // scroll position.
+  function triggerPianoReveal(ctx, bus){
+    var now = ctx.currentTime;
+    var roll = [
+      { freq: 220.0, at: 0.00, vel: 0.5  }, // A3
+      { freq: 329.6, at: 0.09, vel: 0.42 }, // E4
+      { freq: 440.0, at: 0.18, vel: 0.4  }, // A4
+      { freq: 554.4, at: 0.27, vel: 0.34 }, // C#5
+      { freq: 659.3, at: 0.38, vel: 0.36 }  // E5 — top voice, rings the longest
+    ];
+    roll.forEach(function (n) {
+      playPianoNote(ctx, bus, n.freq, now + n.at, n.vel);
+    });
   }
 
   function approach(cur, target, rate){
@@ -1063,11 +1119,19 @@
     c.thump = approach(c.thump || 0, thumpTarget, 0.5);
     n.thumpGain.gain.value = c.thump;
 
-    // hero swell for the finale (peak trimmed 0.14 -> 0.10, on top of the
-    // sawtooth->triangle + tighter lowpass change above)
-    var chordTarget = clamp01((P - 3.6) / 1.1) * 0.10;
-    c.chord = approach(c.chord || 0, chordTarget, 0.06);
-    n.chordGain.gain.value = c.chord;
+    // Reveal moment (Chapter 5, "The Mushbox Cage. Revealed...") — was a
+    // sustained pad that faded in/out with scroll position; now a one-shot
+    // rolled piano chord, fired once as P first crosses into the chapter and
+    // left to ring out and decay on its own rather than being scroll-driven.
+    // The 3.5 reset threshold gives a little hysteresis below the 3.9 trigger
+    // point so scrolling back out and forward again re-triggers it cleanly
+    // (in both scroll mode and auto mode) instead of firing on every frame.
+    if (P >= 3.9 && !c.revealPlayed){
+      triggerPianoReveal(n.ctx, n.pianoBus);
+      c.revealPlayed = true;
+    } else if (P < 3.5 && c.revealPlayed){
+      c.revealPlayed = false;
+    }
 
     // Overall ceiling pulled down from 1.0 to 0.6 — the biggest lever on
     // "too loud" complaints, independent of which element is playing.
