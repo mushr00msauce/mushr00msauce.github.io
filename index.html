@@ -259,6 +259,17 @@
 
   #scrollSpacer{ position:relative; width:100%; height:0; }
 
+  .end-fade{
+    position:fixed;
+    inset:0;
+    background:var(--bg);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.75s ease;
+    z-index:20;
+  }
+  .end-fade.active{ opacity:1; }
+
   .loader{
     position:fixed;
     inset:0;
@@ -338,6 +349,7 @@
 </div>
 
 <div id="scrollSpacer"></div>
+<div class="end-fade" id="endFade"></div>
 
 <script>
 (function(){
@@ -1001,6 +1013,41 @@
     if (!Audio_.enabled && Audio_.nodes) Audio_.nodes.master.gain.value = 0;
   });
 
+  /* ---------- auto-return home once the reveal has fully played out ---------- */
+  var HOME_URL = 'home.html';
+  var endFade = document.getElementById('endFade');
+  var endWatchStart = null;
+  var preFadeTimer = null;
+  var navigateTimer = null;
+
+  function scheduleReturnHome(){
+    if (preFadeTimer || navigateTimer) return; // already scheduled
+    preFadeTimer = setTimeout(function () {
+      endFade.classList.add('active');
+      navigateTimer = setTimeout(function () {
+        window.location.href = HOME_URL;
+      }, 750);
+    }, 2400);
+  }
+
+  function cancelReturnHome(){
+    if (preFadeTimer){ clearTimeout(preFadeTimer); preFadeTimer = null; }
+    if (navigateTimer){ clearTimeout(navigateTimer); navigateTimer = null; }
+    endFade.classList.remove('active');
+  }
+
+  function watchForEnd(P){
+    var atEnd = P >= (N - 0.015);
+    if (atEnd){
+      if (endWatchStart === null) endWatchStart = performance.now();
+      // small grace period so scrubbing quickly past the end doesn't trigger it
+      if (performance.now() - endWatchStart > 400) scheduleReturnHome();
+    } else {
+      endWatchStart = null;
+      cancelReturnHome();
+    }
+  }
+
   /* ---------- render loop ---------- */
   var clock = new THREE.Clock();
 
@@ -1030,6 +1077,7 @@
     evalScene(P);
     updateSmoke(P);
     updateAudio(P);
+    watchForEnd(P);
     renderer.render(scene, camera);
     requestAnimationFrame(tick);
   }
