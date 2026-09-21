@@ -851,9 +851,25 @@
     autoElapsed = 0;
     autoFinished = false;
     autoPlaying = true;
+    landedAtEnd = false;
     playPauseBtn.hidden = false;
     playPauseBtn.textContent = 'Pause';
     replayBtn.hidden = true;
+  }
+
+  // default landing state: skip straight to the finished, upright cage
+  // instead of making every visitor sit through the build-up. Anyone who
+  // wants the full reveal can click through to watch it from the top.
+  var landedAtEnd = false;
+  function landOnEnd(){
+    autoElapsed = autoTotal;
+    autoFinished = true;
+    autoPlaying = false;
+    landedAtEnd = true;
+    playPauseBtn.hidden = true;
+    replayBtn.hidden = false;
+    replayBtn.textContent = 'Watch the full reveal ▸';
+    setBeatCopy(N-1);
   }
 
   playPauseBtn.addEventListener('click', function(){
@@ -861,7 +877,11 @@
     autoPlaying = !autoPlaying;
     playPauseBtn.textContent = autoPlaying ? 'Pause' : 'Play';
   });
-  replayBtn.addEventListener('click', resetAuto);
+  replayBtn.addEventListener('click', function(){
+    cancelReturnHome();
+    replayBtn.textContent = 'Replay';
+    resetAuto();
+  });
 
   /* ---------- SCROLL / TAP MODE ---------- */
   var currentBeatScroll = 0;
@@ -925,7 +945,7 @@
       document.body.classList.remove('scroll-mode');
       scrollSpacer.style.height = '0px';
       window.scrollTo(0,0);
-      resetAuto();
+      landOnEnd();
     } else {
       document.body.classList.add('scroll-mode');
       scrollSpacer.style.height = (N * 140) + 'vh';
@@ -1159,14 +1179,14 @@
   var preFadeTimer = null;
   var navigateTimer = null;
 
-  function scheduleReturnHome(){
+  function scheduleReturnHome(delay){
     if (preFadeTimer || navigateTimer) return; // already scheduled
     preFadeTimer = setTimeout(function () {
       endFade.classList.add('active');
       navigateTimer = setTimeout(function () {
         window.location.href = HOME_URL;
       }, 750);
-    }, 2400);
+    }, delay || 2400);
   }
 
   function cancelReturnHome(){
@@ -1179,8 +1199,10 @@
     var atEnd = P >= (N - 0.015);
     if (atEnd){
       if (endWatchStart === null) endWatchStart = performance.now();
-      // small grace period so scrubbing quickly past the end doesn't trigger it
-      if (performance.now() - endWatchStart > 400) scheduleReturnHome();
+      // small grace period so scrubbing quickly past the end doesn't trigger it.
+      // Landing straight on the finished pose gets a longer look before the
+      // auto-return kicks in than finishing a full watch-through does.
+      if (performance.now() - endWatchStart > 400) scheduleReturnHome(landedAtEnd ? 5000 : 2400);
     } else {
       endWatchStart = null;
       cancelReturnHome();
