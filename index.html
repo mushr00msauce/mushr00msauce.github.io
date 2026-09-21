@@ -399,6 +399,9 @@
   /* ---------- three.js setup ---------- */
   var renderer = new THREE.WebGLRenderer({ canvas:canvas, antialias:true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
+  renderer.outputEncoding = THREE.sRGBEncoding;
 
   var scene = new THREE.Scene();
   scene.background = new THREE.Color(0x060810);
@@ -418,15 +421,30 @@
   glowPoint.position.set(0, 1.6, 2.4);
   scene.add(glowPoint);
 
+  // camPresets below are framed for a wide (~1.6:1) view. On a narrow phone
+  // screen that same vertical FOV crops the sides badly, so widen the FOV on
+  // narrow aspects to keep the same effective horizontal field of view.
+  var BASE_FOV = 38;
+  var REF_ASPECT = 1.6;
   function resize(){
     var w = window.innerWidth, h = window.innerHeight;
     renderer.setSize(w, h, false);
-    camera.aspect = w / h;
+    var aspect = w / h;
+    camera.aspect = aspect;
+    if (aspect < REF_ASPECT){
+      var baseHalfV = (BASE_FOV * Math.PI / 180) / 2;
+      var horizTan = Math.tan(baseHalfV) * REF_ASPECT;
+      var newHalfV = Math.atan(horizTan / aspect);
+      camera.fov = Math.min(newHalfV * 2 * 180 / Math.PI, 92);
+    } else {
+      camera.fov = BASE_FOV;
+    }
     camera.updateProjectionMatrix();
   }
   window.addEventListener('resize', resize);
 
   /* ---------- build the cage from the real, per-part STLs ---------- */
+  var TARGET_SPAN = 2.6; // the model's longest original dimension is rescaled to this, in scene units
   var cage = new THREE.Group();
   scene.add(cage);
 
@@ -490,8 +508,7 @@
         (gmin[2] + gmax[2]) / 2
       ];
       var span = Math.max(gmax[0]-gmin[0], gmax[1]-gmin[1], gmax[2]-gmin[2]) || 1;
-      var targetSpan = 2.6;
-      var scale = targetSpan / span;
+      var scale = TARGET_SPAN / span;
 
       var loaded = 0;
       PART_NAMES.forEach(function (name) {
@@ -706,8 +723,9 @@
     var bottomSettle = easeOutCubic(bottomAppear);
 
     // beat 5: "Apryl Mode" — the bottom plate pulls part-way out on the same
-    // dovetail rail to show it's removable, then slides home again
-    var popWindow = clamp01((P - 5.05) / 0.9);
+    // dovetail rail to show it's removable, then slides home again. Compressed
+    // into the front of the beat so the tail is free for the upright finale.
+    var popWindow = clamp01((P - 5.05) / 0.55);
     var popT = Math.sin(Math.min(popWindow, 1) * Math.PI);
 
     if (meshes.bottom){
@@ -721,10 +739,10 @@
     }
 
     // snap-latch flash: once when the bottom plate first lands, and again
-    // when it clicks back home at the end of the Apryl Mode demo
+    // when it clicks back home at the end of the (now-compressed) Apryl Mode demo
     var snapPulse = Math.max(
       Math.max(0, 1 - Math.abs(P - 1.62) / 0.16),
-      Math.max(0, 1 - Math.abs(P - 5.9) / 0.16)
+      Math.max(0, 1 - Math.abs(P - 5.62) / 0.16)
     );
     snapLight.intensity = snapPulse * 1.8;
 
@@ -755,6 +773,23 @@
     // a still, square-on orientation before the Apryl Mode demo needs to read clearly
     var spinAmt = clamp01((P - 4.0) / 1.0) * (1 - clamp01((P - 4.85) / 0.35));
     cage.rotation.y = spinAmt * globalClock * 0.055;
+
+    // finale: once the bottom plate has clicked back home, tip the whole cage
+    // up onto its end so it finishes standing upright on the pedestal, branded
+    // face toward camera. TARGET_SPAN/2 is the exact half-extent of the axis
+    // that becomes vertical, so the lift lands the new "bottom" exactly on the disc.
+    var uprightAmt = easeInOutCubic(clamp01((P - 5.65) / 0.32));
+    cage.rotation.x = uprightAmt * (Math.PI / 2);
+    cage.position.y = lerp(0, discY + TARGET_SPAN / 2, uprightAmt);
+
+    // ease the camera up and in toward a "standing hero" framing as it tips
+    if (beatIndex === N - 1 && uprightAmt > 0.001){
+      var uprightLook = new THREE.Vector3(0, 0.58, 0);
+      var uprightPos = new THREE.Vector3(2.6, 1.1, 4.4);
+      camera.position.lerp(uprightPos, uprightAmt);
+      lookAt.lerp(uprightLook, uprightAmt);
+      camera.lookAt(lookAt);
+    }
   }
 
   /* ---------- UI sync ---------- */
@@ -808,7 +843,10 @@
   function beatScrollY(idx){
     var doc = document.documentElement;
     var total = doc.scrollHeight - window.innerHeight;
-    return (idx / (N-1)) * total;
+    // the last dot scrolls all the way to the bottom so the finale (which
+    // lives in the tail of the last beat's P range) is reachable by click too
+    if (idx >= N - 1) return total;
+    return (idx / N) * total;
   }
 
   function goToBeat(idx){
@@ -834,7 +872,7 @@
     var total = doc.scrollHeight - window.innerHeight;
     if (total <= 0) return 0;
     var frac = clamp01(window.scrollY / total);
-    return frac * (N - 1);
+    return frac * N;
   }
 
   window.addEventListener('scroll', function(){
@@ -1051,8 +1089,19 @@
   /* ---------- render loop ---------- */
   var clock = new THREE.Clock();
 
+  // if the tab is backgrounded (app switch, screen lock) and comes back,
+  // discard the stale gap instead of either jumping ahead or crawling
+  // through it a clamped frame at a time.
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) clock.getDelta();
+  });
+
   function tick(){
-    var dt = Math.min(clock.getDelta(), 0.05);
+    // allow a genuine slow frame (a dropped-frame stutter) to still count
+    // close to its real duration, so the timeline doesn't fall into
+    // slow motion under a temporary low frame rate — but still cap it
+    // well short of a multi-second background gap.
+    var dt = Math.min(clock.getDelta(), 0.12);
     globalClock += dt;
 
     var P;
