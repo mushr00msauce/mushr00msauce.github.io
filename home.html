@@ -1549,7 +1549,17 @@
     var ALT2MAIN = { "aprylactuallyanonymous":"aprylanonymous", "marcafterbark":"barktok" };
     var embedded = {};
 
+    // Anyone live on Twitch right now. If someone is live on BOTH Twitch and
+    // Kick (e.g. jetlagjacko), Twitch wins and the Kick entry is skipped; if
+    // they're only on Kick, the Kick entry gets the chip badge + a Kick player.
+    var onTwitch = {};
     live.forEach(function(s){
+      if (s.platform !== "kick") onTwitch[ALT2MAIN[s.login] || s.login] = 1;
+    });
+
+    live.forEach(function(s){
+      var isKick = s.platform === "kick";
+      if (isKick && onTwitch[ALT2MAIN[s.login] || s.login]) return;
       // "I'm live" banner for the builder himself
       if (s.login === "mushr00msauce") {
         self.textContent = "\uD83D\uDD34 I\u2019m LIVE right now \u2014 " + s.title + " \u2192";
@@ -1579,7 +1589,7 @@
       var chip = grid.querySelector('[data-login="' + primary + '"]');
       if (chip && !chip.querySelector(".mbxlive-badge")) {
         // link to whichever channel is actually live (main or alt)
-        chip.href = "https://twitch.tv/" + s.login;
+        chip.href = (isKick ? "https://kick.com/" : "https://twitch.tv/") + s.login;
         var b = document.createElement("span");
         b.className = "mbxlive-badge";
         b.textContent = "LIVE";
@@ -1595,11 +1605,13 @@
         var tile = document.createElement("div");
         tile.className = "mbxlive-tile";
         var f = document.createElement("iframe");
-        f.src = "https://player.twitch.tv/?channel=" + encodeURIComponent(s.login)
-              + "&parent=" + PARENT + "&muted=true&autoplay=true";
+        f.src = isKick
+          ? "https://player.kick.com/" + encodeURIComponent(s.login) + "?muted=true&autoplay=true"
+          : "https://player.twitch.tv/?channel=" + encodeURIComponent(s.login)
+            + "&parent=" + PARENT + "&muted=true&autoplay=true";
         f.allowFullscreen = true;
         f.loading = "lazy";
-        f.title = s.name + " live on Twitch";
+        f.title = s.name + (isKick ? " live on Kick" : " live on Twitch");
         tile.appendChild(f);
         var cap = document.createElement("div");
         cap.className = "mbxlive-cap";
@@ -1607,7 +1619,7 @@
         var bold = document.createElement("b");
         bold.textContent = s.name;
         left.appendChild(bold);
-        left.appendChild(document.createTextNode(" \u00B7 " + (s.game || "IRL")));
+        left.appendChild(document.createTextNode(" \u00B7 " + (s.game || "IRL") + (isKick ? " \u00B7 on Kick" : "")));
         var right = document.createElement("span");
         right.textContent = s.viewers + " watching";
         cap.appendChild(left);
