@@ -369,6 +369,63 @@
   html.embed .drawer-tab,
   html.embed .leaflet-control-zoom{display:none!important}
   html.embed .leaflet-control-attribution{font-size:8px;opacity:.5;padding:0 3px}
+
+  /* LOADING OVERLAY — covers the page on first visit so people know the
+     map is still pulling in the family (live status, pins, stats) instead
+     of thinking it's just an empty dark map. Dismissed by load()'s first
+     result (success OR failure), with a min show time so it doesn't
+     flicker and a hard timeout so it can never get stuck. */
+  .mbx-loader{
+    position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at center, rgba(10,21,53,.96) 0%, rgba(6,8,16,.985) 70%);
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+    transition:opacity .55s ease, visibility .55s ease;
+  }
+  .mbx-loader.done{opacity:0;visibility:hidden;pointer-events:none}
+  html.embed .mbx-loader{display:none!important}
+  .mbx-loader-inner{display:flex;flex-direction:column;align-items:center;gap:22px;padding:0 24px;text-align:center}
+  .mbx-radar{position:relative;width:168px;height:168px;border-radius:50%;
+    background:
+      radial-gradient(circle, transparent 0 32%, rgba(77,184,255,.18) 32.5% 33%, transparent 33.5% 65%, rgba(77,184,255,.18) 65.5% 66%, transparent 66.5%),
+      radial-gradient(circle, rgba(30,111,255,.10), rgba(6,8,16,0) 70%);
+    border:1px solid rgba(77,184,255,.35);
+    box-shadow:0 0 40px -6px rgba(30,111,255,.45), inset 0 0 30px rgba(30,111,255,.15);
+    overflow:hidden;
+  }
+  .mbx-radar::before{ /* crosshair */
+    content:"";position:absolute;inset:0;
+    background:
+      linear-gradient(rgba(77,184,255,.14),rgba(77,184,255,.14)) center/1px 100% no-repeat,
+      linear-gradient(rgba(77,184,255,.14),rgba(77,184,255,.14)) center/100% 1px no-repeat;
+  }
+  .mbx-radar-sweep{position:absolute;inset:0;border-radius:50%;
+    background:conic-gradient(from 0deg, rgba(77,184,255,0) 0deg, rgba(77,184,255,0) 280deg, rgba(77,184,255,.55) 358deg, rgba(77,184,255,.9) 360deg);
+    animation:mbxSweep 2.2s linear infinite;
+  }
+  .mbx-radar-logo{position:absolute;top:50%;left:50%;width:58px;height:auto;transform:translate(-50%,-50%);
+    filter:drop-shadow(0 2px 8px rgba(0,0,0,.6));z-index:2;animation:mbxPulse 2.2s ease-in-out infinite}
+  .mbx-blip{position:absolute;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;opacity:0;
+    animation:mbxBlip 2.2s ease-out infinite}
+  .mbx-blip.b1{top:26%;left:68%;background:var(--twitch);box-shadow:0 0 10px var(--twitch);animation-delay:.25s}
+  .mbx-blip.b2{top:70%;left:74%;background:var(--kick);box-shadow:0 0 10px var(--kick);animation-delay:.75s}
+  .mbx-blip.b3{top:76%;left:30%;background:var(--amber);box-shadow:0 0 10px var(--amber);animation-delay:1.25s}
+  .mbx-blip.b4{top:30%;left:24%;background:var(--sky);box-shadow:0 0 10px var(--sky);animation-delay:1.75s}
+  .mbx-loader-title{font-family:"Orbitron",var(--font);font-weight:900;font-size:17px;letter-spacing:.22em;
+    text-transform:uppercase;color:#fff;margin:0}
+  .mbx-loader-title span{color:var(--sky)}
+  .mbx-loader-status{font-family:"Rajdhani",var(--font);font-weight:600;font-size:16px;letter-spacing:.06em;
+    color:#9fb7e0;min-height:1.3em;margin:-12px 0 0;transition:opacity .25s ease}
+  .mbx-loader-bar{width:min(240px,70vw);height:3px;border-radius:3px;background:rgba(77,184,255,.15);overflow:hidden}
+  .mbx-loader-bar i{display:block;height:100%;width:40%;border-radius:3px;
+    background:linear-gradient(90deg,var(--royal),var(--sky));animation:mbxBar 1.4s ease-in-out infinite}
+  @keyframes mbxSweep{to{transform:rotate(360deg)}}
+  @keyframes mbxPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.06)}}
+  @keyframes mbxBlip{0%{opacity:0;transform:scale(.4)}10%{opacity:1;transform:scale(1.25)}60%{opacity:.6;transform:scale(1)}100%{opacity:0;transform:scale(.8)}}
+  @keyframes mbxBar{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+  @media (prefers-reduced-motion: reduce){
+    .mbx-radar-sweep,.mbx-radar-logo,.mbx-blip,.mbx-loader-bar i{animation:none}
+    .mbx-blip{opacity:.8}
+  }
 </style>
 <link rel="stylesheet" href="/assets/css/site-background.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -377,6 +434,51 @@
 <link rel="stylesheet" href="/assets/css/site-theme.css">
 </head>
 <body>
+<div class="mbx-loader" id="mbxLoader" role="status" aria-live="polite">
+  <div class="mbx-loader-inner">
+    <div class="mbx-radar" aria-hidden="true">
+      <div class="mbx-radar-sweep"></div>
+      <span class="mbx-blip b1"></span><span class="mbx-blip b2"></span>
+      <span class="mbx-blip b3"></span><span class="mbx-blip b4"></span>
+      <img class="mbx-radar-logo" src="/assets/img/mushbox-logo.png" alt="">
+    </div>
+    <p class="mbx-loader-title">Mushbox <span>Live Map</span></p>
+    <p class="mbx-loader-status" id="mbxLoaderStatus">Scanning for the Mushbox family…</p>
+    <div class="mbx-loader-bar" aria-hidden="true"><i></i></div>
+  </div>
+</div>
+<script>
+/* Loader controller — runs immediately so the overlay is live before the
+   map script starts. Skipped entirely in embed (homepage thumbnail) mode. */
+(function(){
+  var el = document.getElementById('mbxLoader');
+  if(/[?&]embed=1(?:&|$)/.test(location.search)){ el.parentNode.removeChild(el); window.mbxHideLoader = function(){}; return; }
+  var status = document.getElementById('mbxLoaderStatus');
+  var msgs = [
+    'Scanning for the Mushbox family…',
+    'Checking who’s live on Twitch & Kick…',
+    'Pinging Mushboxes in the field…',
+    'Plotting home bases…',
+    'Almost there…'
+  ];
+  var i = 0, started = Date.now(), MIN_MS = 1200, MAX_MS = 12000, hidden = false;
+  var rot = setInterval(function(){
+    if(i >= msgs.length - 1) return;
+    status.style.opacity = 0;
+    setTimeout(function(){ status.textContent = msgs[++i]; status.style.opacity = 1; }, 250);
+  }, 1600);
+  window.mbxHideLoader = function(){
+    if(hidden) return; hidden = true;
+    var wait = Math.max(0, MIN_MS - (Date.now() - started));
+    setTimeout(function(){
+      clearInterval(rot);
+      el.classList.add('done');
+      setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 700);
+    }, wait);
+  };
+  setTimeout(window.mbxHideLoader, MAX_MS); // never get stuck
+})();
+</script>
 <header class="mbx-site-header">
   <div class="mbx-site-header-inner">
     <a class="mbx-brand" href="/home.html" aria-label="Mushbox home">
@@ -1471,7 +1573,9 @@
     fetch(WORKER, { cache:'no-store' })
       .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
       .then(function(data){ lastLiveArr = parseLive(data); render(lastLiveArr); })
+      .then(function(){ if(window.mbxHideLoader) window.mbxHideLoader(); })
       .catch(function(err){
+        if(window.mbxHideLoader) window.mbxHideLoader();
         console.error('[mushbox-map] fetch failed:', err);
         document.getElementById('liveList').innerHTML =
           '<div class="empty">Couldn\u2019t reach the live-status service.<br>It\u2019ll retry automatically.</div>';
