@@ -9,9 +9,13 @@
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
   }
-  var here = location.pathname.split('/').pop() || 'home.html';
+  // "/" and "/index.html" are both the home page.
+  function page(p){
+    p = (p || '').split('#')[0].split('?')[0].split('/').pop();
+    return (p === '' || p === 'index.html') ? 'index.html' : p;
+  }
+  var here = page(location.pathname);
   header.querySelectorAll('.mbx-site-nav a').forEach(function(a){
-    var href = a.getAttribute('href').split('/').pop();
-    if(href === here) a.classList.add('is-current');
+    if(page(a.getAttribute('href')) === here) a.classList.add('is-current');
   });
 })();
