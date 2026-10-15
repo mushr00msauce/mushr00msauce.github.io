@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mushbox Print Cam</title>
+<meta name="description" content="Watch Mushbox parts printing live on the Bambu P2S.">
+<meta property="og:title" content="Mushbox Print Cam">
+<meta property="og:description" content="Watch Mushbox parts come off the print bed live.">
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; min-height: 100vh; background: #14110f; color: #f3ece4;
+         font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 28px 16px 48px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
+  header a { color: #f5a524; text-decoration: none; font-weight: 600; }
+  header a:hover { text-decoration: underline; }
+  h1 { font-size: clamp(1.5rem, 4vw, 2.2rem); margin: 0 0 6px; }
+  .lede { color: #a89c90; margin: 0 0 22px; line-height: 1.5; }
+  footer { margin-top: 26px; color: #a89c90; font-size: .85rem; text-align: center; }
+  footer a { color: #f5a524; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a href="/home.html">← themushbox.com</a>
+      <a href="https://www.twitch.tv/mushr00msauce" target="_blank" rel="noopener">twitch.tv/mushr00msauce</a>
+    </header>
+    <h1>Mushbox Print Cam</h1>
+    <p class="lede">Every Mushbox case and mount is printed in-house. When the printer is running, you're watching real parts for real streamers come off the bed.</p>
+
+    <div id="mushbox-printcam"></div>
+
+    <footer>Frames refresh every couple of seconds while a print is running.</footer>
+  </div>
+  <script src="/printcam-widget.js" defer></script>
+</body>
+</html>
