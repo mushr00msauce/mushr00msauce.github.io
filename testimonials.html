@@ -469,7 +469,16 @@
     ]
   };
 
+  // ORDER: oldest at top, newest at the BOTTOM. Add new clips to the end.
+  // The page renders this reversed, so the newest clip shows first.
   const TESTIMONIALS = [
+    {
+      name: "Chefmaki",
+      handle: "chefmaki",
+      video: "assets/videos/chefmakiso.mp4",
+      poster: "assets/videos/chefmakiso.jpg",
+      quote: ""
+    },
     {
       name: "Aprylanonymous",
       handle: "aprylanonymous",
@@ -579,13 +588,6 @@
       quote: ""
     },
     {
-      name: "Chefmaki",
-      handle: "chefmaki",
-      video: "assets/videos/chefmakiso.mp4",
-      poster: "assets/videos/chefmakiso.jpg",
-      quote: ""
-    },
-    {
       name: "JayneRio",
       handle: "jaynerio",
       video: "assets/videos/JayneRioScans.mp4",
@@ -618,7 +620,7 @@
     return '<span class="bars" aria-hidden="true"><span></span><span></span><span></span><span></span></span>';
   }
 
-  TESTIMONIALS.forEach(t => {
+  TESTIMONIALS.slice().reverse().forEach(t => {
     const card = document.createElement("article");
     card.className = "card reveal";
 
