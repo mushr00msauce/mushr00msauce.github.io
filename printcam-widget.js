@@ -2,7 +2,7 @@
    Usage:  <div id="mushbox-printcam"></div>
            <script src="/printcam-widget.js" defer></script>
    Add data-hide-when-idle to the div to hide it entirely unless a print is running
-   (good for home.html). Without it, it shows an idle/offline card (printcam.html). */
+   (used on index.html). Wrap it in an element with data-printcam-wrap to hide a label too. Without it, it shows an idle/offline card (printcam.html). */
 (function () {
   'use strict';
   var API = 'https://printcam.themushbox.com';
@@ -12,8 +12,8 @@
   var hideIdle = root.hasAttribute('data-hide-when-idle');
 
   var css = '' +
-    '.mpc{--mpc-bg:#14110f;--mpc-card:#1e1a17;--mpc-line:#2e2823;--mpc-text:#f3ece4;--mpc-dim:#a89c90;' +
-    '--mpc-amber:#f5a524;--mpc-live:#e5484d;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;' +
+    '.mpc{--mpc-bg:#060D24;--mpc-card:#0E1B42;--mpc-line:#1B2C5E;--mpc-text:#D7E3FF;--mpc-dim:#8FA3CC;' +
+    '--mpc-amber:#4DB8FF;--mpc-live:#ff3b4e;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;' +
     'color:var(--mpc-text);background:var(--mpc-card);border:1px solid var(--mpc-line);border-radius:16px;' +
     'overflow:hidden;max-width:960px;margin:0 auto}' +
     '.mpc-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--mpc-line)}' +
@@ -23,7 +23,7 @@
     '.mpc-badge i{width:8px;height:8px;border-radius:50%;background:currentColor;display:block}' +
     '.mpc[data-s=live] .mpc-badge{background:rgba(229,72,77,.15);color:var(--mpc-live)}' +
     '.mpc[data-s=live] .mpc-badge i{animation:mpcPulse 1.4s ease-in-out infinite}' +
-    '.mpc[data-s=paused] .mpc-badge{background:rgba(245,165,36,.15);color:var(--mpc-amber)}' +
+    '.mpc[data-s=paused] .mpc-badge{background:rgba(245,165,36,.15);color:#f5a524}' +
     '@keyframes mpcPulse{50%{opacity:.25}}' +
     '.mpc-view{position:relative;aspect-ratio:16/9;background:var(--mpc-bg);display:flex;align-items:center;justify-content:center}' +
     '.mpc-view img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none}' +
@@ -34,7 +34,7 @@
     '.mpc-info{padding:14px 18px 18px}' +
     '.mpc-job{font-weight:600;margin:0 0 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
     '.mpc-bar{height:8px;border-radius:999px;background:var(--mpc-line);overflow:hidden}' +
-    '.mpc-bar span{display:block;height:100%;width:0;background:var(--mpc-amber);transition:width .8s ease}' +
+    '.mpc-bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,#1E6FFF,#4DB8FF);transition:width .8s ease}' +
     '.mpc-stats{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:.88rem;color:var(--mpc-dim)}' +
     '.mpc-stats strong{color:var(--mpc-text);font-variant-numeric:tabular-nums}' +
     '.mpc[data-s=idle] .mpc-info,.mpc[data-s=offline] .mpc-info{display:none}';
@@ -64,6 +64,8 @@
       stats = root.querySelector('.mpc-stats');
 
   var current = null, frameTimer = null, loading = false;
+  var wrap = root.closest('[data-printcam-wrap]') || root;
+  function setHidden(h) { wrap.hidden = h; }
 
   function fmtMin(m) {
     if (m == null) return '—';
@@ -74,7 +76,7 @@
 
   function setMode(mode, s) {
     box.setAttribute('data-s', mode);
-    root.hidden = hideIdle && (mode === 'idle' || mode === 'offline');
+    setHidden(hideIdle && (mode === 'idle' || mode === 'offline'));
     if (mode === 'live' || mode === 'paused') {
       badge.textContent = mode === 'paused' ? 'Paused' : (s.state === 'PREPARE' ? 'Warming up' : 'Live');
       job.textContent = cleanJob(s.job);
@@ -129,7 +131,7 @@
 
   document.addEventListener('visibilitychange', function () { if (!document.hidden) { poll(); } });
   setMode('idle', {});
-  root.hidden = hideIdle;
+  setHidden(hideIdle);
   poll();
   setInterval(poll, STATUS_MS);
 })();
