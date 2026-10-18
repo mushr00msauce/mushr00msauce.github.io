@@ -373,6 +373,7 @@
   }
 </style>
 <link rel="stylesheet" href="/assets/css/site-background.css">
+<script src="/family.js"></script>
 </head>
 <body>
 <div class="card-col">
@@ -387,6 +388,44 @@
     <span></span><span></span><span></span>
     <em>Bonded &amp; broadcasting</em>
   </div>
+
+  <!-- ===== On the bench: family members whose Mushbox is coming (from /family.js) ===== -->
+  <style>
+    .mbxbench{display:flex;flex-direction:column;align-items:center;gap:7px;margin:4px auto 2px;max-width:640px;width:100%}
+    .mbxbench[hidden]{display:none}
+    .mbxbench-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 8px}
+    .mbxbench-lbl{flex-basis:100%;display:flex;justify-content:center;align-items:center;gap:5px;font-size:11px;font-weight:800;
+      letter-spacing:.14em;text-transform:uppercase;color:#ff8fca}
+    .mbxbench-lbl.ship{color:var(--sky)}
+    .mbxbench-lbl svg{width:16px;height:16px;vertical-align:-3px}
+    .mbxbench a{display:inline-flex;align-items:center;gap:6px;padding:4px 11px 4px 9px;border-radius:999px;
+      background:var(--card);border:1px solid rgba(255,95,180,.45);color:var(--text);
+      font-size:12.5px;font-weight:700;text-decoration:none;transition:transform .12s ease,border-color .12s ease}
+    .mbxbench a:hover{transform:translateY(-1px);border-color:#ff5fb4;color:var(--white)}
+    .mbxbench a.ship{border-color:rgba(77,184,255,.45)}
+    .mbxbench a.ship:hover{border-color:var(--sky)}
+    .mbxbench a i{width:7px;height:7px;border-radius:50%;background:#ff5fb4;box-shadow:0 0 7px rgba(255,95,180,.9)}
+    .mbxbench a.ship i{background:var(--sky);box-shadow:0 0 7px rgba(77,184,255,.9)}
+    @media (prefers-reduced-motion: reduce){ .mbxbench a{transition:none} .mbxbench a:hover{transform:none} }
+  </style>
+  <div class="mbxbench" id="mbxBench" hidden></div>
+  <script>
+  (function(){
+    var F = window.MUSHBOX_FAMILY, box = document.getElementById("mbxBench");
+    if (!F || !box) return;
+    function esc(t){ return String(t).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+    function row(list, label, cls){
+      if (!list.length) return "";
+      return '<div class="mbxbench-row"><span class="mbxbench-lbl ' + cls + '">' + label + '</span>' +
+        list.map(function(p){
+          return '<a class="' + cls + '" href="' + p.url + '" target="_blank" rel="noopener"><i></i>' + esc(p.name) + '</a>';
+        }).join("") + '</div>';
+    }
+    var html = row(F.byStage("bench"), "\uD83C\uDF44 On the bench \u00B7 coming soon", "bench") +
+               row(F.byStage("shipped"), "\uD83D\uDCE6 Just landed", "ship");
+    if (html) { box.innerHTML = html; box.hidden = false; }
+  })();
+  </script>
 
   <div class="badges">
   <a class="belabox" href="https://belabox.net/" target="_blank" rel="noopener"
@@ -731,7 +770,7 @@
     </div>
 
 
-    <span class="section-label centered">The Mushbox Family — 55 strong</span>
+    <span class="section-label centered" id="mbxfamLabel">The Mushbox Family</span>
 
     <style>
       .mbxfam-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:10px}
@@ -767,8 +806,8 @@
         font-size:11px;line-height:1;
       }
       /* Coming soon: family member whose Mushbox is still on the bench.
-         Pink dot + a tiny cartoon mushroom (still growing) + a COMING SOON tag. Delete the extra
-         class and the mushroom from their chip once the box ships. */
+         Pink dot + a tiny cartoon mushroom (still growing) + a COMING SOON tag.
+         Driven by stage: "bench" in /family.js. */
       .mbxfam-dot.mbxfam-soon{background:#ff5fb4;box-shadow:0 0 8px rgba(255,95,180,.85)}
       .mbxfam-shroom{display:inline-block;margin-left:1px;vertical-align:-3px;
         transform-origin:50% 100%;animation:mbxShroom 2.8s ease-in-out infinite}
@@ -780,6 +819,9 @@
         box-shadow:1.5px 1.5px 0 #1a1205;transform:rotate(-6deg);
         font-size:8px;font-weight:800;letter-spacing:.08em;line-height:1.3;text-transform:uppercase;
       }
+      /* Shipped: has the Mushbox, hasn't streamed on it yet. */
+      .mbxfam-dot.mbxfam-ship{background:var(--sky);box-shadow:0 0 8px rgba(77,184,255,.85)}
+      .mbxfam-box{font-size:12px;line-height:1;margin-left:-1px}
       .mbxfam-foot{margin-top:14px;color:var(--text-dim);font-size:13px;text-align:center}
       .mbxfam-foot a{color:var(--sky);text-decoration:none;font-weight:700}
       @media (prefers-reduced-motion: reduce){
@@ -827,63 +869,41 @@
     <a class="mbxself-banner" id="mbxself" href="https://twitch.tv/mushr00msauce" target="_blank" rel="noopener"></a>
     <div class="mbxlive-row" id="mbxlive"></div>
 
-    <div class="mbxfam-grid">
-      <a class="mbxfam-chip" data-login="afrazexplores" href="https://twitch.tv/afrazexplores" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>AfrazExplores</a>
-      <a class="mbxfam-chip" data-login="alldaynyc" href="https://twitch.tv/alldaynyc" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>AllDayNYC</a>
-      <a class="mbxfam-chip" data-login="aprylanonymous" href="https://twitch.tv/aprylanonymous" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Aprylanonymous</a>
-      <a class="mbxfam-chip" data-login="barktok" href="https://twitch.tv/barktok" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Barktok</a>
-      <a class="mbxfam-chip" data-login="bigbonelife" href="https://twitch.tv/bigbonelife" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Bigbonelife</a>
-      <a class="mbxfam-chip" data-login="chefmaki" href="https://twitch.tv/chefmaki" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Chefmaki</a>
-      <a class="mbxfam-chip" data-login="deepseahomer" href="https://twitch.tv/deepseahomer" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>DeepSeaHomer</a>
-      <a class="mbxfam-chip" data-login="dianathedoggroomer" href="https://twitch.tv/dianathedoggroomer" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>DianaTheDogGroomer</a>
-      <a class="mbxfam-chip" data-login="eatage" href="https://twitch.tv/eatage" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Eatage</a>
-      <a class="mbxfam-chip" data-login="edventureslive" href="https://twitch.tv/edventureslive" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>EdventuresLive</a>
-      <a class="mbxfam-chip" data-login="elgatopub" href="https://twitch.tv/elgatopub" target="_blank" rel="noopener" title="Mushbox coming soon &mdash; being built now"><span class="mbxfam-dot mbxfam-soon"></span>ElGatoPub<svg class="mbxfam-shroom" viewBox="0 0 26 26" width="16" height="16" aria-hidden="true"><path d="M9 14 Q8.4 21 9.6 23.5 L16.4 23.5 Q17.6 21 17 14 Z" fill="#fff1c9" stroke="#1a1205" stroke-width="1.6" stroke-linejoin="round"/><circle cx="11.6" cy="18.3" r=".9" fill="#1a1205"/><circle cx="14.4" cy="18.3" r=".9" fill="#1a1205"/><path d="M11.9 20.2 Q13 21.2 14.1 20.2" fill="none" stroke="#1a1205" stroke-width=".9" stroke-linecap="round"/><path d="M2.2 14.6 Q2 3 13 2.4 Q24 3 23.8 14.6 Q13 16.4 2.2 14.6 Z" fill="#ff5fb4" stroke="#1a1205" stroke-width="1.8" stroke-linejoin="round"/><ellipse cx="8" cy="8.6" rx="2.1" ry="1.7" fill="#fff"/><ellipse cx="15.6" cy="5.8" rx="1.7" ry="1.4" fill="#fff"/><ellipse cx="18.6" cy="11" rx="1.6" ry="1.3" fill="#fff"/><ellipse cx="12.2" cy="11.8" rx="1.1" ry=".9" fill="#fff"/></svg><span class="mbxfam-sign">Coming soon</span></a>
-      <a class="mbxfam-chip" data-login="emmdeefit" href="https://twitch.tv/emmdeefit" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>EmmDeeFit</a>
-      <a class="mbxfam-chip" data-login="falconelite" href="https://twitch.tv/falconelite" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>FalconElite</a>
-      <a class="mbxfam-chip" data-login="fi1es" href="https://twitch.tv/fi1es" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Fi1es</a>
-      <a class="mbxfam-chip" data-login="friskyalien" href="https://twitch.tv/friskyalien" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>FriskyAlien</a>
-      <a class="mbxfam-chip" data-login="gxufy" href="https://twitch.tv/gxufy" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Gxufy</a>
-      <a class="mbxfam-chip" data-login="hamandlizgaming" href="https://twitch.tv/hamandlizgaming" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Hamandlizgaming</a>
-      <a class="mbxfam-chip" data-login="jakestuds" href="https://twitch.tv/jakestuds" target="_blank" rel="noopener" title="Mushbox coming soon &mdash; being built now"><span class="mbxfam-dot mbxfam-soon"></span>JakeStuds<svg class="mbxfam-shroom" viewBox="0 0 26 26" width="16" height="16" aria-hidden="true"><path d="M9 14 Q8.4 21 9.6 23.5 L16.4 23.5 Q17.6 21 17 14 Z" fill="#fff1c9" stroke="#1a1205" stroke-width="1.6" stroke-linejoin="round"/><circle cx="11.6" cy="18.3" r=".9" fill="#1a1205"/><circle cx="14.4" cy="18.3" r=".9" fill="#1a1205"/><path d="M11.9 20.2 Q13 21.2 14.1 20.2" fill="none" stroke="#1a1205" stroke-width=".9" stroke-linecap="round"/><path d="M2.2 14.6 Q2 3 13 2.4 Q24 3 23.8 14.6 Q13 16.4 2.2 14.6 Z" fill="#ff5fb4" stroke="#1a1205" stroke-width="1.8" stroke-linejoin="round"/><ellipse cx="8" cy="8.6" rx="2.1" ry="1.7" fill="#fff"/><ellipse cx="15.6" cy="5.8" rx="1.7" ry="1.4" fill="#fff"/><ellipse cx="18.6" cy="11" rx="1.6" ry="1.3" fill="#fff"/><ellipse cx="12.2" cy="11.8" rx="1.1" ry=".9" fill="#fff"/></svg><span class="mbxfam-sign">Coming soon</span></a>
-      <a class="mbxfam-chip" data-login="jaynerio" href="https://twitch.tv/jaynerio" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>JayneRio</a>
-      <a class="mbxfam-chip" data-login="jdcharisma" href="https://twitch.tv/jdcharisma" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>JDCharisma</a>
-      <a class="mbxfam-chip" data-login="jetlagjacko" data-platform="kick" href="https://kick.com/jetlagjacko" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>JetLagJacko</a>
-      <a class="mbxfam-chip" data-login="jtengland" href="https://twitch.tv/jtengland" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>JTEngland</a>
-      <a class="mbxfam-chip" data-login="k9gizmo" href="https://twitch.tv/k9gizmo" target="_blank" rel="noopener" title="Phone Streamer &mdash; OBS + Noalbs, streams from a phone"><span class="mbxfam-dot mbxfam-phone" aria-hidden="true">📱</span>K9Gizmo</a>
-      <a class="mbxfam-chip" data-login="kardtrick" href="https://twitch.tv/kardtrick" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>KardTrick</a>
-      <a class="mbxfam-chip" data-login="kaseysnowart" href="https://twitch.tv/kaseysnowart" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>KaseySnowArt</a>
-      <a class="mbxfam-chip" data-login="katana1988" href="https://twitch.tv/katana1988" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Katana1988</a>
-      <a class="mbxfam-chip" data-login="kelleycakes" href="https://twitch.tv/kelleycakes" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>KelleyCakes</a>
-      <a class="mbxfam-chip" data-login="kozybean" href="https://twitch.tv/kozybean" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Kozybean</a>
-      <a class="mbxfam-chip" data-login="ldsylvr" href="https://twitch.tv/ldsylvr" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>LDSylvr</a>
-      <a class="mbxfam-chip" data-login="lyndainfj" href="https://twitch.tv/lyndainfj" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Lyndainfj</a>
-      <a class="mbxfam-chip" data-login="maestroharrell" href="https://twitch.tv/maestroharrell" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>MaestroHarrell</a>
-      <a class="mbxfam-chip" data-login="miekii" href="https://twitch.tv/miekii" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Miekii</a>
-      <a class="mbxfam-chip" data-login="mikefromny" href="https://twitch.tv/mikefromny" target="_blank" rel="noopener" title="Phone Streamer &mdash; OBS + Noalbs, streams from a phone"><span class="mbxfam-dot mbxfam-phone" aria-hidden="true">📱</span>MikeFromNY</a>
-      <a class="mbxfam-chip" data-login="missyalcazarmusic" href="https://twitch.tv/missyalcazarmusic" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>MissyAlcazarMusic</a>
-      <a class="mbxfam-chip" data-login="mocomade" href="https://twitch.tv/mocomade" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Mocomade</a>
-      <a class="mbxfam-chip" data-login="morjanga" href="https://twitch.tv/morjanga" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Morjanga</a>
-      <a class="mbxfam-chip" data-login="morwen_xo" href="https://twitch.tv/morwen_xo" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>MorwenXo</a>
-      <a class="mbxfam-chip" data-login="mrtelesir" href="https://twitch.tv/mrtelesir" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>MrTelesir</a>
-      <a class="mbxfam-chip" data-login="neverbeenhappiertv" href="https://twitch.tv/neverbeenhappiertv" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>NeverBeenHappierTV</a>
-      <a class="mbxfam-chip" data-login="optimuskale" href="https://twitch.tv/optimuskale" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>OptimusKale</a>
-      <a class="mbxfam-chip" data-login="papasmaxe" href="https://twitch.tv/papasmaxe" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>PapaSmaxe</a>
-      <a class="mbxfam-chip" data-login="poisonhearrt" href="https://twitch.tv/poisonhearrt" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>PoisonHearrt</a>
-      <a class="mbxfam-chip" data-login="redivivus" href="https://twitch.tv/redivivus" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Redivivus</a>
-      <a class="mbxfam-chip" data-login="refurbersteve" href="https://twitch.tv/refurbersteve" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>RefurberSteve</a>
-      <a class="mbxfam-chip" data-login="renz" href="https://twitch.tv/renz" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Renz</a>
-      <a class="mbxfam-chip" data-login="rustyrhymez" href="https://twitch.tv/rustyrhymez" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>RustyRhymez</a>
-      <a class="mbxfam-chip" data-login="sbmel" href="https://twitch.tv/sbmel" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>SBMel</a>
-      <a class="mbxfam-chip" data-login="sftortlife" href="https://twitch.tv/sftortlife" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>SFTortLife</a>
-      <a class="mbxfam-chip" data-login="shumba" href="https://twitch.tv/shumba" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Shumba</a>
-      <a class="mbxfam-chip" data-login="sneakybeagle" href="https://twitch.tv/sneakybeagle" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>SneakyBeagle</a>
-      <a class="mbxfam-chip" data-login="sweatypedals" href="https://twitch.tv/sweatypedals" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>SweatyPedals</a>
-      <a class="mbxfam-chip" data-login="ulumaika" href="https://twitch.tv/ulumaika" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>UluMaika</a>
-      <a class="mbxfam-chip" data-login="unclejpop" href="https://twitch.tv/unclejpop" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>UncleJPop</a>
-      <a class="mbxfam-chip" data-login="woodrowjenkins" href="https://twitch.tv/woodrowjenkins" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>WoodrowJenkins</a>
-      <a class="mbxfam-chip" data-login="xanthe" href="https://twitch.tv/xanthe" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Xanthe</a>
-    </div>
+    <div class="mbxfam-grid" id="mbxfamGrid"></div>
+    <script>
+    /* Family wall — built from /family.js. Edit the roster there, not here. */
+    (function(){
+      var F = window.MUSHBOX_FAMILY; if (!F) return;
+      var grid = document.getElementById("mbxfamGrid");
+      var SHROOM = '<svg class="mbxfam-shroom" viewBox="0 0 26 26" width="16" height="16" aria-hidden="true"><path d="M9 14 Q8.4 21 9.6 23.5 L16.4 23.5 Q17.6 21 17 14 Z" fill="#fff1c9" stroke="#1a1205" stroke-width="1.6" stroke-linejoin="round"/><circle cx="11.6" cy="18.3" r=".9" fill="#1a1205"/><circle cx="14.4" cy="18.3" r=".9" fill="#1a1205"/><path d="M11.9 20.2 Q13 21.2 14.1 20.2" fill="none" stroke="#1a1205" stroke-width=".9" stroke-linecap="round"/><path d="M2.2 14.6 Q2 3 13 2.4 Q24 3 23.8 14.6 Q13 16.4 2.2 14.6 Z" fill="#ff5fb4" stroke="#1a1205" stroke-width="1.8" stroke-linejoin="round"/><ellipse cx="8" cy="8.6" rx="2.1" ry="1.7" fill="#fff"/><ellipse cx="15.6" cy="5.8" rx="1.7" ry="1.4" fill="#fff"/><ellipse cx="18.6" cy="11" rx="1.6" ry="1.3" fill="#fff"/><ellipse cx="12.2" cy="11.8" rx="1.1" ry=".9" fill="#fff"/></svg>';
+      function esc(t){ return String(t).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+      F.members.slice().sort(function(a,b){ return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1; })
+       .forEach(function(p){
+        var a = document.createElement("a");
+        a.className = "mbxfam-chip";
+        a.setAttribute("data-login", p.login);
+        if (p.platform === "kick") a.setAttribute("data-platform", "kick");
+        a.href = p.url; a.target = "_blank"; a.rel = "noopener";
+        var dot = '<span class="mbxfam-dot"></span>', tail = "";
+        if (p.stage === "phone") {
+          a.title = "Phone Streamer \u2014 OBS + Noalbs, streams from a phone";
+          dot = '<span class="mbxfam-dot mbxfam-phone" aria-hidden="true">\uD83D\uDCF1</span>';
+        } else if (p.stage === "bench") {
+          a.title = "Mushbox coming soon \u2014 being built now";
+          dot = '<span class="mbxfam-dot mbxfam-soon"></span>';
+          tail = SHROOM + '<span class="mbxfam-sign">Coming soon</span>';
+        } else if (p.stage === "shipped") {
+          a.title = "Mushbox just landed \u2014 first stream coming up";
+          dot = '<span class="mbxfam-dot mbxfam-ship"></span>';
+          tail = '<span class="mbxfam-box" aria-label="just landed">\uD83D\uDCE6</span>';
+        }
+        a.innerHTML = dot + esc(p.name) + tail;
+        grid.appendChild(a);
+      });
+      var lbl = document.getElementById("mbxfamLabel");
+      if (lbl) lbl.textContent = "The Mushbox Family \u2014 " + F.counts.family + " strong";
+    })();
+    </script>
     <p class="mbxfam-foot">Want your name on this wall? <a href="https://twitch.tv/mushr00msauce" target="_blank" rel="noopener">Catch me live</a> and let&rsquo;s build yours. 🍄</p>
 
     <!-- ===== Live map teaser ===== -->
@@ -959,13 +979,18 @@
         </div>
         <div class="mbxmap-body">
           <span class="mbxmap-eyebrow">Live map</span>
-          <span class="mbxmap-title">52 Mushboxes,<br>one live map</span>
+          <span class="mbxmap-title"><span id="mbxMapCount">Mushboxes,</span><br>one live map</span>
           <span class="mbxmap-sub" id="mbxMapSub">See who&rsquo;s streaming right now &mdash; anywhere in the world.</span>
           <span class="mbxmap-cta">See who&rsquo;s live
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </span>
         </div>
       </a>
+      <script>
+        /* Mushbox count = shipped + active in /family.js */
+        (function(){ var F = window.MUSHBOX_FAMILY, el = document.getElementById("mbxMapCount");
+          if (F && el) el.textContent = F.counts.mushboxes + " Mushboxes,"; })();
+      </script>
 
       <script>
       (function(){
@@ -975,7 +1000,7 @@
             sub=document.getElementById('mbxMapSub');
         fetch(W,{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
           var arr=(d&&(d.live||d.channels||d.streams))||[];
-          var A={ "aprylactuallyanonymous":"aprylanonymous", "marcafterbark":"barktok" };
+          var A=(window.MUSHBOX_FAMILY && window.MUSHBOX_FAMILY.alt2main) || {};
           var seen={}, n=0;
           (Array.isArray(arr)?arr:[]).forEach(function(e){
             var lg=((e.login||e.name||'')+'').toLowerCase(); var p=A[lg]||lg;
@@ -1579,7 +1604,7 @@
     var embeds = 0;
 
     // alt/second channels map to the same person (keep chips + count deduped)
-    var ALT2MAIN = { "aprylactuallyanonymous":"aprylanonymous", "marcafterbark":"barktok" };
+    var ALT2MAIN = (window.MUSHBOX_FAMILY && window.MUSHBOX_FAMILY.alt2main) || {};
     var embedded = {};
 
     // Anyone live on Twitch right now. If someone is live on BOTH Twitch and
@@ -1677,7 +1702,7 @@
       seenFam[p] = 1; famLive++;
     });
     if (label && famLive > 0) {
-      label.textContent = "The Mushbox Family \u2014 55 strong \u00B7 " + famLive + " live now";
+      label.textContent = "The Mushbox Family \u2014 " + (window.MUSHBOX_FAMILY ? window.MUSHBOX_FAMILY.counts.family : 55) + " strong \u00B7 " + famLive + " live now";
     }
   }).catch(function(){ /* worker unreachable: page works fine without it */ });
 

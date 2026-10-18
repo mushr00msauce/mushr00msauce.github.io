@@ -156,6 +156,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/css/site-theme.css">
+<script src="/family.js"></script>
 </head>
 <body>
 <header class="mbx-site-header">
@@ -280,53 +281,19 @@
         <select id="referrer" name="Referred by" required>
           <option value="">Select one…</option>
           <option>Nobody — found it myself</option>
-          <option>AfrazExplores</option>
-          <option>AllDayNYC</option>
-          <option>Aprylanonymous</option>
-          <option>Barktok</option>
-          <option>Bigbonelife</option>
-          <option>Chefmaki</option>
-          <option>DianaTheDogGroomer</option>
-          <option>Eatage</option>
-          <option>Edventures</option>
-          <option>ElGatoPub</option>
-          <option>EmmDeeFit</option>
-          <option>FalconElite</option>
-          <option>Fi1es</option>
-          <option>friskyalien</option>
-          <option>Hamandlizgaming</option>
-          <option>JakeStuds</option>
-          <option>JayneRio</option>
-          <option>JDCharisma</option>
-          <option>jtengland</option>
-          <option>KardTrick</option>
-          <option>Katana1988</option>
-          <option>KelleyCakes</option>
-          <option>Kozybean</option>
-          <option>LDSylvr</option>
-          <option>Miekii</option>
-          <option>MissyAlcazarMusic</option>
-          <option>mocomade</option>
-          <option>Morjanga</option>
-          <option>MorwenXo</option>
-          <option>MrTelesir</option>
-          <option>NeverbeenHappiertTV</option>
-          <option>OptimusKale</option>
-          <option>PapaSmaxe</option>
-          <option>potentialbliss</option>
-          <option>redivivus</option>
-          <option>RefurberSteve</option>
-          <option>Renz</option>
-          <option>SBMel</option>
-          <option>SFTortLife</option>
-          <option>Shumba</option>
-          <option>SneakyBeagle</option>
-          <option>tikitacotony</option>
-          <option>UluMaika</option>
-          <option>UncleJPop</option>
-          <option>WoodrowJenkins</option>
           <option value="Other">Other (not listed)</option>
         </select>
+        <script>
+        /* Family names come from /family.js (plus its extraReferrers). */
+        (function(){
+          var F = window.MUSHBOX_FAMILY; if (!F) return;
+          var sel = document.getElementById("referrer");
+          var other = sel.querySelector('option[value="Other"]');
+          var names = F.members.map(function(p){ return p.name; }).concat(F.extraReferrers || []);
+          names.sort(function(a,b){ return a.toLowerCase() < b.toLowerCase() ? -1 : 1; })
+               .forEach(function(n){ var o = document.createElement("option"); o.textContent = n; sel.insertBefore(o, other); });
+        })();
+        </script>
         <input type="text" id="referrerOther" name="Referred by (other)" placeholder="Their name or handle" style="display:none;margin-top:8px">
       </div>
 

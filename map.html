@@ -264,6 +264,14 @@
     border:1.3px solid #1a1205;border-top:none}
   @keyframes soonBob{0%,100%{transform:rotate(-6deg) scaleY(1)}50%{transform:rotate(5deg) scaleY(1.06)}}
   @media (prefers-reduced-motion: reduce){ .soon-shroom{animation:none} }
+  /* SHIPPED: has the Mushbox, hasn't streamed on it yet — a little 📦 on the dot */
+  .ship-hit{position:relative;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .ship-dot{width:10px;height:10px;border-radius:50%;background:var(--sky);border:1.5px solid #fff;
+    box-shadow:0 0 0 1.5px #0b1430,0 0 9px rgba(77,184,255,.85)}
+  .ship-box{position:absolute;left:11px;bottom:10px;font-size:13px;line-height:1;pointer-events:none;
+    filter:drop-shadow(1px 1px 0 rgba(10,8,16,.85))}
+  .legend .lg-ship{background:var(--sky);box-shadow:0 0 8px var(--sky)}
+  .offtip .ost.ship{color:var(--sky)}
   .legend .lg-soon{background:var(--soon);box-shadow:0 0 8px var(--soon)}
   .offtip .ost.soon{color:var(--soon)}
   .offtip .ava.soon{border-color:var(--soon)}
@@ -557,6 +565,7 @@
     <span><i class="lg-amber"></i>Mushbox Online</span>
     <span><i class="lg-off"></i>Offline</span>
     <span><i class="lg-soon"></i>Coming soon</span>
+    <span><i class="lg-ship"></i>📦 Just landed</span>
     <span class="lg-pin">📍 from stream title</span>
     <span class="lg-pin">🏆 75+ viewers · Partner Watch</span>
   </div>
@@ -570,6 +579,7 @@
 
 <div class="partnerwatch" id="partnerWatch"></div>
 
+<script src="/family.js"></script>
 <script>
 (function(){
   "use strict";
@@ -581,113 +591,24 @@
   if(EMBED){ document.documentElement.classList.add('embed'); }
 
   /* =====================================================================
-     LOCATIONS  —  each family member's HOME BASE.  ← EDIT THIS TABLE.
-
-     One person per line, in this shape:
-
-         "twitchlogin": "City, ST",
-
-     • KEY  = their exact lowercase Twitch login (must match, or they show a
-              dot but won't light up when live).
-     • VALUE = a city name in quotes — "Nashville", "Austin, TX", "London".
-              No coordinates needed; the map looks them up from its city list.
-              For a place the list doesn't know, use exact coordinates instead:
-                  "twitchlogin": [39.7684, -86.1581, "Small Town, IN"]
-              (In Google Maps, right-click the spot → click the lat, lng to copy.)
-
-     • ADD a person: add a new line.   MOVE: change the value.   REMOVE: delete the line.
-     • COMMAS: end every line with a comma. (A comma on the last line is fine too,
-              so you never have to worry about it.)
+     FAMILY ROSTER  —  lives in /family.js (one file for the whole site).
+     Home bases, stages (bench / shipped / active / phone), Kick channels
+     and alt channels all come from there. Edit family.js, not this page.
 
      A person also appears automatically wherever they name a place in their
      live TITLE (see PLACES below) — that overrides the home base for that stream.
      ===================================================================== */
-  var LOCATIONS = {
-    "afrazexplores":       "New York, NY",
-    "alldaynyc":           "New York, NY",
-    "aprylanonymous":      "New York, NY",
-    "barktok":             "Los Angeles, CA",
-    "bigbonelife":         "Florida",
-    "chefmaki":            "New York, NY",
-    "deepseahomer":        "California",
-    "dianathedoggroomer":  "Virginia",
-    "eatage":              "Iowa",
-    "edventureslive":      "Connecticut",
-    "elgatopub":           "New York, NY",
-    "emmdeefit":           "Pennsylvania",
-    "falconelite":         "Texas",
-    "fi1es":               "New Jersey",
-    "friskyalien":         "Colorado",
-    "gxufy":               "New York, NY",
-    "hamandlizgaming":     "Fort Wayne, IN",
-    "jaynerio":            "Dallas, Texas",
-    "jakestuds":           "UK",
-    "jdcharisma":          "San Jose, California",
-    "jetlagjacko":         "Bangkok",
-    "jtengland":           "San Diego, CA",
-    "k9gizmo":             [38.5495, -86.6178, "French Lick, IN"],
-    "kardtrick":           "Kentucky",
-    "kaseysnowart":        "Colorado",
-    "katana1988":          "Missouri",
-    "kelleycakes":         "Kentucky",
-    "kozybean":            "Wyoming",
-    "ldsylvr":             "Texas",
-    "lyndainfj":           "Delaware",
-    "maestroharrell":      "California",
-    "miekii":              "New York",
-    "mikefromny":          [40.7891, -73.1350, "Long Island, NY"],
-    "missyalcazarmusic":   "California",
-    "mocomade":            "Pennsylvania",
-    "morjanga":            "Arizona",
-    "morwen_xo":           "Tampa, Florida",
-    "mrtelesir":           "Wisconsin",
-    "mushr00msauce":       "Indianapolis, IN",
-    "neverbeenhappiertv":  "Michigan",
-    "optimuskale":         "Florida",
-    "papasmaxe":           "Colorado",
-    "poisonhearrt":        "California",
-    "redivivus":           "UK",
-    "refurbersteve":       "Illinois",
-    "renz":                "Minnesota",
-    "rustyrhymez":         "Rhode Island",
-    "sbmel":               "Illinois",
-    "sftortlife":          "San Francisco",
-    "shumba":              "St. Louis",
-    "sneakybeagle":        "Maryland",
-    "sweatypedals":        "Minnesota",
-    "ulumaika":            "Los Angeles, CA",
-    "unclejpop":           "Las Vegas, NV",
-    "woodrowjenkins":      "Florida",
-    "xanthe":              "Los Angeles, CA",
-  };
-
-  /* COMING SOON.  Family members whose Mushbox is still being built.
-     They get a pink dot with a little cartoon mushroom sprouting out of it
-     (holding up a COMING SOON sign) instead of the gray offline dot. They still need a LOCATIONS line above.
-     When their box ships, just delete their line here.
-        "twitchlogin": true,
-  */
-  var COMING_SOON = {
-    "elgatopub": true,
-    "jakestuds": true,
-  };
-
-  /* SECOND / ALT CHANNELS.  List a person's other logins so either channel
-     going live counts as the SAME person — one pin, one spot in the count,
-     linked to whichever channel is actually live.
-        "primarylogin": ["altlogin", ...]
-     IMPORTANT: also add each alt login to your Worker's CHANNELS list, or
-     live-status never sees it. */
-  var ALIASES = {
-    "aprylanonymous": ["aprylactuallyanonymous"],
-    "barktok":        ["marcafterbark"]
-  };
-  var ALT2MAIN = {};
-  Object.keys(ALIASES).forEach(function(main){
-    (ALIASES[main]||[]).forEach(function(alt){
-      alt = (alt||"").toString().toLowerCase().trim();
-      if(alt) ALT2MAIN[alt] = main;
-    });
+  var FAM = window.MUSHBOX_FAMILY || { members: [] };
+  var LOCATIONS = {}, COMING_SOON = {}, SHIPPED = {}, ALT2MAIN = {};
+  var KICK_LOGINS = {}, PHONE_LOGINS = {};
+  if(FAM.builder) LOCATIONS[FAM.builder.name.toLowerCase()] = FAM.builder.home;
+  FAM.members.forEach(function(p){
+    LOCATIONS[p.login] = p.home;
+    if(p.stage === 'bench')   COMING_SOON[p.login] = true;
+    if(p.stage === 'shipped') SHIPPED[p.login] = true;
+    if(p.stage === 'phone')   PHONE_LOGINS[p.login] = 1;
+    if(p.platform === 'kick') KICK_LOGINS[p.login] = 1;
+    p.alts.forEach(function(alt){ ALT2MAIN[alt] = p.login; });
   });
 
   /* When a streamer names a place in their TITLE, the pin moves there for
@@ -975,15 +896,13 @@
   var lastLiveArr = null; // most recent parseLive() result, cached so loadPartnerProgress() can trigger a redraw without a second roster fetch
   var didInitialFocus = false; // deep-link (#focus=login) only auto-pans once, on first load
 
-  // Kick family logins — watch links point at kick.com, never twitch.tv,
-  // even for offline dots where platform isn't in the live feed.
-  var KICK_LOGINS = { "jetlagjacko":1 };
+  // Kick family logins (KICK_LOGINS, from family.js) — watch links point at
+  // kick.com, never twitch.tv, even for offline dots.
 
   // Family members streaming from a phone (OBS + Noalbs) rather than actual
   // Mushbox encoder hardware. Shows a small "📱 Phone Streamer" tag next to
-  // their name while they're live — informational, not a ranking. Add a
-  // login here to tag them; nothing else about how they're displayed changes.
-  var PHONE_LOGINS = { "mikefromny":1, "k9gizmo":1 };
+  // their name while they're live — informational, not a ranking.
+  // PHONE_LOGINS comes from family.js (stage: "phone").
   function mobileTag(login){
     return PHONE_LOGINS[(login||'').toString().toLowerCase()]
       ? '<span class="mobiletag" title="Streams via phone (OBS + Noalbs), not Mushbox hardware">📱 Phone Streamer</span>' : '';
@@ -1053,6 +972,8 @@
   }
   function soonIcon(off){ off = off || [0,0]; return L.divIcon({ className:'', iconSize:[22,22], iconAnchor:[11 - off[0], 11 - off[1]],
     html:'<div class="soon-hit"><span class="soon-sign"><svg class="soon-shroom" viewBox="0 0 26 26" width="26" height="26" aria-hidden="true"><path d="M9 14 Q8.4 21 9.6 23.5 L16.4 23.5 Q17.6 21 17 14 Z" fill="#fff1c9" stroke="#1a1205" stroke-width="1.6" stroke-linejoin="round"/><circle cx="11.6" cy="18.3" r=".9" fill="#1a1205"/><circle cx="14.4" cy="18.3" r=".9" fill="#1a1205"/><path d="M11.9 20.2 Q13 21.2 14.1 20.2" fill="none" stroke="#1a1205" stroke-width=".9" stroke-linecap="round"/><path d="M2.2 14.6 Q2 3 13 2.4 Q24 3 23.8 14.6 Q13 16.4 2.2 14.6 Z" fill="#ff5fb4" stroke="#1a1205" stroke-width="1.8" stroke-linejoin="round"/><ellipse cx="8" cy="8.6" rx="2.1" ry="1.7" fill="#fff"/><ellipse cx="15.6" cy="5.8" rx="1.7" ry="1.4" fill="#fff"/><ellipse cx="18.6" cy="11" rx="1.6" ry="1.3" fill="#fff"/><ellipse cx="12.2" cy="11.8" rx="1.1" ry=".9" fill="#fff"/></svg><span class="soon-stake"><span class="soon-board">Coming<br>soon</span><span class="soon-post"></span></span></span><div class="soon-dot"></div></div>' }); }
+  function shipIcon(off){ off = off || [0,0]; return L.divIcon({ className:'', iconSize:[22,22], iconAnchor:[11 - off[0], 11 - off[1]],
+    html:'<div class="ship-hit"><div class="ship-dot"></div><span class="ship-box">📦</span></div>' }); }
   function offIcon(off){ off = off || [0,0]; return L.divIcon({ className:'', iconSize:[22,22], iconAnchor:[11 - off[0], 11 - off[1]], html:'<div class="off-hit"><div class="off-dot"></div></div>' }); }
 
   // Hover card for an offline home dot: the member's Twitch avatar +
@@ -1068,7 +989,9 @@
     return '<div class="otwrap">'
       + img
       + '<span class="onm">' + esc(disp) + '</span>'
-      + (COMING_SOON[login] ? '<span class="ost soon">mushbox coming soon</span>' : '<span class="ost">offline</span>')
+      + (COMING_SOON[login] ? '<span class="ost soon">mushbox coming soon</span>'
+         : SHIPPED[login] ? '<span class="ost ship">📦 mushbox just landed</span>'
+         : '<span class="ost">offline</span>')
       + '</div>';
   }
 
@@ -1166,10 +1089,10 @@
     offMarkers = {};
     Object.keys(HOMES).forEach(function(login){
       if(liveMarkers[login]) return; // don't double-draw someone who's live
-      var soon = !!COMING_SOON[login];
-      if(!show && !soon) return;      // coming-soon pins stay up even with offline hidden
+      var soon = !!COMING_SOON[login], ship = !!SHIPPED[login];
+      if(!show && !soon && !ship) return;  // coming-soon / just-landed pins stay up even with offline hidden
       var loc = HOMES[login];
-      var mk = L.marker([loc[0],loc[1]], { icon:(soon ? soonIcon : offIcon)(HOME_OFFSET[login]), keyboard:false, zIndexOffset:(soon ? -400 : -500), riseOnHover:true });
+      var mk = L.marker([loc[0],loc[1]], { icon:(soon ? soonIcon : ship ? shipIcon : offIcon)(HOME_OFFSET[login]), keyboard:false, zIndexOffset:((soon||ship) ? -400 : -500), riseOnHover:true });
       mk.bindTooltip((function(lg){ return function(){ return offTip(lg); }; })(login),
         {direction:'top', className:'offtip', opacity:1, offset:[0,-7]});
       mk.on('click', (function(lg){
