@@ -48,7 +48,7 @@ window.MUSHBOX_FAMILY = {
     { name:"DianaTheDogGroomer", stage:"active", home:"Virginia" },
     { name:"Eatage", stage:"active", home:"Iowa" },
     { name:"EdventuresLive", stage:"active", home:"Connecticut" },
-    { name:"ElGatoPub", stage:"bench", home:[42.9500, -75.5000, "Upstate NY"] },
+    { name:"ElGatoPub", stage:"bench", home:[42.9500, -75.5000, "New York"] },
     { name:"EmmDeeFit", stage:"active", home:"Pennsylvania" },
     { name:"FalconElite", stage:"active", home:"Texas" },
     { name:"Fi1es", stage:"active", home:"New Jersey" },
