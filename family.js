@@ -78,7 +78,7 @@ window.MUSHBOX_FAMILY = {
     { name:"OptimusKale", stage:"active", home:"Florida" },
     { name:"PapaSmaxe", stage:"active", home:"Colorado" },
     { name:"PoisonHearrt", stage:"active", home:"California" },
-    { name:"Redivivus", stage:"active", home:"UK" },
+    { name:"Redivivus", stage:"bench", home:"UK" },
     { name:"RefurberSteve", stage:"active", home:"Illinois" },
     { name:"Renz", stage:"active", home:"Minnesota" },
     { name:"RustyRhymez", stage:"active", home:"Rhode Island" },
