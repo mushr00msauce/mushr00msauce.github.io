@@ -50,7 +50,7 @@ window.MUSHBOX_FAMILY = {
     { name:"EmmDeeFit", stage:"active", home:"Pennsylvania" },
     { name:"FalconElite", stage:"active", home:"Texas" },
     { name:"Fi1es", stage:"active", home:"New Jersey" },
-    { name:"FriskyAlien", stage:"active", home:"Colorado" },
+    { name:"FriskyAlien", stage:"shipped", home:"Colorado" },
     { name:"Gxufy", stage:"active", home:"New York, NY" },
     { name:"Hamandlizgaming", stage:"active", home:"Fort Wayne, IN" },
     { name:"JakeStuds", stage:"bench", home:"UK" },
@@ -71,7 +71,7 @@ window.MUSHBOX_FAMILY = {
     { name:"MikeFromNY", stage:"phone", home:[40.7891, -73.1350, "Long Island, NY"] },
     { name:"MissyAlcazarMusic", stage:"active", home:"California" },
     { name:"Mocomade", stage:"active", home:"Pennsylvania" },
-    { name:"Morjanga", stage:"active", home:"Arizona" },
+    { name:"Morjanga", stage:"shipped", home:"Arizona" },
     { name:"MorwenXo", login:"morwen_xo", stage:"active", home:"Tampa, Florida" },
     { name:"MrTelesir", stage:"active", home:"Wisconsin" },
     { name:"NeverBeenHappierTV", stage:"active", home:"Michigan" },
@@ -90,7 +90,7 @@ window.MUSHBOX_FAMILY = {
     { name:"UluMaika", stage:"active", home:"Los Angeles, CA" },
     { name:"UncleJPop", stage:"active", home:"Las Vegas, NV" },
     { name:"WoodrowJenkins", stage:"active", home:"Florida" },
-    { name:"Xanthe", stage:"active", home:"Los Angeles, CA" },
+    { name:"Xanthe", stage:"shipped", home:"Los Angeles, CA" },
   ],
 
   // Extra names for the request form's "Referred by" list who aren't on
