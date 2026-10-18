@@ -18,7 +18,9 @@
                  "phone"   — family, streams from a phone (📱), no Mushbox
      home:     a place name ("Florida", "UK", "Austin, TX") or exact
                coordinates [lat, lng, "Label"] for a spot the map
-               doesn't know
+               doesn't know — also handy for spreading out people in the
+               same city (the Manhattan crew below are spaced across the
+               island this way; the label is all anyone sees)
      platform: "kick" if their main channel is on Kick (default Twitch)
      alts:     other channel logins that count as the same person
 
@@ -36,22 +38,22 @@ window.MUSHBOX_FAMILY = {
   builder: { name:"mushr00msauce", home:"Indianapolis, IN" },
 
   members: [
-    { name:"AfrazExplores", stage:"active", home:"New York, NY" },
-    { name:"AllDayNYC", stage:"active", home:"New York, NY" },
-    { name:"Aprylanonymous", stage:"active", home:"New York, NY", alts:["aprylactuallyanonymous"] },
+    { name:"AfrazExplores", stage:"active", home:[40.7870, -73.9754, "New York, NY"] },
+    { name:"AllDayNYC", stage:"active", home:[40.7549, -73.9840, "New York, NY"] },
+    { name:"Aprylanonymous", stage:"active", home:[40.8116, -73.9465, "New York, NY"], alts:["aprylactuallyanonymous"] },
     { name:"Barktok", stage:"active", home:"Los Angeles, CA", alts:["marcafterbark"] },
     { name:"Bigbonelife", stage:"active", home:"Florida" },
-    { name:"Chefmaki", stage:"active", home:"New York, NY" },
+    { name:"Chefmaki", stage:"active", home:[40.7265, -73.9815, "New York, NY"] },
     { name:"DeepSeaHomer", stage:"active", home:"California" },
     { name:"DianaTheDogGroomer", stage:"active", home:"Virginia" },
     { name:"Eatage", stage:"active", home:"Iowa" },
     { name:"EdventuresLive", stage:"active", home:"Connecticut" },
-    { name:"ElGatoPub", stage:"bench", home:"New York, NY" },
+    { name:"ElGatoPub", stage:"bench", home:[42.9500, -75.5000, "Upstate NY"] },
     { name:"EmmDeeFit", stage:"active", home:"Pennsylvania" },
     { name:"FalconElite", stage:"active", home:"Texas" },
     { name:"Fi1es", stage:"active", home:"New Jersey" },
     { name:"FriskyAlien", stage:"shipped", home:"Colorado" },
-    { name:"Gxufy", stage:"active", home:"New York, NY" },
+    { name:"Gxufy", stage:"active", home:[40.7075, -74.0090, "New York, NY"] },
     { name:"Hamandlizgaming", stage:"active", home:"Fort Wayne, IN" },
     { name:"JakeStuds", stage:"bench", home:"UK" },
     { name:"JayneRio", stage:"active", home:"Dallas, Texas" },
@@ -67,7 +69,7 @@ window.MUSHBOX_FAMILY = {
     { name:"LDSylvr", stage:"active", home:"Texas" },
     { name:"Lyndainfj", stage:"active", home:"Delaware" },
     { name:"MaestroHarrell", stage:"active", home:"California" },
-    { name:"Miekii", stage:"active", home:"New York" },
+    { name:"Miekii", stage:"active", home:[40.7736, -73.9566, "New York, NY"] },
     { name:"MikeFromNY", stage:"phone", home:[40.7891, -73.1350, "Long Island, NY"] },
     { name:"MissyAlcazarMusic", stage:"active", home:"California" },
     { name:"Mocomade", stage:"active", home:"Pennsylvania" },
