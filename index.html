@@ -731,7 +731,7 @@
     </div>
 
 
-    <span class="section-label centered">The Mushbox Family — 54 strong</span>
+    <span class="section-label centered">The Mushbox Family — 55 strong</span>
 
     <style>
       .mbxfam-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:10px}
@@ -765,6 +765,16 @@
       .mbxfam-dot.mbxfam-phone{
         width:auto;height:auto;border-radius:0;background:none;box-shadow:none;
         font-size:11px;line-height:1;
+      }
+      /* Coming soon: family member whose Mushbox is still on the bench.
+         Pink dot + a tiny tilted cartoon sign. Delete the extra class and
+         the sign span from their chip once the box ships. */
+      .mbxfam-dot.mbxfam-soon{background:#ff5fb4;box-shadow:0 0 8px rgba(255,95,180,.85)}
+      .mbxfam-sign{
+        display:inline-block;margin-left:2px;padding:1px 5px 0;
+        background:#fff1c9;color:#d6246e;border:1.5px solid #1a1205;border-radius:2px;
+        box-shadow:1.5px 1.5px 0 #1a1205;transform:rotate(-6deg);
+        font-size:8.5px;font-weight:800;letter-spacing:.08em;line-height:1.3;text-transform:uppercase;
       }
       .mbxfam-foot{margin-top:14px;color:var(--text-dim);font-size:13px;text-align:center}
       .mbxfam-foot a{color:var(--sky);text-decoration:none;font-weight:700}
@@ -831,6 +841,7 @@
       <a class="mbxfam-chip" data-login="friskyalien" href="https://twitch.tv/friskyalien" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>FriskyAlien</a>
       <a class="mbxfam-chip" data-login="gxufy" href="https://twitch.tv/gxufy" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Gxufy</a>
       <a class="mbxfam-chip" data-login="hamandlizgaming" href="https://twitch.tv/hamandlizgaming" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>Hamandlizgaming</a>
+      <a class="mbxfam-chip" data-login="jakestuds" href="https://twitch.tv/jakestuds" target="_blank" rel="noopener" title="Mushbox coming soon &mdash; being built now"><span class="mbxfam-dot mbxfam-soon"></span>JakeStuds<span class="mbxfam-sign" aria-label="coming soon">Soon</span></a>
       <a class="mbxfam-chip" data-login="jaynerio" href="https://twitch.tv/jaynerio" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>JayneRio</a>
       <a class="mbxfam-chip" data-login="jdcharisma" href="https://twitch.tv/jdcharisma" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>JDCharisma</a>
       <a class="mbxfam-chip" data-login="jetlagjacko" data-platform="kick" href="https://kick.com/jetlagjacko" target="_blank" rel="noopener"><span class="mbxfam-dot"></span>JetLagJacko</a>
@@ -1662,7 +1673,7 @@
       seenFam[p] = 1; famLive++;
     });
     if (label && famLive > 0) {
-      label.textContent = "The Mushbox Family \u2014 54 strong \u00B7 " + famLive + " live now";
+      label.textContent = "The Mushbox Family \u2014 55 strong \u00B7 " + famLive + " live now";
     }
   }).catch(function(){ /* worker unreachable: page works fine without it */ });
 

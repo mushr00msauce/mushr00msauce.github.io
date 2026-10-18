@@ -24,6 +24,7 @@
     --red:#ff3b4e; --red-soft:#ff5a6a;
     --twitch:#9146FF; --twitch-soft:#a970ff; --kick:#53FC18; --kick-soft:#78ff45;
     --amber:#F5A623; --amber-soft:#ffbf4d;
+    --soon:#ff5fb4;
     --edge:rgba(77,184,255,.28);
     --panel:rgba(10,21,53,.82);
     --dim:#7f92b8;
@@ -238,6 +239,31 @@
     font-size:8px;line-height:1;z-index:5;box-shadow:0 0 6px rgba(145,70,255,.9),0 0 0 1.5px var(--navy)}
   .beacon.partnerhot .pwbadge{display:flex}
   @keyframes partnerPulse{0%,100%{opacity:.55;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}
+  /* ---- COMING SOON: family member whose Mushbox is being built ----
+     Hot-pink dot (no other pin uses pink) with an old-cartoon wooden
+     signpost poking up out of it. Shows even when "offline home bases"
+     is unchecked — it's a welcome, not an offline status. */
+  .soon-hit{position:relative;width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .soon-dot{position:relative;z-index:2;width:11px;height:11px;border-radius:50%;background:var(--soon);
+    border:1.5px solid #fff;box-shadow:0 0 0 1.5px #1a0d14,0 0 10px rgba(255,95,180,.9);transition:transform .14s}
+  .soon-hit:hover .soon-dot{transform:scale(1.2)}
+  .soon-sign{position:absolute;left:8px;bottom:8px;z-index:1;pointer-events:none;
+    display:flex;flex-direction:column;align-items:flex-start;
+    transform:rotate(14deg);transform-origin:4px 100%;animation:soonWobble 3.2s ease-in-out infinite}
+  .soon-post{order:2;margin-left:4px;margin-top:-2px;width:4px;height:22px;background:#8a5a2b;
+    border:1.5px solid #1a1205;border-top:none;border-radius:0 0 1px 1px}
+  .soon-board{order:1;position:relative;display:block;white-space:nowrap;
+    padding:3px 7px 2px;background:#fff1c9;border:2px solid #1a1205;border-radius:3px;
+    box-shadow:2px 2px 0 #1a1205;transform:rotate(-18deg);transform-origin:6px 100%;
+    font-family:var(--mono);font-weight:700;font-size:8.5px;letter-spacing:.08em;line-height:1.05;
+    color:#d6246e;text-align:center;text-transform:uppercase}
+  .soon-board::before,.soon-board::after{content:"";position:absolute;top:3px;width:3px;height:3px;border-radius:50%;background:#1a1205}
+  .soon-board::before{left:2px} .soon-board::after{right:2px}
+  @keyframes soonWobble{0%,100%{transform:rotate(14deg)}50%{transform:rotate(19deg)}}
+  @media (prefers-reduced-motion: reduce){ .soon-sign{animation:none} }
+  .legend .lg-soon{background:var(--soon);box-shadow:0 0 8px var(--soon)}
+  .offtip .ost.soon{color:var(--soon)}
+  .offtip .ava.soon{border-color:var(--soon)}
   .off-dot{width:10px;height:10px;border-radius:50%;background:#39507f;
     border:1px solid rgba(120,150,200,.5);box-shadow:0 0 5px rgba(20,40,80,.8);
     transition:background .14s,box-shadow .14s,transform .14s}
@@ -527,6 +553,7 @@
     <span><i class="lg-live"></i>Live</span>
     <span><i class="lg-amber"></i>Mushbox Online</span>
     <span><i class="lg-off"></i>Offline</span>
+    <span><i class="lg-soon"></i>Coming soon</span>
     <span class="lg-pin">📍 from stream title</span>
     <span class="lg-pin">🏆 75+ viewers · Partner Watch</span>
   </div>
@@ -591,6 +618,7 @@
     "gxufy":               "New York, NY",
     "hamandlizgaming":     "Fort Wayne, IN",
     "jaynerio":            "Dallas, Texas",
+    "jakestuds":           [51.7526, -0.4692, "Hemel Hempstead, UK"],
     "jdcharisma":          "San Jose, California",
     "jetlagjacko":         "Bangkok",
     "jtengland":           "San Diego, CA",
@@ -628,6 +656,16 @@
     "unclejpop":           "Las Vegas, NV",
     "woodrowjenkins":      "Florida",
     "xanthe":              "Los Angeles, CA",
+  };
+
+  /* COMING SOON.  Family members whose Mushbox is still being built.
+     They get a pink dot with a little "COMING SOON" signpost instead of the
+     gray offline dot. They still need a LOCATIONS line above.
+     When their box ships, just delete their line here.
+        "twitchlogin": true,
+  */
+  var COMING_SOON = {
+    "jakestuds": true,
   };
 
   /* SECOND / ALT CHANNELS.  List a person's other logins so either channel
@@ -1009,6 +1047,8 @@
     return L.divIcon({ className:'', iconSize:[18,18], iconAnchor:[9 - off[0], 9 - off[1]],
       html:'<div class="'+cls+'">'+pin+rings+'<span class="core"></span>'+badge+pw+'</div>' });
   }
+  function soonIcon(off){ off = off || [0,0]; return L.divIcon({ className:'', iconSize:[22,22], iconAnchor:[11 - off[0], 11 - off[1]],
+    html:'<div class="soon-hit"><span class="soon-sign"><span class="soon-board">Coming<br>soon</span><span class="soon-post"></span></span><div class="soon-dot"></div></div>' }); }
   function offIcon(off){ off = off || [0,0]; return L.divIcon({ className:'', iconSize:[22,22], iconAnchor:[11 - off[0], 11 - off[1]], html:'<div class="off-hit"><div class="off-dot"></div></div>' }); }
 
   // Hover card for an offline home dot: the member's Twitch avatar +
@@ -1019,12 +1059,12 @@
     var url  = AVATARS[login] || '';
     var disp = NAMES[login] || login;
     var img  = url
-      ? '<img class="ava" src="' + esc(url) + '" alt="" onerror="this.remove()">'
+      ? '<img class="ava' + (COMING_SOON[login] ? ' soon' : '') + '" src="' + esc(url) + '" alt="" onerror="this.remove()">'
       : '';
     return '<div class="otwrap">'
       + img
       + '<span class="onm">' + esc(disp) + '</span>'
-      + '<span class="ost">offline</span>'
+      + (COMING_SOON[login] ? '<span class="ost soon">mushbox coming soon</span>' : '<span class="ost">offline</span>')
       + '</div>';
   }
 
@@ -1120,11 +1160,12 @@
   function renderOffline(show){
     Object.keys(offMarkers).forEach(function(k){ map.removeLayer(offMarkers[k]); });
     offMarkers = {};
-    if(!show) return;
     Object.keys(HOMES).forEach(function(login){
       if(liveMarkers[login]) return; // don't double-draw someone who's live
+      var soon = !!COMING_SOON[login];
+      if(!show && !soon) return;      // coming-soon pins stay up even with offline hidden
       var loc = HOMES[login];
-      var mk = L.marker([loc[0],loc[1]], { icon:offIcon(HOME_OFFSET[login]), keyboard:false, zIndexOffset:-500, riseOnHover:true });
+      var mk = L.marker([loc[0],loc[1]], { icon:(soon ? soonIcon : offIcon)(HOME_OFFSET[login]), keyboard:false, zIndexOffset:(soon ? -400 : -500), riseOnHover:true });
       mk.bindTooltip((function(lg){ return function(){ return offTip(lg); }; })(login),
         {direction:'top', className:'offtip', opacity:1, offset:[0,-7]});
       mk.on('click', (function(lg){
