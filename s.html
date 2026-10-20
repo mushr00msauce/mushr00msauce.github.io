@@ -6,8 +6,9 @@
 <meta name="robots" content="noindex">
 <title>Mushbox</title>
 <link rel="canonical" href="https://themushbox.com/">
-<!-- Sticker QR landing: counts as /s in Cloudflare Web Analytics, then forwards home -->
-<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "95572a93d4ee4bf1bc6ef531dccab9af"}'></script>
+<!-- Sticker QR landing: counts as /s in Cloudflare Web Analytics, then forwards home.
+     No beacon tag here on purpose: the zone uses Web Analytics "Automatic setup",
+     which injects it at Cloudflare's edge. Adding it here would double-count. -->
 <noscript><meta http-equiv="refresh" content="0; url=/"></noscript>
 <style>
   html,body{margin:0;height:100%;background:#060810;color:#4DB8FF;font-family:system-ui,sans-serif}
