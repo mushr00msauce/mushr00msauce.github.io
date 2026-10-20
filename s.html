@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Mushbox</title>
+<link rel="canonical" href="https://themushbox.com/">
+<!-- Sticker QR landing: counts as /s in Cloudflare Web Analytics, then forwards home -->
+<script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "95572a93d4ee4bf1bc6ef531dccab9af"}'></script>
+<noscript><meta http-equiv="refresh" content="0; url=/"></noscript>
+<style>
+  html,body{margin:0;height:100%;background:#060810;color:#4DB8FF;font-family:system-ui,sans-serif}
+  body{display:flex;align-items:center;justify-content:center}
+  a{color:#4DB8FF}
+</style>
+</head>
+<body>
+<p>Loading Mushbox… <a href="/">tap here</a> if nothing happens.</p>
+<script>
+  (function () {
+    var done = false;
+    function go() { if (done) return; done = true; location.replace('/'); }
+    // Give the analytics beacon a moment to record the visit, then forward.
+    window.addEventListener('load', function () { setTimeout(go, 400); });
+    setTimeout(go, 2000); // fallback if the beacon is slow or blocked
+  })();
+</script>
+</body>
+</html>
