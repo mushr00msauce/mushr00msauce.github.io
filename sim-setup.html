@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ordering Your SIM Cards · Mushbox</title>
+<meta name="description" content="Step-by-step: order a Visible SIM with the Mushbox friend code and a US Mobile Starter Kit for your bonded Mushbox.">
+<link rel="canonical" href="https://themushbox.com/sim-setup.html">
+<meta property="og:title" content="Ordering Your SIM Cards · Mushbox">
+<meta property="og:description" content="Visible SIM ($20 off with the friend code) + US Mobile Starter Kit — step by step with screenshots.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://themushbox.com/sim-setup.html">
+<meta property="og:image" content="https://themushbox.com/assets/family-nyc.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ordering Your SIM Cards · Mushbox">
+<meta name="twitter:description" content="Visible SIM ($20 off with the friend code) + US Mobile Starter Kit — step by step.">
+<meta name="twitter:image" content="https://themushbox.com/assets/family-nyc.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --black:#060810;
+    --navy:#0A1535;
+    --royal:#1E6FFF;
+    --sky:#4DB8FF;
+    --ink:#EAF1FF;
+    --mute:#9FB2D6;
+    --faint:#6A7DA6;
+    --line:rgba(77,184,255,.14);
+    --line-hot:rgba(77,184,255,.45);
+    --card:rgba(12,24,58,.55);
+    --card-hi:rgba(18,34,78,.72);
+    --amber:#FFC24B;
+    --green:#7CFFB0;
+    --grad:linear-gradient(135deg,var(--royal),var(--sky));
+    --display:'Orbitron',sans-serif;
+    --head:'Rajdhani',sans-serif;
+    --body:'Inter',system-ui,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    font-family:var(--body);
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 700px at 78% -12%, rgba(30,111,255,.18), transparent 60%),
+      radial-gradient(900px 600px at 6% 8%, rgba(77,184,255,.10), transparent 55%),
+      var(--black);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--sky)}
+  .wrap{max-width:920px;margin:0 auto;padding:0 22px}
+
+  /* ---- hero ---- */
+  header.hero{padding:44px 0 14px;text-align:center}
+  .kicker{
+    font-family:var(--display);font-weight:700;font-size:11px;
+    letter-spacing:4px;text-transform:uppercase;color:var(--sky);
+    display:inline-flex;align-items:center;gap:9px;margin-bottom:16px;
+  }
+  .kicker::before,.kicker::after{
+    content:"";width:26px;height:1px;
+    background:linear-gradient(90deg,transparent,var(--sky));
+  }
+  .kicker::after{background:linear-gradient(90deg,var(--sky),transparent)}
+  h1{
+    font-family:var(--display);font-weight:900;
+    font-size:clamp(32px,6.5vw,54px);line-height:1.04;margin:0 0 16px;
+    letter-spacing:1px;
+    background:linear-gradient(180deg,#fff 0%,#BFD8FF 62%,#4DB8FF 130%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .lede{max-width:600px;margin:0 auto;color:var(--mute);font-size:16.5px;line-height:1.6}
+  .lede b{color:var(--ink);font-weight:600}
+  .dots{display:flex;justify-content:center;gap:8px;margin:22px 0 6px}
+  .dots span{width:7px;height:7px;border-radius:50%;background:var(--sky);opacity:.35;animation:pulse 2.4s infinite ease-in-out}
+  .dots span:nth-child(2){animation-delay:.3s}
+  .dots span:nth-child(3){animation-delay:.6s}
+  .dots span:nth-child(4){animation-delay:.9s}
+  .dots span:nth-child(5){animation-delay:1.2s}
+  @keyframes pulse{0%,100%{opacity:.25;transform:scale(1)}50%{opacity:1;transform:scale(1.35)}}
+
+  /* ---- jump links ---- */
+  .jump{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin:22px 0 4px}
+  .jump a{
+    font-family:var(--head);font-weight:600;font-size:14px;letter-spacing:.4px;
+    color:var(--mute);text-decoration:none;padding:8px 14px;
+    border:1px solid var(--line);border-radius:999px;transition:.18s;
+  }
+  .jump a:hover{color:var(--ink);border-color:var(--line-hot);background:rgba(30,111,255,.08)}
+
+  /* ---- code tiles ---- */
+  .codes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:30px 0 0}
+  .code{
+    padding:18px 20px;border-radius:14px;background:var(--card);
+    border:1px solid var(--line);position:relative;overflow:hidden;
+  }
+  .code::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grad)}
+  .code .lbl{
+    font-family:var(--display);font-weight:700;font-size:10px;letter-spacing:2.5px;
+    text-transform:uppercase;color:var(--faint);margin-bottom:8px;
+  }
+  .code .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .code .val{font-family:var(--mono);font-size:22px;font-weight:600;letter-spacing:.06em;color:var(--ink);word-break:break-all}
+  .code p{margin:8px 0 0;color:var(--mute);font-size:13.5px;line-height:1.5}
+  .code p a{word-break:break-all}
+  button.copy{
+    font:600 12.5px var(--head);letter-spacing:.6px;text-transform:uppercase;
+    border:1px solid var(--line-hot);color:var(--sky);background:rgba(30,111,255,.08);
+    border-radius:8px;padding:6px 12px;cursor:pointer;transition:.15s;
+  }
+  button.copy:hover{background:rgba(30,111,255,.18);color:#fff}
+  button.copy.done{color:var(--green);border-color:rgba(58,220,130,.4);background:rgba(58,220,130,.1)}
+
+  /* ---- sections ---- */
+  section.part{margin:52px 0 0;scroll-margin-top:70px}
+  .part-head{
+    display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:0 0 18px;
+    padding-bottom:12px;border-bottom:1px solid var(--line);
+  }
+  .part-head .n{font-family:var(--display);font-weight:700;font-size:12px;color:var(--faint);letter-spacing:2px}
+  .part-head h2{font-family:var(--head);font-weight:700;font-size:26px;letter-spacing:.5px;margin:0;color:var(--ink)}
+  .part-head p{margin:0 0 0 auto;color:var(--faint);font-size:13.5px;font-family:var(--head);font-weight:500}
+
+  .steps{display:grid;gap:14px}
+  .step{
+    display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start;
+    padding:20px 22px;border-radius:14px;background:var(--card);border:1px solid var(--line);
+  }
+  .step.noimg{grid-template-columns:minmax(0,1fr)}
+  .num{font-family:var(--display);font-weight:700;font-size:11px;color:var(--sky);letter-spacing:3px}
+  .step h3{font-family:var(--head);font-weight:700;font-size:21px;letter-spacing:.3px;margin:6px 0 8px;color:var(--ink)}
+  .step p,.step li{color:var(--mute);font-size:15px;line-height:1.6;margin:0 0 8px}
+  .step ul{padding-left:20px;margin:0}
+  .step strong{color:var(--ink);font-weight:600}
+  .step img{width:100%;height:auto;border-radius:10px;border:1px solid var(--line);display:block;background:#fff}
+  .step figure{margin:0}
+  code.k{font-family:var(--mono);background:rgba(30,111,255,.14);border:1px solid var(--line);padding:1px 7px;border-radius:5px;color:var(--ink);font-size:.92em;white-space:nowrap}
+
+  .note{
+    margin-top:14px;padding:14px 16px;border-radius:0 12px 12px 0;
+    border-left:3px solid var(--amber);background:rgba(255,194,75,.06);
+    color:var(--mute);font-size:14.5px;line-height:1.6;
+  }
+  .note b{color:var(--amber);font-family:var(--head);font-weight:700;letter-spacing:.4px}
+  .note.blue{border-left-color:var(--sky);background:rgba(77,184,255,.06)}
+  .note.blue b{color:var(--sky)}
+
+  footer.page-foot{
+    margin:56px 0 0;padding-top:24px;border-top:1px solid var(--line);
+    text-align:center;color:var(--faint);font-size:13px;line-height:1.7;
+  }
+  footer.page-foot b{font-family:var(--display);font-weight:700;color:var(--mute);letter-spacing:1px}
+  footer.page-foot a:hover{text-decoration:underline}
+
+  @media (max-width:680px){
+    .step{grid-template-columns:minmax(0,1fr);gap:16px;padding:18px}
+    .step img{max-width:360px;margin:0 auto}
+    .part-head p{margin:0;flex-basis:100%}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;scroll-behavior:auto}
+  }
+</style>
+<link rel="stylesheet" href="/assets/css/site-background.css">
+<link rel="stylesheet" href="/assets/css/site-theme.css">
+</head>
+<body>
+<header class="mbx-site-header">
+  <div class="mbx-site-header-inner">
+    <a class="mbx-brand" href="/" aria-label="Mushbox home">
+      <img src="/assets/img/mushbox-logo.png" alt="" class="mbx-brand-logo">
+      <span class="mbx-brand-name">MUSHBOX</span>
+    </a>
+    <button class="mbx-nav-toggle" type="button" aria-expanded="false" aria-controls="mbx-site-nav" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    <nav class="mbx-site-nav" id="mbx-site-nav" aria-label="Site">
+      <a href="/">Home</a>
+      <a href="/request.html">Request</a>
+      <a href="/tech-tips.html">Tech Tips</a>
+      <a href="/moblink.html">Moblink Install</a>
+      <a href="/updating.html">Updating</a>
+      <a href="/testimonials.html">Testimonials</a>
+      <a href="/map.html">Live Map</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="kicker">SIM Setup</div>
+    <h1>Ordering your<br>SIM cards</h1>
+    <p class="lede">Your Mushbox bonds multiple cellular connections. Follow these two walkthroughs to get a <b>Visible SIM</b> (Verizon network) and a <b>US Mobile Starter Kit</b>. Use the Visible friend link below so you get <b>$20 off</b>.</p>
+    <div class="dots" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="jump">
+      <a href="#visible">Part 1 · Visible</a>
+      <a href="#usmobile">Part 2 · US Mobile</a>
+    </div>
+  </header>
+
+  <div class="codes">
+    <div class="code">
+      <div class="lbl">Visible friend code</div>
+      <div class="row">
+        <span class="val">63NCPZH</span>
+        <button class="copy" type="button" data-copy="63NCPZH">Copy</button>
+      </div>
+      <p><a href="https://www.visible.com/get/?63NCPZH" target="_blank" rel="noopener">visible.com/get/?63NCPZH</a></p>
+    </div>
+    <div class="code">
+      <div class="lbl">IMEI for Visible check</div>
+      <div class="row">
+        <span class="val">350693901936029</span>
+        <button class="copy" type="button" data-copy="350693901936029">Copy</button>
+      </div>
+      <p>Enter this when Visible asks for your phone's IMEI.</p>
+    </div>
+  </div>
+
+  <!-- ============ PART 1 · VISIBLE ============ -->
+  <section class="part" id="visible">
+    <div class="part-head">
+      <span class="n">PART 1</span>
+      <h2>Visible</h2>
+      <p>$20 off a month of service with the friend code</p>
+    </div>
+    <div class="steps">
+
+      <div class="step">
+        <div>
+          <div class="num">STEP 1</div>
+          <h3>Open the referral link</h3>
+          <p>Go to <a href="https://www.visible.com/get/?63NCPZH" target="_blank" rel="noopener">visible.com/get/?63NCPZH</a>. You should see <strong>"Join Visible, save $20."</strong> If you don't, the code isn't attached — reopen the link.</p>
+          <p>Tap <strong>Choose a plan</strong>.</p>
+        </div>
+        <figure><img src="/assets/sim/visible-1-referral.jpg" width="722" height="850" loading="lazy" alt="Visible referral landing page showing Join Visible, save $20"></figure>
+      </div>
+
+      <div class="step">
+        <div>
+          <div class="num">STEP 2</div>
+          <h3>Pick a plan</h3>
+          <p>Leave it on <strong>Monthly</strong> and scroll to the plans.</p>
+          <p>Pick the <strong>cheapest plan available</strong>. Right now that's the base Visible $25/mo plan.</p>
+          <p>Skip the <code class="k">5OFF5</code> banner code; the friend code is the one we're using.</p>
+        </div>
+        <figure><img src="/assets/sim/visible-2-plans.jpg" width="722" height="850" loading="lazy" alt="Visible plan list with Monthly selected"></figure>
+      </div>
+
+      <div class="step">
+        <div>
+          <div class="num">STEP 3</div>
+          <h3>Choose the plan</h3>
+          <p>Tap <strong>Choose Visible plan</strong> on the cheapest plan.</p>
+        </div>
+        <figure><img src="/assets/sim/visible-3-choose.jpg" width="722" height="850" loading="lazy" alt="Choose Visible plan button on the base plan"></figure>
+      </div>
+
+      <div class="step">
+        <div>
+          <div class="num">STEP 4</div>
+          <h3>Tap "Bring my phone"</h3>
+          <p>Don't shop for a new phone. Tap <strong>Bring my phone</strong>.</p>
+        </div>
+        <figure><img src="/assets/sim/visible-4-bring-phone.jpg" width="722" height="830" loading="lazy" alt="Bring my phone option on Visible"></figure>
+      </div>
+
+      <div class="step">
+        <div>
+          <div class="num">STEP 5</div>
+          <h3>Enter the IMEI</h3>
+          <p>In <strong>Enter your phone's IMEI number</strong>, type <code class="k">350693901936029</code> and tap <strong>Submit</strong>.</p>
+        </div>
+        <figure><img src="/assets/sim/visible-5-imei.jpg" width="722" height="520" loading="lazy" alt="Visible IMEI entry field"></figure>
+      </div>
+
+      <div class="step noimg">
+        <div>
+          <div class="num">STEP 6</div>
+          <h3>Pick a physical SIM, then check out</h3>
+          <ul>
+            <li>When asked how you want service, choose the <strong>physical SIM card</strong> (not eSIM). Visible ships it free.</li>
+            <li>In the cart, check the promo box shows <code class="k">63NCPZH</code>. If it's empty, type it in and apply.</li>
+            <li>Create your Visible account and finish checkout. Choose a <strong>new number</strong> unless you're moving one over.</li>
+          </ul>
+          <div class="note blue"><b>When it arrives:</b> send the SIM to me (or bring it with your Mushbox) and I'll set it up in the modem.</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ PART 2 · US MOBILE ============ -->
+  <section class="part" id="usmobile">
+    <div class="part-head">
+      <span class="n">PART 2</span>
+      <h2>US Mobile Starter Kit</h2>
+      <p>$6.99 · Verizon + AT&amp;T SIMs</p>
+    </div>
+    <div class="steps">
+
+      <div class="step">
+        <div>
+          <div class="num">STEP 1</div>
+          <h3>Open the Starter Kit</h3>
+          <p>Go to <a href="https://www.usmobile.com/shop/product/starter-kit/starter-kit-sim" target="_blank" rel="noopener">usmobile.com/shop/product/starter-kit/starter-kit-sim</a>.</p>
+          <p>The kit is <strong>$6.99</strong> and includes a <strong>Warp SIM</strong> (Verizon) and a <strong>Dark Star SIM</strong> (AT&amp;T) plus a SIM tool.</p>
+        </div>
+        <figure><img src="/assets/sim/usmobile-1-kit.jpg" width="722" height="860" loading="lazy" alt="US Mobile Starter Kit product page, $6.99"></figure>
+      </div>
+
+      <div class="step">
+        <div>
+          <div class="num">STEP 2</div>
+          <h3>Check out</h3>
+          <p>Leave quantity at <strong>1</strong> and tap <strong>Checkout</strong>. Sign in or create a US Mobile account when prompted, then pay and enter your shipping address.</p>
+          <div class="note"><b>When the kit arrives:</b> activate it in the US Mobile app and pick the cheapest plan available.</div>
+        </div>
+        <figure><img src="/assets/sim/usmobile-2-checkout.jpg" width="722" height="860" loading="lazy" alt="US Mobile Starter Kit checkout"></figure>
+      </div>
+
+    </div>
+  </section>
+
+  <footer class="page-foot">
+    Stuck on a step? <a href="https://discord.gg/pHa57WwCw">Ask in the Discord</a> · <a href="/tech-tips.html">More Tech Tips</a><br>
+    Powered by <b>Mushbox</b> · bonded IRL streaming rigs
+  </footer>
+</div>
+
+<footer class="mbx-site-footer">
+  <div class="mbx-site-footer-inner">
+    <a class="mbx-brand" href="/">
+      <img src="/assets/img/mushbox-logo.png" alt="" class="mbx-brand-logo">
+      <span class="mbx-brand-name">MUSHBOX</span>
+    </a>
+    <p>Hand-built bonded IRL streaming rigs &middot; <a href="mailto:mushboxirl@gmail.com">mushboxirl@gmail.com</a></p>
+    <p class="mbx-credit">Logo &amp; art by <a href="https://x.com/Kpapple23" target="_blank" rel="noopener">@Kpapple23</a></p>
+    <nav class="mbx-site-footer-nav" aria-label="Footer">
+      <a href="/">Home</a>
+      <a href="/tech-tips.html">Tech Tips</a>
+      <a href="/moblink.html">Moblink Install</a>
+      <a href="/updating.html">Updating</a>
+      <a href="/testimonials.html">Testimonials</a>
+      <a href="/map.html">Live Map</a>
+      <a href="/mods.html">Mod Commands</a>
+      <a href="/request.html">Request</a>
+    </nav>
+  </div>
+</footer>
+<script src="/assets/js/site-nav.js" defer></script>
+<script>
+  document.querySelectorAll('button.copy').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var text = btn.getAttribute('data-copy');
+      function done(){
+        btn.textContent = 'Copied';
+        btn.classList.add('done');
+        setTimeout(function(){ btn.textContent = 'Copy'; btn.classList.remove('done'); }, 1600);
+      }
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done).catch(fallback);
+      } else { fallback(); }
+      function fallback(){
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.setAttribute('readonly',''); ta.style.position='absolute'; ta.style.left='-9999px';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); done(); } catch(e) {}
+        document.body.removeChild(ta);
+      }
+    });
+  });
+</script>
+</body>
+</html>
