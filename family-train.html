@@ -26,6 +26,11 @@
     dir=left      roll right-to-left instead of left-to-right
     names=0       hide the name plates
     bg=0b0f1a     solid background color (hex, no #) instead of transparent
+    me=yourlogin  your car rides right behind the engine in gold (for your own stream)
+    engine=sauce  put the Mushroom Sauce shield in the engine instead of the Mushbox wordmark
+
+  Sharing: any Mushboxer can add this same URL. Tip: tick "Shutdown source when not
+  visible" in the Browser source settings so it only checks live status while shown.
 -->
 <style>
   :root{
@@ -50,6 +55,8 @@
          padding:calc(1px * var(--s)) calc(9px * var(--s));border-radius:calc(7px * var(--s));
          max-width:calc(170px * var(--s));overflow:hidden;text-overflow:ellipsis}
   .car.live .plate{background:var(--red)}
+  .car.me .plate{background:var(--gold);color:var(--ink)}
+  .car.me svg{filter:drop-shadow(0 0 calc(10px * var(--s)) rgba(255,194,26,.75))}
   .waves path{animation:wave 1.5s linear infinite;transform-box:fill-box;transform-origin:50% 100%}
   .waves path:nth-child(2){animation-delay:-.5s}.waves path:nth-child(3){animation-delay:-1s}
   @keyframes wave{0%{opacity:1;transform:scale(.5)}100%{opacity:0;transform:scale(1.5)}}
@@ -72,6 +79,9 @@
   const ONLYLIVE = Q.get("onlylive") === "1";
   const DIR = Q.get("dir") === "left" ? -1 : 1;
   const NAMES = Q.get("names") !== "0";
+  const ME = (Q.get("me") || "").toLowerCase().replace(/[^a-z0-9_]/g, "");
+  const ENGINE_IMG = Q.get("engine") === "sauce" ? "logo.png" : "assets/img/mushbox-logo.png";
+  const LIVE_POLL_MS = 120000 + Math.floor(Math.random() * 20000); // ~2 min, staggered across viewers
   if (Q.get("bg")) document.body.style.background = "#" + Q.get("bg").replace(/[^0-9a-f]/gi, "");
   document.documentElement.style.setProperty("--s", S);
 
@@ -84,6 +94,7 @@
     pink:   ["#ff4fb4","#ffa3d7","#c4207f","#5e0d3b"],
     purple: ["#a46bff","#d2b8ff","#7339d6","#33166b"],
     black:  ["#2c303b","#5d6475","#1b1e25","#0d0f13"],
+    gold:   ["#ffbf14","#fff0a0","#cc8a00","#7a4f00"],
   };
   const CYCLE = ["orange","yellow","green","pink","purple","blue"];
   let avatars = {}, names = {}, live = new Set();
@@ -100,7 +111,7 @@
                     fill="${opts.live ? "#4DB8FF" : "#060810"}"/>`).join("");
     const pic = opts.avatar
       ? `<clipPath id="${id}"><rect x="${wx}" y="${wy}" width="${win}" height="${win}" rx="7"/></clipPath>
-         <image href="${opts.avatar}" x="${wx}" y="${wy}" width="${win}" height="${win}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${id})"/>`
+         <image href="${opts.avatar}" x="${wx}" y="${wy}" width="${win}" height="${win}" preserveAspectRatio="${opts.fit ? "xMidYMid meet" : "xMidYMid slice"}" clip-path="url(#${id})"/>`
       : `<text x="${wx+win/2}" y="${wy+win/2+12}" text-anchor="middle" font-size="34" font-weight="800" fill="#0A1535">${(opts.initial||"?")}</text>`;
     const waves = (opts.live || opts.waves) ? `<g class="waves" stroke="#4DB8FF" stroke-width="5" fill="none" stroke-linecap="round">
         ${[0,1,2].map(()=>`<path d="M${(x0+x1)/2+bx/2-20} ${y0+by-4} Q${(x0+x1)/2+bx/2} ${y0+by-22} ${(x0+x1)/2+bx/2+20} ${y0+by-4}"/>`).join("")}</g>` : "";
@@ -125,7 +136,7 @@
   }
 
   function engineSVG(){
-    const html = carSVG("blue", { waves:true, avatar:"logo.png" });
+    const html = carSVG("blue", { waves:true, avatar:ENGINE_IMG, fit: ENGINE_IMG.indexOf("mushbox-logo") >= 0 });
     return html;
   }
 
@@ -136,6 +147,7 @@
     }));
     if (ONLYLIVE) list = list.filter(p => p.live);
     if (LIVEFIRST) list.sort((a,b) => (b.live - a.live) || (a.i - b.i));
+    if (ME) list.sort((a,b) => ((b.login === ME) - (a.login === ME)));
     return list;
   }
 
@@ -150,8 +162,9 @@
     frag.appendChild(eng);
     people().forEach((p, k) => {
       const el = document.createElement("div");
-      el.className = "car" + (p.live ? " live" : "");
-      const skin = p.stage === "bench" ? "black" : (p.live ? "blue" : CYCLE[k % CYCLE.length]);
+      const mine = ME && p.login === ME;
+      el.className = "car" + (p.live ? " live" : "") + (mine ? " me" : "");
+      const skin = mine ? "gold" : p.stage === "bench" ? "black" : (p.live ? "blue" : CYCLE[k % CYCLE.length]);
       el.innerHTML = carSVG(skin, { live: p.live, soon: p.stage === "bench", avatar: avatars[p.login], initial: (p.name||"?")[0].toUpperCase() })
                    + (NAMES ? `<div class="plate">${p.name.replace(/[<>&]/g, "")}</div>` : "");
       frag.appendChild(el);
@@ -215,7 +228,7 @@
   render();
   requestAnimationFrame(tick);
   refreshAvatars().then(refreshLive);
-  setInterval(refreshLive, 60000);
+  setInterval(() => { if (document.visibilityState !== "hidden") refreshLive(); }, LIVE_POLL_MS);
   setInterval(refreshAvatars, 10 * 60000);
 })();
 </script>
