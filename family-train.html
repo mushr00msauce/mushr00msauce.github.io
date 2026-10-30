@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mushbox Family Train — OBS overlay</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!--
+  MUSHBOX FAMILY TRAIN — OBS browser source
+  ------------------------------------------------------------------
+  A train of Mushbox cages rolls across the screen. Each car shows a
+  family member's Twitch profile pic and name. Anyone live gets a red
+  LIVE tag, lit-up vents and signal waves; bench members ride in a
+  black "SOON" car. Roster comes from family.js, pics + live status
+  from the mushbox-live Worker (GET /avatars, GET /), so it updates on
+  its own when someone is added to family.js.
+
+  OBS: Sources > + > Browser
+       URL:    https://themushbox.com/family-train.html
+       Width:  1920   Height: 260   (transparent background by default)
+
+  Options (add to the URL, e.g. family-train.html?speed=90&livefirst=1):
+    speed=60      pixels per second (default 60)
+    size=1        car scale, 0.6 – 2 (default 1)
+    livefirst=1   live streamers ride right behind the engine
+    onlylive=1    only cars for people who are live (engine always shows)
+    dir=left      roll right-to-left instead of left-to-right
+    names=0       hide the name plates
+    bg=0b0f1a     solid background color (hex, no #) instead of transparent
+-->
+<style>
+  :root{
+    --ink:#060810; --navy:#0A1535; --royal:#1E6FFF; --sky:#4DB8FF; --deep:#1450c8;
+    --red:#ff3355; --gold:#ffc21a;
+  }
+  html,body{margin:0;height:100%;overflow:hidden;background:transparent}
+  body{font-family:"Rajdhani","Inter",system-ui,sans-serif}
+  #stage{position:absolute;inset:0;overflow:hidden}
+  #rail{position:absolute;left:0;right:0;height:9px;background:var(--ink);border-radius:3px}
+  #ties{position:absolute;left:0;height:12px;width:200%;
+        background:repeating-linear-gradient(90deg,var(--ink) 0 10px,transparent 10px 34px)}
+  #track{position:absolute;left:0;z-index:2;display:flex;align-items:flex-end;will-change:transform}
+  .car{position:relative;flex:0 0 auto;margin-right:calc(18px * var(--s))}
+  .car svg{display:block;width:calc(150px * var(--s));height:calc(150px * var(--s));overflow:visible}
+  .car .bob{animation:bob .55s ease-in-out infinite alternate}
+  .car:nth-child(2n) .bob{animation-delay:-.27s}
+  @keyframes bob{from{transform:translateY(0)}to{transform:translateY(calc(-3px * var(--s)))}}
+  .plate{position:absolute;left:50%;bottom:calc(-44px * var(--s));transform:translateX(-50%);
+         white-space:nowrap;font-weight:700;font-size:calc(17px * var(--s));letter-spacing:.3px;
+         color:#fff;background:var(--navy);border:calc(2.5px * var(--s)) solid var(--ink);
+         padding:calc(1px * var(--s)) calc(9px * var(--s));border-radius:calc(7px * var(--s));
+         max-width:calc(170px * var(--s));overflow:hidden;text-overflow:ellipsis}
+  .car.live .plate{background:var(--red)}
+  .waves path{animation:wave 1.5s linear infinite;transform-box:fill-box;transform-origin:50% 100%}
+  .waves path:nth-child(2){animation-delay:-.5s}.waves path:nth-child(3){animation-delay:-1s}
+  @keyframes wave{0%{opacity:1;transform:scale(.5)}100%{opacity:0;transform:scale(1.5)}}
+  .livetag{animation:blink 1.2s steps(2,start) infinite}
+  @keyframes blink{50%{opacity:.35}}
+  .wheel{animation:spin .6s linear infinite;transform-box:fill-box;transform-origin:center}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="stage"><div id="track"></div><div id="ties"></div><div id="rail"></div></div>
+<script src="family.js"></script>
+<script>
+(function(){
+  const WORKER = "https://mushbox-live.wkennedy74.workers.dev";
+  const Q = new URLSearchParams(location.search);
+  const SPEED = Math.max(5, +Q.get("speed") || 60);
+  const S = Math.min(2, Math.max(0.6, +Q.get("size") || 1));
+  const LIVEFIRST = Q.get("livefirst") === "1";
+  const ONLYLIVE = Q.get("onlylive") === "1";
+  const DIR = Q.get("dir") === "left" ? -1 : 1;
+  const NAMES = Q.get("names") !== "0";
+  if (Q.get("bg")) document.body.style.background = "#" + Q.get("bg").replace(/[^0-9a-f]/gi, "");
+  document.documentElement.style.setProperty("--s", S);
+
+  const FAM = window.MUSHBOX_FAMILY || { members: [] };
+  const SKINS = {
+    blue:   ["#1E6FFF","#4DB8FF","#1450c8","#0A1535"],
+    orange: ["#ff7a1a","#ffb877","#c95600","#6b2c00"],
+    yellow: ["#ffd21f","#fff29a","#cfa200","#6b5300"],
+    green:  ["#2fd36b","#9af5bd","#18994a","#0b4d23"],
+    pink:   ["#ff4fb4","#ffa3d7","#c4207f","#5e0d3b"],
+    purple: ["#a46bff","#d2b8ff","#7339d6","#33166b"],
+    black:  ["#2c303b","#5d6475","#1b1e25","#0d0f13"],
+  };
+  const CYCLE = ["orange","yellow","green","pink","purple","blue"];
+  let avatars = {}, names = {}, live = new Set();
+  let uid = 0;
+
+  // ---- one cage car as SVG (viewBox 150x150, cage front 20..112, peak up) ----
+  function carSVG(skin, opts){
+    const [body, hi, side, back] = SKINS[skin];
+    const id = "c" + (uid++);
+    const x0 = 18, y0 = 22, x1 = 114, y1 = 128, ch = 20, bx = 14, by = -9;
+    const poly = (a,b,c,d) => `${a},${b+ch} ${a+ch},${b} ${c-ch},${b} ${c},${b+ch} ${c},${d} ${a},${d}`;
+    const win = 62, wx = (x0+x1)/2 - win/2, wy = y0 + 13;
+    const vents = [0,1,2].map(i => `<rect x="${x0+12+i*25}" y="${wy+win+7}" width="20" height="9" rx="2.5"
+                    fill="${opts.live ? "#4DB8FF" : "#060810"}"/>`).join("");
+    const pic = opts.avatar
+      ? `<clipPath id="${id}"><rect x="${wx}" y="${wy}" width="${win}" height="${win}" rx="7"/></clipPath>
+         <image href="${opts.avatar}" x="${wx}" y="${wy}" width="${win}" height="${win}" preserveAspectRatio="xMidYMid slice" clip-path="url(#${id})"/>`
+      : `<text x="${wx+win/2}" y="${wy+win/2+12}" text-anchor="middle" font-size="34" font-weight="800" fill="#0A1535">${(opts.initial||"?")}</text>`;
+    const waves = (opts.live || opts.waves) ? `<g class="waves" stroke="#4DB8FF" stroke-width="5" fill="none" stroke-linecap="round">
+        ${[0,1,2].map(()=>`<path d="M${(x0+x1)/2+bx/2-20} ${y0+by-4} Q${(x0+x1)/2+bx/2} ${y0+by-22} ${(x0+x1)/2+bx/2+20} ${y0+by-4}"/>`).join("")}</g>` : "";
+    const tag = opts.live
+      ? `<g class="livetag"><rect x="${x1-30}" y="${y0-2}" width="40" height="17" rx="4" fill="#ff3355" stroke="#060810" stroke-width="3"/>
+         <text x="${x1-10}" y="${y0+11}" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">LIVE</text></g>`
+      : opts.soon ? `<rect x="${x1-34}" y="${y0-2}" width="46" height="17" rx="4" fill="#ffc21a" stroke="#060810" stroke-width="3"/>
+         <text x="${x1-11}" y="${y0+11}" text-anchor="middle" font-size="12" font-weight="800" fill="#060810">SOON</text>` : "";
+    const wheels = [x0+22, x1-14].map(cx => `<g class="wheel"><circle cx="${cx}" cy="${y1+9}" r="9" fill="#4DB8FF" stroke="#060810" stroke-width="3.5"/>
+        <line x1="${cx-6}" y1="${y1+9}" x2="${cx+6}" y2="${y1+9}" stroke="#060810" stroke-width="2.5"/></g>`).join("");
+    return `<svg viewBox="0 0 150 150">${wheels}<g class="bob">${waves}
+      <g stroke="#060810" stroke-width="5" stroke-linejoin="round">
+        <polygon points="${poly(x0+bx,y0+by,x1+bx,y1+by)}" fill="${back}"/>
+        <polygon points="${x1},${y0+ch} ${x1+bx},${y0+ch+by} ${x1+bx},${y1+by} ${x1},${y1}" fill="${side}"/>
+        <polygon points="${x1-ch},${y0} ${x1-ch+bx},${y0+by} ${x1+bx},${y0+ch+by} ${x1},${y0+ch}" fill="${body}"/>
+        <polygon points="${x0+ch},${y0} ${x0+ch+bx},${y0+by} ${x1-ch+bx},${y0+by} ${x1-ch},${y0}" fill="${hi}"/>
+        <polygon points="${poly(x0,y0,x1,y1)}" fill="${body}"/>
+      </g>
+      <polyline points="${x0+4},${y1-5} ${x0+4},${y0+ch+1} ${x0+ch+1},${y0+4} ${x1-ch-1},${y0+4}" stroke="${hi}" stroke-width="3" fill="none"/>
+      <rect x="${wx-3}" y="${wy-3}" width="${win+6}" height="${win+6}" rx="9" fill="#fff" stroke="#060810" stroke-width="3"/>
+      ${pic}${vents}${tag}</g></svg>`;
+  }
+
+  function engineSVG(){
+    const html = carSVG("blue", { waves:true, avatar:"logo.png" });
+    return html;
+  }
+
+  function people(){
+    let list = FAM.members.map((p, i) => ({
+      login: p.login, name: names[p.login] || p.name, stage: p.stage,
+      live: live.has(p.login) || (p.alts || []).some(a => live.has(a)), i
+    }));
+    if (ONLYLIVE) list = list.filter(p => p.live);
+    if (LIVEFIRST) list.sort((a,b) => (b.live - a.live) || (a.i - b.i));
+    return list;
+  }
+
+  const track = document.getElementById("track");
+  let setWidth = 0, offset = 0, last = performance.now();
+
+  function buildSet(){
+    const frag = document.createDocumentFragment();
+    const eng = document.createElement("div");
+    eng.className = "car";
+    eng.innerHTML = engineSVG() + (NAMES ? `<div class="plate">MUSHBOX FAMILY</div>` : "");
+    frag.appendChild(eng);
+    people().forEach((p, k) => {
+      const el = document.createElement("div");
+      el.className = "car" + (p.live ? " live" : "");
+      const skin = p.stage === "bench" ? "black" : (p.live ? "blue" : CYCLE[k % CYCLE.length]);
+      el.innerHTML = carSVG(skin, { live: p.live, soon: p.stage === "bench", avatar: avatars[p.login], initial: (p.name||"?")[0].toUpperCase() })
+                   + (NAMES ? `<div class="plate">${p.name.replace(/[<>&]/g, "")}</div>` : "");
+      frag.appendChild(el);
+    });
+    return frag;
+  }
+
+  function render(){
+    track.innerHTML = "";
+    // copies so the loop is seamless at any screen width
+    const one = buildSet();
+    track.appendChild(one);
+    setWidth = track.scrollWidth;
+    const copies = Math.max(2, Math.ceil(innerWidth / Math.max(1, setWidth)) + 1);
+    for (let c = 1; c < copies; c++) track.appendChild(buildSet());
+    layout();
+  }
+
+  function layout(){
+    const carH = 150 * S, plate = NAMES ? 46 * S : 6;
+    const railY = innerHeight - plate - 6 * S;
+    track.style.top = (railY - carH + 2 * S) + "px";
+    document.getElementById("rail").style.top = railY + "px";
+    document.getElementById("ties").style.top = (railY + 4) + "px";
+  }
+
+  function tick(now){
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;
+    if (setWidth > 0){
+      offset = (offset + SPEED * dt) % setWidth;
+      const x = DIR > 0 ? (offset - setWidth) : -offset;
+      track.style.transform = `translateX(${x}px)`;
+      document.getElementById("ties").style.transform = `translateX(${(DIR > 0 ? offset : -offset) % 34 - 34}px)`;
+    }
+    requestAnimationFrame(tick);
+  }
+
+  async function getJSON(path){
+    const r = await fetch(WORKER + path, { cache: "no-store" });
+    return r.json();
+  }
+  async function refreshLive(){
+    try{
+      const j = await getJSON("/");
+      const next = new Set((j.live || []).map(e => (e.login || "").toLowerCase()));
+      const changed = next.size !== live.size || [...next].some(l => !live.has(l));
+      live = next;
+      if (changed) render();
+    }catch(e){ /* keep rolling with what we have */ }
+  }
+  async function refreshAvatars(){
+    try{
+      const j = await getJSON("/avatars");
+      avatars = j.avatars || {}; names = j.names || {};
+      render();
+    }catch(e){}
+  }
+
+  if (DIR < 0) track.style.flexDirection = "row-reverse";
+  addEventListener("resize", render);
+  render();
+  requestAnimationFrame(tick);
+  refreshAvatars().then(refreshLive);
+  setInterval(refreshLive, 60000);
+  setInterval(refreshAvatars, 10 * 60000);
+})();
+</script>
+</body>
+</html>
