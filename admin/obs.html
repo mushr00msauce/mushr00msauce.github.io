@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Mushbox Cloud OBS</title>
+<style>
+  :root{
+    --bg:#0d1210; --panel:#131a17; --line:#223028;
+    --moss:#6fae7c; --moss-bright:#8fd39e; --spore:#b98ce0;
+    --text:#dfe8e2; --text-dim:#8fa298;
+    --mono:"JetBrains Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    --sans:"Inter","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; color:var(--text); font-family:var(--sans); line-height:1.55;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(111,174,124,0.10), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 10%, rgba(185,140,224,0.07), transparent 55%),
+      var(--bg);
+    padding-bottom:60px;
+  }
+  a{color:var(--moss-bright); text-decoration:none;}
+  header.top{padding:48px 24px 28px; max-width:900px; margin:0 auto; border-bottom:1px solid var(--line);}
+  .eyebrow{
+    font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--spore); margin-bottom:12px; display:flex; align-items:center; gap:8px;
+  }
+  .eyebrow::before{content:""; width:6px; height:6px; border-radius:50%; background:var(--spore); box-shadow:0 0 8px var(--spore);}
+  h1{font-size:clamp(28px,4vw,40px); margin:0 0 10px; letter-spacing:-.01em; font-weight:650;}
+  .lede{color:var(--text-dim); font-size:16px; max-width:640px; margin:0;}
+  .back{font-family:var(--mono); font-size:13px; display:inline-block; margin-bottom:18px;}
+  .wrap{max-width:900px; margin:0 auto; padding:0 24px;}
+  .grid{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); margin-top:28px;}
+  a.slot{
+    display:flex; flex-direction:column; gap:6px; padding:22px 20px; color:var(--text);
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    transition:border-color .15s, transform .15s, box-shadow .15s;
+  }
+  a.slot:hover, a.slot:focus-visible{border-color:var(--moss); transform:translateY(-2px); box-shadow:0 6px 24px rgba(111,174,124,.12); outline:none;}
+  .num{font-family:var(--mono); font-size:34px; font-weight:700; color:var(--moss-bright); line-height:1;}
+  .name{font-weight:600; font-size:17px;}
+  .host{font-family:var(--mono); color:var(--text-dim); font-size:12px; word-break:break-all;}
+  .tips{margin-top:28px; padding:18px 20px; background:var(--panel); border:1px solid var(--line); border-radius:14px; color:var(--text-dim); font-size:14.5px;}
+  .tips b{color:var(--text);}
+  .tips ol{margin:8px 0 0; padding-left:20px;}
+  .tips li{margin:5px 0;}
+  code{font-family:var(--mono); font-size:13px; color:var(--moss-bright);}
+</style>
+</head>
+<body>
+  <header class="top">
+    <a class="back" href="./">&larr; Admin</a>
+    <div class="eyebrow">OptiPlex &middot; Cloud OBS</div>
+    <h1>Cloud OBS slots</h1>
+    <p class="lede">Backup OBS for the Mushbox family. Each slot is its own desktop with its own OBS, scenes and stream key.</p>
+  </header>
+
+  <main class="wrap">
+    <!-- Rename slots here (name only - the number must match the slot). -->
+    <div class="grid" id="slots"></div>
+
+    <section class="tips">
+      <b>Using a slot</b>
+      <ol>
+        <li>Click a slot. The Cloudflare login you used for this page covers all four.</li>
+        <li>Enter that slot's login once and let the browser save it. List them any time with <code>obsslot list</code>.</li>
+        <li>Selkies sidebar &rarr; <b>Screen Settings</b> &rarr; 1920&times;1080 &rarr; <b>Set Manual Resolution</b>.</li>
+        <li>On weak internet: sidebar &rarr; <b>Video Settings</b> &rarr; lower quality/FPS. This only changes your view, not the stream.</li>
+        <li>A slot that won't load is probably parked: <code>obsslot start N</code> over SSH.</li>
+      </ol>
+    </section>
+  </main>
+
+<script>
+  const SLOTS = [
+    { n: 1, name: "Slot 1" },
+    { n: 2, name: "Slot 2" },
+    { n: 3, name: "Slot 3" },
+    { n: 4, name: "Slot 4" },
+  ];
+  const grid = document.getElementById("slots");
+  for (const s of SLOTS) {
+    const host = `obs${s.n}.themushbox.com`;
+    const a = document.createElement("a");
+    a.className = "slot";
+    a.href = `https://${host}/`;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.innerHTML = `<span class="num">${s.n}</span><span class="name"></span><span class="host">${host}</span>`;
+    a.querySelector(".name").textContent = s.name;
+    grid.appendChild(a);
+  }
+</script>
+</body>
+</html>
