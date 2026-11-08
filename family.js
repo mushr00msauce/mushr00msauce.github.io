@@ -115,7 +115,7 @@ window.MUSHBOX_FAMILY = {
             "JTEngland", "Kozybean", "Lyndainfj", "Morjanga", "OptimusKale",
             "PoisonHearrt", "Redivivus", "RefurberSteve", "UluMaika", "UncleJPop",
             "Xanthe"],
-    hypeTrain: ["mushr00msauce", "FriskyAlien", "Kozybean", "OptimusKale",
+    hypeTrain: ["mushr00msauce", "FriskyAlien", "Kozybean",
                 "Gman5o5", "RefurberSteve", "UncleJPop"],
     secret: {
       "Redivivus": "2026-11-12T02:00:00Z"   // Wed Nov 11, 6:00 PM Pacific
