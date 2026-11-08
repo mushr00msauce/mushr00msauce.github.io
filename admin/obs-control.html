@@ -195,7 +195,7 @@ async function resetSlot(s, live) {
   const n = s.name.replace(/\D/g, "");
   const msg = (live ? "⚠ Slot " + n + " looks LIVE right now. Resetting will end their stream.\n\n" : "") +
     "Reset Slot " + n + " (" + nameOf(s) + ") to the template?\n\n" +
-    "Its OBS scenes, sources, stream key and SRT link are wiped and replaced with the template. " +
+    "Its OBS scenes, sources, stream key and SRT link are wiped and replaced with the template, and the slot goes back to Unassigned. " +
     "A backup of the current setup is kept on the OptiPlex." +
     (s.state === "running" ? "\n\nOBS will restart (about 15 seconds)." : "");
   if (!confirm(msg)) return;
