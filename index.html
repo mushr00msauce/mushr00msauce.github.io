@@ -384,6 +384,42 @@
   </a>
   <p class="tagline">IRL streamer · builder of Mushbox bonded streaming rigs · Creators for Charity</p>
 
+  <!-- ===== 🚂 Hype Train banner (shows itself Nov 8 – 11, 2026) ===== -->
+  <style>
+    .mbxht{display:none;align-items:center;justify-content:center;gap:10px;width:100%;max-width:640px;margin:10px auto 2px;
+      padding:11px 16px;border-radius:14px;text-decoration:none;color:#1a1205;font-weight:800;font-size:15px;
+      font-family:"Rajdhani","Inter",sans-serif;letter-spacing:.02em;text-align:center;
+      background:linear-gradient(90deg,#ffc44d,#ffdf8a,#ffc44d);background-size:200% 100%;
+      border:2px solid #1a1205;box-shadow:3px 3px 0 #1a1205, 0 0 22px rgba(255,196,77,.45);
+      animation:mbxhtShine 3.5s linear infinite;transition:transform .12s ease}
+    .mbxht.on{display:flex}
+    .mbxht:hover{transform:translateY(-2px)}
+    .mbxht .loco{font-size:22px;display:inline-block;animation:mbxhtChug .6s ease-in-out infinite}
+    .mbxht .go{white-space:nowrap;background:#1a1205;color:#ffc44d;border-radius:999px;padding:2px 10px;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+    @keyframes mbxhtShine{0%{background-position:0 0}100%{background-position:200% 0}}
+    @keyframes mbxhtChug{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-2px) rotate(2deg)}}
+    @media (prefers-reduced-motion: reduce){ .mbxht,.mbxht .loco{animation:none} }
+  </style>
+  <a class="mbxht" id="mbxHypeBanner" href="/map.html?train=1">
+    <span class="loco" aria-hidden="true">&#x1F682;</span><span class="txt"></span><span class="go">Track it live</span>
+  </a>
+  <script>
+  (function(){
+    var a = document.getElementById("mbxHypeBanner"); if (!a) return;
+    var now = Date.now(),
+        show   = Date.parse("2026-11-08T00:00:00Z"),
+        depart = Date.parse("2026-11-09T12:30:00Z"),
+        arrive = Date.parse("2026-11-11T20:50:00Z"),
+        hide   = Date.parse("2026-11-12T07:59:00Z"), msg;
+    if (now < show || now > hide) return;
+    if (now < depart)      msg = "The Hype Train leaves for TwitchCon Monday morning!";
+    else if (now < arrive) msg = "The Hype Train is rolling to TwitchCon right now!";
+    else                   msg = "The Hype Train made it to San Diego!";
+    a.querySelector(".txt").textContent = msg;
+    a.classList.add("on");
+  })();
+  </script>
+
   <div class="uplink" aria-hidden="true">
     <span></span><span></span><span></span>
     <em>Bonded &amp; broadcasting</em>

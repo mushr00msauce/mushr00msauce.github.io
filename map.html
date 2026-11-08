@@ -143,6 +143,21 @@
   .partnertag{display:inline-block;margin:2px 0 0;font-family:var(--mono);font-size:9.5px;
     letter-spacing:.03em;color:var(--twitch-soft);background:rgba(145,70,255,.14);
     border:1px solid rgba(145,70,255,.4);border-radius:999px;padding:2px 7px;white-space:nowrap}
+  /* 🚂 Hype Train marker */
+  .hypetrain{position:relative;width:56px;height:44px;display:flex;flex-direction:column;align-items:center;
+    filter:drop-shadow(0 0 6px rgba(255,196,77,.75));animation:htBob 1.1s ease-in-out infinite}
+  .hypetrain .ht-loco{font-size:28px;line-height:30px}
+  .hypetrain .ht-tag{margin-top:-2px;font-family:var(--mono);font-size:8.5px;font-weight:800;letter-spacing:.08em;
+    text-transform:uppercase;color:#1a1205;background:#ffc44d;border:1.5px solid #1a1205;border-radius:999px;
+    padding:0 6px;white-space:nowrap}
+  .hypetrain .ht-smoke{position:absolute;top:-6px;left:10px;width:20px;height:16px}
+  .hypetrain .ht-smoke i{position:absolute;bottom:0;left:0;width:7px;height:7px;border-radius:50%;
+    background:rgba(255,255,255,.75);animation:htPuff 1.8s ease-out infinite}
+  .hypetrain .ht-smoke i:nth-child(2){animation-delay:.6s}
+  .hypetrain .ht-smoke i:nth-child(3){animation-delay:1.2s}
+  @keyframes htBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+  @keyframes htPuff{0%{opacity:.85;transform:translate(0,0) scale(.6)}100%{opacity:0;transform:translate(10px,-14px) scale(1.7)}}
+  @media (prefers-reduced-motion: reduce){ .hypetrain,.hypetrain .ht-smoke i{animation:none} }
   /* 🎪 TwitchCon attendee — same footnote pill, Mushbox sky-toned */
   .tctag{display:inline-block;margin:2px 0 0 3px;font-family:var(--mono);font-size:9.5px;
     letter-spacing:.03em;color:#bfe6ff;background:rgba(77,184,255,.14);
@@ -1553,7 +1568,7 @@
       list.appendChild(u);
     }
 
-    if(!EMBED && bounds.length) map.flyToBounds(bounds, { padding:[70,70], maxZoom:6, duration:.6 });
+    if(!EMBED && !HYPE_FOCUS && bounds.length) map.flyToBounds(bounds, { padding:[70,70], maxZoom:6, duration:.6 });
     stamp();
   }
 
@@ -1727,6 +1742,180 @@
   });
 
   renderManualPins();
+
+  /* =====================================================================
+     🚂 THE HYPE TRAIN — Champaign → Chicago → Los Angeles → San Diego
+     Live position from Amtraker (a public mirror of Amtrak's Track-a-Train
+     feed). If that's unreachable, the train is placed by the timetable below
+     so it always keeps moving. Shows only during the trip window.
+     map.html?train=1 opens the map zoomed in on it.
+     ===================================================================== */
+  var HYPE = {
+    start: Date.parse("2026-11-08T00:00:00Z"),   // parked in Champaign until it leaves
+    end:   Date.parse("2026-11-12T07:59:00Z"),   // gone after Nov 11, 11:59 PM PT
+    api:   "https://api-v3.amtraker.com/v3/trains/",
+    legs: [
+      { id:"58-8", name:"City of New Orleans #58", from:"2026-11-09T11:30:00Z", to:"2026-11-09T19:00:00Z" },
+      { id:"3-9",  name:"Southwest Chief #3",      from:"2026-11-09T19:00:00Z", to:"2026-11-11T18:00:00Z" }
+    ],
+    // [name, lat, lng, UTC time]  (timetable; the Surfliner leg is an estimate)
+    stops: [
+      ["Champaign, IL",      40.1164, -88.2434, "2026-11-09T12:30:00Z"],
+      ["Kankakee, IL",       41.1197, -87.8612, "2026-11-09T13:18:00Z"],
+      ["Homewood, IL",       41.5572, -87.6687, "2026-11-09T13:49:00Z"],
+      ["Chicago, IL",        41.8789, -87.6396, "2026-11-09T15:15:00Z"],
+      ["Chicago, IL",        41.8789, -87.6396, "2026-11-09T19:30:00Z"],
+      ["Naperville, IL",     41.7795, -88.1455, "2026-11-09T20:03:00Z"],
+      ["Mendota, IL",        41.5475, -89.1176, "2026-11-09T20:54:00Z"],
+      ["Princeton, IL",      41.3681, -89.4648, "2026-11-09T21:16:00Z"],
+      ["Galesburg, IL",      40.9447, -90.3640, "2026-11-09T22:09:00Z"],
+      ["Fort Madison, IA",   40.6250, -91.3150, "2026-11-09T23:10:00Z"],
+      ["La Plata, MO",       40.0275, -92.4919, "2026-11-10T00:24:00Z"],
+      ["Kansas City, MO",    39.0848, -94.5880, "2026-11-10T02:53:00Z"],
+      ["Kansas City, MO",    39.0848, -94.5880, "2026-11-10T03:37:00Z"],
+      ["Lawrence, KS",       38.9717, -95.2353, "2026-11-10T04:47:00Z"],
+      ["Topeka, KS",         39.0558, -95.6710, "2026-11-10T05:24:00Z"],
+      ["Newton, KS",         38.0467, -97.3450, "2026-11-10T07:40:00Z"],
+      ["Hutchinson, KS",     38.0561, -97.9311, "2026-11-10T08:15:00Z"],
+      ["Dodge City, KS",     37.7528, -100.0171,"2026-11-10T10:14:00Z"],
+      ["Garden City, KS",    37.9653, -100.8731,"2026-11-10T11:05:00Z"],
+      ["Lamar, CO",          38.0900, -102.6188,"2026-11-10T12:33:00Z"],
+      ["La Junta, CO",       37.9850, -103.5440,"2026-11-10T13:50:00Z"],
+      ["Trinidad, CO",       37.1700, -104.5085,"2026-11-10T15:10:00Z"],
+      ["Raton, NM",          36.9003, -104.4383,"2026-11-10T16:12:00Z"],
+      ["Las Vegas, NM",      35.5933, -105.2139,"2026-11-10T17:57:00Z"],
+      ["Lamy, NM",           35.4811, -105.8800,"2026-11-10T19:53:00Z"],
+      ["Albuquerque, NM",    35.0820, -106.6480,"2026-11-10T21:24:00Z"],
+      ["Albuquerque, NM",    35.0820, -106.6480,"2026-11-10T22:14:00Z"],
+      ["Gallup, NM",         35.5292, -108.7406,"2026-11-11T00:54:00Z"],
+      ["Winslow, AZ",        35.0222, -110.6970,"2026-11-11T01:43:00Z"],
+      ["Flagstaff, AZ",      35.1981, -111.6510,"2026-11-11T02:55:00Z"],
+      ["Kingman, AZ",        35.1889, -114.0530,"2026-11-11T05:49:00Z"],
+      ["Needles, CA",        34.8406, -114.6062,"2026-11-11T07:54:00Z"],
+      ["Barstow, CA",        34.9048, -117.0247,"2026-11-11T11:23:00Z"],
+      ["Victorville, CA",    34.5361, -117.2912,"2026-11-11T12:02:00Z"],
+      ["San Bernardino, CA", 34.1043, -117.3086,"2026-11-11T13:26:00Z"],
+      ["Riverside, CA",      33.9757, -117.3700,"2026-11-11T13:50:00Z"],
+      ["Fullerton, CA",      33.8697, -117.9248,"2026-11-11T15:24:00Z"],
+      ["Los Angeles, CA",    34.0562, -118.2365,"2026-11-11T16:12:00Z"],
+      ["Los Angeles, CA",    34.0562, -118.2365,"2026-11-11T18:00:00Z"],
+      ["Irvine, CA",         33.6567, -117.7334,"2026-11-11T18:55:00Z"],
+      ["Oceanside, CA",      33.1957, -117.3797,"2026-11-11T19:55:00Z"],
+      ["San Diego, CA",      32.7163, -117.1696,"2026-11-11T20:50:00Z"]
+    ]
+  };
+  var HYPE_FOCUS = /[?&]train=1\b/.test(location.search);
+  HYPE.stops.forEach(function(s){ s[3] = Date.parse(s[3]); });
+
+  function hypeLegName(now){
+    var S = HYPE.stops;
+    if(now < S[3][3])  return "City of New Orleans #58";
+    if(now < S[4][3])  return "Layover in Chicago";
+    if(now < S[37][3]) return "Southwest Chief #3";
+    if(now < S[38][3]) return "Layover in Los Angeles";
+    return "Pacific Surfliner";
+  }
+  // Where the timetable says the train should be right now.
+  function hypeScheduled(now){
+    var S = HYPE.stops;
+    if(now <= S[0][3]) return { lat:S[0][1], lng:S[0][2], next:S[0][0], at:S[0][0] };
+    for(var i=1;i<S.length;i++){
+      if(now <= S[i][3]){
+        var a=S[i-1], b=S[i], f=(now-a[3])/Math.max(1,(b[3]-a[3]));
+        return { lat:a[1]+(b[1]-a[1])*f, lng:a[2]+(b[2]-a[2])*f,
+                 next: b[0], at: (a[0]===b[0] ? a[0] : null) };
+      }
+    }
+    var z=S[S.length-1]; return { lat:z[1], lng:z[2], next:null, at:z[0], arrived:true };
+  }
+  function hypeFirstTrain(j){
+    if(!j || typeof j !== "object") return null;
+    var keys = Object.keys(j);
+    for(var k=0;k<keys.length;k++){
+      var v = j[keys[k]];
+      if(Array.isArray(v) && v.length && v[0] && typeof v[0] === "object") return v[0];
+    }
+    return null;
+  }
+  function hypeLive(now){
+    var leg = HYPE.legs.filter(function(l){ return now >= Date.parse(l.from) && now < Date.parse(l.to); })[0];
+    if(!leg) return Promise.resolve(null);
+    return fetch(HYPE.api + leg.id, { cache:"no-store" })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(j){
+        var t = hypeFirstTrain(j);
+        var lat = t && +t.lat, lng = t && +(t.lon != null ? t.lon : t.lng);
+        if(!t || !isFinite(lat) || !isFinite(lng) || (!lat && !lng)) return null;
+        var next = null;
+        (t.stations || []).some(function(s){
+          var st = String(s.status || "").toLowerCase();
+          if(st === "enroute" || st === "station"){ next = s.name || s.code; return true; }
+          return false;
+        });
+        return { lat:lat, lng:lng, next:next, live:true, leg:leg.name,
+                 timely: t.trainTimely || "", state: t.trainState || "" };
+      })
+      .catch(function(){ return null; });
+  }
+
+  var hypeMarker = null, hypeLine = null, hypeFocused = false, hypeLast = null;
+  function hypeIcon(){
+    return L.divIcon({ className:"", iconSize:[56,44], iconAnchor:[28,30],
+      html:'<div class="hypetrain"><span class="ht-smoke"><i></i><i></i><i></i></span>'
+         + '<span class="ht-loco">🚂</span><span class="ht-tag">Hype Train</span></div>' });
+  }
+  function hypePopup(){
+    var p = hypeLast || {};
+    var riders = (window.MUSHBOX_FAMILY && window.MUSHBOX_FAMILY.event)
+      ? window.MUSHBOX_FAMILY.event.list("hypeTrain").map(function(r){ return esc(r.name); }).join(", ") : "";
+    var where = p.arrived ? "Arrived in San Diego! 🎉"
+      : (Date.now() < HYPE.stops[0][3]) ? "Boarding in Champaign Mon 6:30 AM CT"
+      : p.at ? "Stopped at " + esc(p.at)
+      : p.next ? "Next stop: " + esc(p.next) : "";
+    return '<div class="pop hypepop">'
+      + '<p class="pnm">🚂 The Hype Train</p>'
+      + '<div class="pcity">Champaign → Chicago → LA → San Diego</div>'
+      + '<p class="psrc">' + esc(p.leg || "") + (where ? " · " + where : "") + '</p>'
+      + (p.timely ? '<p class="pcat">' + esc(p.timely) + '</p>' : '')
+      + '<p class="psrc">' + (p.live ? '📡 Live position' : '🕒 Estimated from the Amtrak schedule') + '</p>'
+      + (riders ? '<p class="pcat">Aboard: ' + riders + '</p>' : '')
+      + '<p class="psrc" style="opacity:.7">Live data: <a href="https://amtraker.com" target="_blank" rel="noopener">Amtraker</a></p>'
+      + '</div>';
+  }
+  function hypeUpdate(){
+    var now = Date.now();
+    if(now < HYPE.start || now > HYPE.end){
+      if(hypeMarker){ map.removeLayer(hypeMarker); hypeMarker = null; }
+      if(hypeLine){ map.removeLayer(hypeLine); hypeLine = null; }
+      return;
+    }
+    if(!hypeLine){
+      hypeLine = L.polyline(HYPE.stops.map(function(s){ return [s[1], s[2]]; }),
+        { color:"#ffc44d", weight:2, opacity:.55, dashArray:"4 7", interactive:false }).addTo(map);
+    }
+    hypeLive(now).then(function(live){
+      var sch = hypeScheduled(now);
+      var p = live || sch;
+      p.leg = (live && live.leg) || hypeLegName(now);
+      if(!live){ p.live = false; }
+      hypeLast = p;
+      if(!hypeMarker){
+        hypeMarker = L.marker([p.lat, p.lng], { icon:hypeIcon(), zIndexOffset:2000, riseOnHover:true })
+          .bindPopup(hypePopup).addTo(map);
+      } else {
+        hypeMarker.setLatLng([p.lat, p.lng]);
+        if(hypeMarker.isPopupOpen()) hypeMarker.setPopupContent(hypePopup());
+      }
+      if(HYPE_FOCUS && !hypeFocused && !EMBED){
+        hypeFocused = true;
+        map.setView([p.lat, p.lng], 6);
+        setTimeout(function(){ hypeMarker.openPopup(); }, 400);
+      }
+    });
+  }
+  hypeUpdate();
+  setInterval(hypeUpdate, 60000);
+
   setInterval(renderManualPins, 60000); // prune expired pins + refresh "Xh Ym left" countdowns
 
   renderOffline(true);
