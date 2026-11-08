@@ -67,6 +67,14 @@
                  background: var(--bg); color: var(--text); font: inherit; margin: 10px 0; }
   #login .err { color: var(--red); font-size: 13px; min-height: 18px; }
   #app { display: none; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: none;
+           align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+  .mbox { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px;
+          width: 100%; max-width: 460px; }
+  .mbox label { display: block; margin-top: 14px; font-size: 13px; font-weight: 600; }
+  .mbox input { width: 100%; padding: 9px 10px; border-radius: 9px; border: 1px solid var(--line);
+                background: var(--bg); color: var(--text); font: inherit; margin-top: 5px; }
+  .mbox .err { color: var(--red); font-size: 13px; min-height: 18px; margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -114,6 +122,29 @@
     <b>Reset to template</b> keeps the last 5 backups per slot on the OptiPlex in /srv/mushbox/backups.
   </p>
 </main>
+
+<div class="modal" id="setupModal">
+  <div class="mbox">
+    <h2 id="setupTitle" style="margin:0 0 4px">Set up streamer</h2>
+    <div class="muted">Fill in what you have. Blank boxes are left as they are.</div>
+    <div class="warn" id="suWarn" style="display:none;margin-top:10px">⚠ This slot looks LIVE right now.</div>
+    <label>Twitch handle <span class="muted">(names the slot and finishes the clips link)</span></label>
+    <input id="suHandle" autocomplete="off" placeholder="mushr00msauce">
+    <label>Twitch stream key</label>
+    <div style="display:flex;gap:6px">
+      <input id="suKey" type="password" autocomplete="off" placeholder="live_…" style="flex:1">
+      <button id="suShow" type="button" title="Show / hide">👁</button>
+    </div>
+    <label>SRT link <span class="muted">(from NOALBS Cloud, goes into the IRL scene feed)</span></label>
+    <input id="suSrt" autocomplete="off" placeholder="srt://…">
+    <div class="muted" id="suNote" style="margin-top:10px"></div>
+    <div class="err" id="suErr"></div>
+    <div class="btns" style="margin-top:12px">
+      <button class="go" id="suApply">Apply</button>
+      <button id="suCancel">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <script>
 /* ===== Settings ===== */
@@ -176,6 +207,45 @@ async function resetSlot(s, live) {
   }
   catch (e) { if (e.message !== "401") banner("Couldn't reset slot " + n + ": " + e.message); }
   busy[s.name] = false; refresh();
+}
+
+let setupSlot = null, setupLive = false;
+function openSetup(s, live) {
+  setupSlot = s; setupLive = live;
+  const n = s.name.replace(/\D/g, "");
+  $("setupTitle").textContent = "Set up Slot " + n + " (" + nameOf(s) + ")";
+  $("suHandle").value = ""; $("suKey").value = ""; $("suSrt").value = "";
+  $("suKey").type = "password";
+  $("suErr").textContent = "";
+  $("suWarn").style.display = live ? "block" : "none";
+  $("suNote").textContent = s.state === "running" ? "OBS will restart (about 15 seconds) to apply this." : "The slot is stopped; it stays stopped.";
+  $("setupModal").style.display = "flex";
+  $("suHandle").focus();
+}
+function closeSetup() { $("setupModal").style.display = "none"; setupSlot = null; }
+
+async function applySetup() {
+  const s = setupSlot; if (!s) return;
+  const body = {
+    handle: $("suHandle").value.trim().replace(/^@/, ""),
+    key: $("suKey").value.trim(),
+    srt: $("suSrt").value.trim()
+  };
+  if (!body.handle && !body.key && !body.srt) { $("suErr").textContent = "Fill in at least one box."; return; }
+  if (body.handle && !/^[A-Za-z0-9_]{1,25}$/.test(body.handle)) { $("suErr").textContent = "Twitch handle: letters, numbers and _ only."; return; }
+  if (body.srt && !/^[a-z]+:\/\/\S+$/i.test(body.srt)) { $("suErr").textContent = "SRT link should look like srt://…"; return; }
+  if (setupLive && !confirm("This slot looks LIVE. Applying restarts OBS and will drop their stream for a few seconds. Continue?")) return;
+  const btn = $("suApply"); btn.disabled = true; btn.textContent = "Applying…";
+  busy[s.name] = true;
+  try {
+    const r = await api("/api/slot/" + s.name + "/setup", "POST", body);
+    closeSetup();
+    alertOk("Slot " + s.name.replace(/\D/g, "") + " updated: " + (r.changed || []).join(", ") + ".");
+  } catch (e) {
+    if (e.message !== "401") $("suErr").textContent = "Couldn't apply: " + e.message;
+  }
+  busy[s.name] = false; btn.disabled = false; btn.textContent = "Apply";
+  refresh();
 }
 
 function alertOk(msg) {
@@ -330,6 +400,10 @@ function renderSlots(slots) {
     card.appendChild(btns);
 
     const tbtns = el("div", "btns tmpl");
+    const setup = el("button", "go", "⚙ Set up streamer");
+    setup.disabled = !!busy[s.name];
+    setup.onclick = () => openSetup(s, live);
+    tbtns.appendChild(setup);
     const reset = el("button", "", busy[s.name] ? "Working…" : "↺ Reset to template");
     reset.disabled = !!busy[s.name] || !template;
     reset.title = template ? "Wipe this slot's OBS back to the template (a backup is kept)" : "Save a template first";
@@ -368,6 +442,12 @@ async function rename(s) {
   catch (e) { if (e.message !== "401") banner("Couldn't rename slot " + n + ": " + e.message); }
   refresh();
 }
+
+$("suApply").onclick = applySetup;
+$("suCancel").onclick = closeSetup;
+$("suShow").onclick = () => { const k = $("suKey"); k.type = k.type === "password" ? "text" : "password"; };
+$("setupModal").addEventListener("click", e => { if (e.target.id === "setupModal") closeSetup(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && setupSlot) closeSetup(); });
 
 $("loginBtn").onclick = async () => {
   const t = $("tokenInput").value.trim();
