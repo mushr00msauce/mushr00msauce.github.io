@@ -151,7 +151,11 @@ async function saveTemplate(s) {
       "Every future reset will copy this slot's scenes and sources. Stream keys and SRT links are removed from the copy." +
       (template ? "\n\nThis replaces the current template." : ""))) return;
   busy[s.name] = true; refresh();
-  try { await api("/api/slot/" + s.name + "/save-template", "POST"); banner(""); }
+  try {
+    const r = await api("/api/slot/" + s.name + "/save-template", "POST");
+    banner("");
+    alertOk("Template saved from Slot " + n + " with " + (r.files || 0) + " image/media file(s).");
+  }
   catch (e) { if (e.message !== "401") banner("Couldn't save template from slot " + n + ": " + e.message); }
   busy[s.name] = false; refresh();
 }
