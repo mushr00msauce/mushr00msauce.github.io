@@ -762,6 +762,19 @@
   function isIRL(cat){ return IRL_SET.indexOf(normCat(cat)) > -1; }
 
   // Build lookups. Sort places longest-first so multi-word names win.
+  /* TwitchCon week: a title that mentions TwitchCon pins them at the San Diego
+     Convention Center. Only active during the event window so a "TwitchCon
+     recap" stream from home later doesn't move anyone. Update the dates each year. */
+  var TWITCHCON = { start: "2026-11-11", end: "2026-11-15",
+                    lat: 32.7065, lng: -117.1617, label: "TwitchCon · San Diego" };
+  (function(){
+    var today = new Date().toISOString().slice(0,10);
+    if(today < TWITCHCON.start || today > TWITCHCON.end) return;
+    ["twitchcon", "twitch con", "twitchcon san diego", "twitch con san diego",
+     "twitchcon sd", "twitchcon2026", "twitchcon 2026", "twitchconsd", "tcsd", "tcsd26", "tcsd2026"]
+      .forEach(function(k){ PLACES.push([k, TWITCHCON.lat, TWITCHCON.lng, TWITCHCON.label]); });
+  })();
+
   PLACES.sort(function(a,b){ return b[0].length - a[0].length; });
   var CITY_INDEX = {};
   PLACES.forEach(function(p){ if(!(p[0] in CITY_INDEX)) CITY_INDEX[p[0]] = p; });
