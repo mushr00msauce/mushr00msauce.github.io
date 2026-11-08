@@ -155,6 +155,14 @@
     background:rgba(255,255,255,.75);animation:htPuff 1.8s ease-out infinite}
   .hypetrain .ht-smoke i:nth-child(2){animation-delay:.6s}
   .hypetrain .ht-smoke i:nth-child(3){animation-delay:1.2s}
+  .htwait{position:relative;width:44px;height:58px;display:flex;flex-direction:column;align-items:center}
+  .htwait img,.htwait .htw-ini{width:38px;height:38px;border-radius:50%;border:3px solid #ffc44d;
+    box-shadow:0 0 0 2px #1a1205, 0 0 14px rgba(255,196,77,.7);object-fit:cover;background:#0A1535}
+  .htwait .htw-ini{position:absolute;top:0;z-index:-1;display:flex;align-items:center;justify-content:center;
+    color:#ffc44d;font-weight:800;font-size:16px}
+  .htwait .htw-tag{margin-top:3px;font-family:var(--mono);font-size:8.5px;font-weight:800;letter-spacing:.04em;
+    color:#ffc44d;background:rgba(10,21,53,.92);border:1px solid rgba(255,196,77,.6);border-radius:999px;
+    padding:1px 6px;white-space:nowrap}
   @keyframes htBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
   @keyframes htPuff{0%{opacity:.85;transform:translate(0,0) scale(.6)}100%{opacity:0;transform:translate(10px,-14px) scale(1.7)}}
   @media (prefers-reduced-motion: reduce){ .hypetrain,.hypetrain .ht-smoke i{animation:none} }
@@ -1804,6 +1812,14 @@
       ["San Diego, CA",      32.7163, -117.1696,"2026-11-11T20:50:00Z"]
     ]
   };
+  // Riders waiting on a platform down the line. Their pic sits at the station
+  // until the train gets there (live station status, or the timetable if the
+  // live feed is down), then they're "aboard".  stop = index into HYPE.stops.
+  HYPE.waiting = [
+    { login:"friskyalien", name:"FriskyAlien", code:"LAJ", stop:20, tz:"America/Denver" },
+    { login:"gman5o5",     name:"Gman5o5",     code:"ABQ", stop:25, tz:"America/Denver" },
+    { login:"deedotdolla", name:"DeeDotDolla", code:"LAX", stop:37, tz:"America/Los_Angeles" }
+  ];
   var HYPE_FOCUS = /[?&]train=1\b/.test(location.search);
   HYPE.stops.forEach(function(s){ s[3] = Date.parse(s[3]); });
 
@@ -1852,7 +1868,12 @@
           if(st === "enroute" || st === "station"){ next = s.name || s.code; return true; }
           return false;
         });
-        return { lat:lat, lng:lng, next:next, live:true, leg:leg.name,
+        var reached = {};
+        (t.stations || []).forEach(function(s){
+          var st = String(s.status || "").toLowerCase();
+          if(st === "departed" || st === "station" || st === "arrived") reached[String(s.code || "").toUpperCase()] = 1;
+        });
+        return { lat:lat, lng:lng, next:next, live:true, leg:leg.name, reached:reached, chief: leg.id.indexOf("3-") === 0,
                  timely: t.trainTimely || "", state: t.trainState || "" };
       })
       .catch(function(){ return null; });
@@ -1866,8 +1887,13 @@
   }
   function hypePopup(){
     var p = hypeLast || {};
+    var waitingNow = {}, waitTxt = [];
+    HYPE.waiting.forEach(function(w){
+      if(!hypeBoarded(w)){ waitingNow[w.login] = 1; waitTxt.push(esc(w.name) + " (" + esc(HYPE.stops[w.stop][0].split(",")[0]) + ")"); }
+    });
     var riders = (window.MUSHBOX_FAMILY && window.MUSHBOX_FAMILY.event)
-      ? window.MUSHBOX_FAMILY.event.list("hypeTrain").map(function(r){ return esc(r.name); }).join(", ") : "";
+      ? window.MUSHBOX_FAMILY.event.list("hypeTrain").filter(function(r){ return !waitingNow[r.login]; })
+          .map(function(r){ return esc(r.name); }).join(", ") : "";
     var where = p.arrived ? "Arrived in San Diego! 🎉"
       : (Date.now() < HYPE.stops[0][3]) ? "Boarding in Champaign Mon 6:30 AM CT"
       : p.at ? "Stopped at " + esc(p.at)
@@ -1879,11 +1905,51 @@
       + (p.timely ? '<p class="pcat">' + esc(p.timely) + '</p>' : '')
       + '<p class="psrc">' + (p.live ? '📡 Live position' : '🕒 Estimated from the Amtrak schedule') + '</p>'
       + (riders ? '<p class="pcat">Aboard: ' + riders + '</p>' : '')
+      + (waitTxt.length ? '<p class="psrc">Waiting down the line: ' + waitTxt.join(", ") + '</p>' : '')
       + '<p class="psrc" style="opacity:.7">Live data: <a href="https://amtraker.com" target="_blank" rel="noopener">Amtraker</a></p>'
       + '</div>';
   }
+  // Has the train reached this rider's station yet?
+  var hypeReached = {};   // station code -> true, remembered from live data
+  function hypeBoarded(w){
+    if(hypeReached[w.code]) return true;
+    // no live word yet: trust the timetable, plus a little grace for late trains
+    return Date.now() > HYPE.stops[w.stop][3] + 20*60000 && !hypeLiveOK;
+  }
+  var hypeLiveOK = false, hypeWaitMarkers = {};
+  function hypeWaitIcon(w){
+    var src = AVATARS[w.login] || ("https://unavatar.io/twitch/" + encodeURIComponent(w.login));
+    return L.divIcon({ className:"", iconSize:[44,58], iconAnchor:[22,22],
+      html:'<div class="htwait"><img src="' + esc(src) + '" alt="" onerror="this.style.visibility=\'hidden\'">'
+         + '<span class="htw-ini">' + esc(w.name.charAt(0).toUpperCase()) + '</span>'
+         + '<span class="htw-tag">⏳ ' + esc(w.name) + '</span></div>' });
+  }
+  function hypeWaitPopup(w){
+    var st = HYPE.stops[w.stop], when = "";
+    try{
+      when = new Date(st[3]).toLocaleString("en-US", { timeZone:w.tz, weekday:"short", hour:"numeric", minute:"2-digit", timeZoneName:"short" });
+    }catch(e){ when = new Date(st[3]).toLocaleString(); }
+    return '<div class="pop hypepop"><p class="pnm">' + esc(w.name) + '</p>'
+      + '<div class="pcity">Waiting at ' + esc(st[0]) + '</div>'
+      + '<p class="psrc">🚂 Hops on the Hype Train here</p>'
+      + '<p class="pcat">Train due ' + esc(when) + (hypeLast && hypeLast.timely ? ' · ' + esc(hypeLast.timely) : '') + '</p>'
+      + '<a class="watch" href="https://twitch.tv/' + encodeURIComponent(w.login) + '" target="_blank" rel="noopener">Twitch ▸</a></div>';
+  }
+  function hypeUpdateWaiting(show){
+    HYPE.waiting.forEach(function(w){
+      var on = show && !hypeBoarded(w), mk = hypeWaitMarkers[w.login];
+      if(on && !mk){
+        var st = HYPE.stops[w.stop];
+        mk = hypeWaitMarkers[w.login] = L.marker([st[1], st[2]], { icon:hypeWaitIcon(w), zIndexOffset:1900, riseOnHover:true })
+          .bindPopup(function(){ return hypeWaitPopup(w); }).addTo(map);
+      } else if(!on && mk){
+        map.removeLayer(mk); delete hypeWaitMarkers[w.login];
+      }
+    });
+  }
   function hypeUpdate(){
     var now = Date.now();
+    hypeUpdateWaiting(now >= HYPE.start && now <= HYPE.end);
     if(now < HYPE.start || now > HYPE.end){
       if(hypeMarker){ map.removeLayer(hypeMarker); hypeMarker = null; }
       if(hypeLine){ map.removeLayer(hypeLine); hypeLine = null; }
@@ -1899,6 +1965,9 @@
       p.leg = (live && live.leg) || hypeLegName(now);
       if(!live){ p.live = false; }
       hypeLast = p;
+      hypeLiveOK = !!(live && live.chief);
+      if(live && live.reached) Object.keys(live.reached).forEach(function(c){ hypeReached[c] = true; });
+      hypeUpdateWaiting(true);
       if(!hypeMarker){
         hypeMarker = L.marker([p.lat, p.lng], { icon:hypeIcon(), zIndexOffset:2000, riseOnHover:true })
           .bindPopup(hypePopup).addTo(map);

@@ -92,7 +92,7 @@ window.MUSHBOX_FAMILY = {
     { name:"UluMaika", stage:"active", home:"Los Angeles, CA" },
     { name:"UncleJPop", stage:"active", home:"Las Vegas, NV" },
     { name:"WoodrowJenkins", stage:"active", home:"Florida" },
-    { name:"Xanthe", stage:"shipped", home:"Los Angeles, CA" },
+    { name:"Xanthe", stage:"active", home:"Los Angeles, CA" },
   ],
 
   // Extra names for the request form's "Referred by" list who aren't on
@@ -116,7 +116,7 @@ window.MUSHBOX_FAMILY = {
             "PoisonHearrt", "Redivivus", "RefurberSteve", "UluMaika", "UncleJPop",
             "Xanthe"],
     hypeTrain: ["mushr00msauce", "FriskyAlien", "Kozybean",
-                "Gman5o5", "RefurberSteve", "UncleJPop"],
+                "Gman5o5", "RefurberSteve", "UncleJPop", "DeeDotDolla"],
     secret: {
       "Redivivus": "2026-11-12T02:00:00Z"   // Wed Nov 11, 6:00 PM Pacific
     }
