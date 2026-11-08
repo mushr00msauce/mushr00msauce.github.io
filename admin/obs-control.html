@@ -22,6 +22,11 @@
   main { max-width: 1100px; margin: 0 auto; padding: 20px; }
   .banner { padding: 10px 14px; border-radius: 10px; margin-bottom: 16px; display: none; }
   .banner.err { background: #3a1820; border: 1px solid var(--red); display: block; }
+  .banner.ok { background: #173b27; border: 1px solid #23633f; color: var(--green); }
+  .tmplbar { background: var(--panel); border: 1px dashed var(--line); border-radius: 10px;
+             padding: 10px 14px; margin-bottom: 14px; color: var(--muted); font-size: 13px; }
+  .btns.tmpl { margin-top: 0; padding-top: 8px; border-top: 1px solid var(--line); }
+  .btns.tmpl button { font-size: 12px; padding: 6px 10px; }
   .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 22px; }
   .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
   .tile .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
@@ -85,6 +90,7 @@
 
 <main id="app">
   <div class="banner" id="banner"></div>
+  <div class="banner ok" id="okBanner"></div>
 
   <div class="tiles">
     <div class="tile"><div class="label">CPU</div><div class="val" id="hCpu">—</div>
@@ -99,11 +105,13 @@
       <div class="hint" id="hLive">—</div></div>
   </div>
 
+  <div class="tmplbar" id="tmplInfo">—</div>
   <div class="slots" id="slots"></div>
 
   <p class="muted" style="margin-top:22px">
     <b>Start</b> also turns on auto-start after reboots. <b>Stop</b> turns it off, so an unused slot stays off.
     A slot shows <b>LIVE</b> when it's uploading more than 1.5 Mbps.
+    <b>Reset to template</b> keeps the last 5 backups per slot on the OptiPlex in /srv/mushbox/backups.
   </p>
 </main>
 
@@ -124,7 +132,53 @@ function setToken(t) { memToken = t; try { localStorage.setItem(TOKEN_KEY, t); }
 function clearToken() { memToken = ""; try { localStorage.removeItem(TOKEN_KEY); } catch (e) {} }
 
 const $ = id => document.getElementById(id);
-let timer = null, busy = {};
+let timer = null, busy = {}, template = null;
+
+function renderTemplate() {
+  const t = $("tmplInfo");
+  if (!template) {
+    t.textContent = "No template saved yet. Set up one slot the way every streamer should start, then click “Save as template” on it.";
+    return;
+  }
+  const when = template.saved_at ? new Date(template.saved_at * 1000).toLocaleString() : "unknown time";
+  t.textContent = "Template: saved from Slot " + String(template.from || "?").replace(/\D/g, "") + " · " + when +
+    ". Stream keys and SRT links are cleared from it.";
+}
+
+async function saveTemplate(s) {
+  const n = s.name.replace(/\D/g, "");
+  if (!confirm("Use Slot " + n + " (" + nameOf(s) + ") as the template?\n\n" +
+      "Every future reset will copy this slot's scenes and sources. Stream keys and SRT links are removed from the copy." +
+      (template ? "\n\nThis replaces the current template." : ""))) return;
+  busy[s.name] = true; refresh();
+  try { await api("/api/slot/" + s.name + "/save-template", "POST"); banner(""); }
+  catch (e) { if (e.message !== "401") banner("Couldn't save template from slot " + n + ": " + e.message); }
+  busy[s.name] = false; refresh();
+}
+
+async function resetSlot(s, live) {
+  const n = s.name.replace(/\D/g, "");
+  const msg = (live ? "⚠ Slot " + n + " looks LIVE right now. Resetting will end their stream.\n\n" : "") +
+    "Reset Slot " + n + " (" + nameOf(s) + ") to the template?\n\n" +
+    "Its OBS scenes, sources, stream key and SRT link are wiped and replaced with the template. " +
+    "A backup of the current setup is kept on the OptiPlex." +
+    (s.state === "running" ? "\n\nOBS will restart (about 15 seconds)." : "");
+  if (!confirm(msg)) return;
+  busy[s.name] = true; refresh();
+  try {
+    const r = await api("/api/slot/" + s.name + "/reset", "POST");
+    banner("");
+    alertOk("Slot " + n + " reset to template." + (r.backup ? " Backup saved as " + r.backup + "." : ""));
+  }
+  catch (e) { if (e.message !== "401") banner("Couldn't reset slot " + n + ": " + e.message); }
+  busy[s.name] = false; refresh();
+}
+
+function alertOk(msg) {
+  const b = $("okBanner");
+  b.textContent = msg; b.style.display = "block";
+  clearTimeout(alertOk.t); alertOk.t = setTimeout(() => { b.style.display = "none"; }, 8000);
+}
 
 function showLogin(msg) {
   clearInterval(timer); timer = null;
@@ -184,7 +238,9 @@ async function refresh() {
     return;
   }
   banner(data.error ? "OptiPlex reported a problem: " + data.error : "");
+  template = data.template || null;
   renderHost(data.host || {}, data.slots || []);
+  renderTemplate();
   renderSlots(data.slots || []);
   $("updated").textContent = data.updated ? "Updated " + new Date(data.updated * 1000).toLocaleTimeString() : "—";
 }
@@ -268,6 +324,19 @@ function renderSlots(slots) {
     open.href = SLOT_URL(s.name); open.target = "_blank"; open.rel = "noopener";
     btns.appendChild(open);
     card.appendChild(btns);
+
+    const tbtns = el("div", "btns tmpl");
+    const reset = el("button", "", busy[s.name] ? "Working…" : "↺ Reset to template");
+    reset.disabled = !!busy[s.name] || !template;
+    reset.title = template ? "Wipe this slot's OBS back to the template (a backup is kept)" : "Save a template first";
+    reset.onclick = () => resetSlot(s, live);
+    tbtns.appendChild(reset);
+    const save = el("button", "", "Save as template");
+    save.disabled = !!busy[s.name];
+    save.title = "Use this slot's OBS setup as the starting point for every reset";
+    save.onclick = () => saveTemplate(s);
+    tbtns.appendChild(save);
+    card.appendChild(tbtns);
 
     wrap.appendChild(card);
   }
