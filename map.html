@@ -143,6 +143,10 @@
   .partnertag{display:inline-block;margin:2px 0 0;font-family:var(--mono);font-size:9.5px;
     letter-spacing:.03em;color:var(--twitch-soft);background:rgba(145,70,255,.14);
     border:1px solid rgba(145,70,255,.4);border-radius:999px;padding:2px 7px;white-space:nowrap}
+  /* 🎪 TwitchCon attendee — same footnote pill, Mushbox sky-toned */
+  .tctag{display:inline-block;margin:2px 0 0 3px;font-family:var(--mono);font-size:9.5px;
+    letter-spacing:.03em;color:#bfe6ff;background:rgba(77,184,255,.14);
+    border:1px solid rgba(77,184,255,.45);border-radius:999px;padding:2px 7px;white-space:nowrap}
   .row .tel{font-size:10.5px;color:var(--sky);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--mono);opacity:.85}
   .row .vw{font-family:var(--mono);font-size:11px;color:var(--sky);flex:0 0 auto;text-align:right}
   .row .vw small{display:block;color:var(--dim);font-size:9px;letter-spacing:.08em}
@@ -936,6 +940,11 @@
     return isPartnerHot(e)
       ? '<span class="partnertag" title="At/above the Twitch Partner viewer threshold">🏆 Partner Watch</span>' : '';
   }
+  // 🎪 TwitchCon attendee pill — list lives in family.js (twitchcon.going).
+  function tcTag(login){
+    return (FAM.atTwitchCon && FAM.atTwitchCon(login))
+      ? '<span class="tctag" title="See them at '+esc(FAM.tcLabel)+'">🎪 '+esc(FAM.tcLabel)+'</span>' : '';
+  }
   function watchURL(login, platform){
     var isKick = platform==='kick' || KICK_LOGINS[(login||'').toString().toLowerCase()];
     return (isKick ? 'https://kick.com/' : 'https://twitch.tv/') + encodeURIComponent(login);
@@ -1005,6 +1014,7 @@
       + (COMING_SOON[login] ? '<span class="ost soon">mushbox coming soon</span>'
          : SHIPPED[login] ? '<span class="ost ship">📦 mushbox just landed</span>'
          : '<span class="ost">offline</span>')
+      + tcTag(login)
       + '</div>';
   }
 
@@ -1066,6 +1076,7 @@
       +     '<div class="pcity">'+esc(e.label)+'</div>'
       +     mobileTag(e.login || e.person)
       +     partnerTag(e)
+      +     tcTag(e.person || e.login)
       +   '</div>'
       + '</div>'
       + altLine
@@ -1094,6 +1105,7 @@
       + '<span class="onm">' + esc(disp) + '</span>'
       + '<span class="ost '+ring+'">' + label + '</span>'
       + partnerTag(e)
+      + tcTag(e.person || e.login)
       + '</div>';
   }
 
@@ -1390,7 +1402,7 @@
     // resolve each live person's location (title overrides home)
     var items = [];
     people.forEach(function(e){
-      var det = detectFromTitle(e.title), loc;
+      var det = (FAM.tcHidden && FAM.tcHidden(e.person || e.login)) ? null : detectFromTitle(e.title), loc;
       if(det){ loc = {lat:det.lat,lng:det.lng,label:det.label,source:'title'}; }
       else if(HOMES[e.person]){ var h=HOMES[e.person]; loc = {lat:h[0],lng:h[1],label:h[2],source:'home'}; }
       else { unmapped.push(e); return; }
@@ -1507,7 +1519,7 @@
         : fmtViewers(e.viewers);
       row.innerHTML =
         '<span class="beacon-mini"></span>'
-        + '<span class="info"><span class="nm">'+esc(e.name)+'</span>' + mobileTag(e.login || e.person) + partnerTag(e)
+        + '<span class="info"><span class="nm">'+esc(e.name)+'</span>' + mobileTag(e.login || e.person) + partnerTag(e) + tcTag(e.person || e.login)
         + '<span class="sub">'+pin+esc(e.label) + (e.cat ? ' · '+esc(e.cat) : '') +'</span>'
         + telLine
         + '</span>'

@@ -97,7 +97,24 @@ window.MUSHBOX_FAMILY = {
 
   // Extra names for the request form's "Referred by" list who aren't on
   // the family wall.
-  extraReferrers: ["potentialbliss", "tikitacotony"]
+  extraReferrers: ["potentialbliss", "tikitacotony"],
+
+  // TwitchCon badge (🎪) on the family wall and the map. Names as they're
+  // written above. Badges switch off by themselves after badgeUntil.
+  // secret: hidden until that moment — no badge, and their stream title
+  // won't move their map pin (they stay at their home base).
+  twitchcon: {
+    label:      "TwitchCon 2026",
+    badgeUntil: "2026-11-16",
+    going: ["Aprylanonymous", "Barktok", "EdventuresLive", "ElGatoPub", "FalconElite",
+            "Fi1es", "FriskyAlien", "Hamandlizgaming", "JayneRio", "JDCharisma",
+            "JTEngland", "Kozybean", "Lyndainfj", "Morjanga", "OptimusKale",
+            "PoisonHearrt", "Redivivus", "RefurberSteve", "UluMaika", "UncleJPop",
+            "Xanthe"],
+    secret: {
+      "Redivivus": "2026-11-12T02:00:00Z"   // Wed Nov 11, 6:00 PM Pacific
+    }
+  }
 };
 
 /* ---- helpers every page uses (no need to edit below) ---- */
@@ -118,4 +135,22 @@ window.MUSHBOX_FAMILY = {
   };
   F.alt2main = {};
   F.members.forEach(function(p){ p.alts.forEach(function(a){ F.alt2main[a] = p.login; }); });
+
+  // TwitchCon helpers
+  var TC = F.twitchcon || { going: [] }, going = {}, secret = {};
+  var byName = {};
+  F.members.forEach(function(p){ byName[p.name.toLowerCase()] = p.login; byName[p.login] = p.login; });
+  (TC.going || []).forEach(function(n){ var l = byName[String(n).toLowerCase()]; if (l) going[l] = 1; });
+  Object.keys(TC.secret || {}).forEach(function(n){
+    var l = byName[n.toLowerCase()]; if (l) secret[l] = Date.parse(TC.secret[n]);
+  });
+  function main(login){ login = String(login || "").toLowerCase(); return F.alt2main[login] || login; }
+  F.tcHidden = function(login){ var l = main(login); return !!secret[l] && Date.now() < secret[l]; };
+  F.atTwitchCon = function(login){
+    var l = main(login);
+    if (!going[l]) return false;
+    if (TC.badgeUntil && new Date().toISOString().slice(0,10) > TC.badgeUntil) return false;
+    return !F.tcHidden(l);
+  };
+  F.tcLabel = TC.label || "TwitchCon";
 })(window.MUSHBOX_FAMILY);

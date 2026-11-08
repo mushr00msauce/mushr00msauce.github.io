@@ -829,6 +829,10 @@
       /* Shipped: has the Mushbox, hasn't streamed on it yet. */
       .mbxfam-dot.mbxfam-ship{background:var(--sky);box-shadow:0 0 8px rgba(77,184,255,.85)}
       .mbxfam-box{font-size:12px;line-height:1;margin-left:-1px}
+      /* TwitchCon attendee — driven by twitchcon.going in /family.js */
+      .mbxfam-tc{display:inline-block;margin-left:4px;padding:1px 6px;border-radius:999px;
+        background:rgba(145,70,255,.18);border:1px solid rgba(145,70,255,.55);color:#cdb4ff;
+        font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;line-height:1.5;white-space:nowrap}
       .mbxfam-foot{margin-top:14px;color:var(--text-dim);font-size:13px;text-align:center}
       .mbxfam-foot a{color:var(--sky);text-decoration:none;font-weight:700}
       @media (prefers-reduced-motion: reduce){
@@ -903,6 +907,9 @@
           a.title = "Mushbox just landed \u2014 first stream coming up";
           dot = '<span class="mbxfam-dot mbxfam-ship"></span>';
           tail = '<span class="mbxfam-box" aria-label="just landed">\uD83D\uDCE6</span>';
+        }
+        if (F.atTwitchCon && F.atTwitchCon(p.login)) {
+          tail += '<span class="mbxfam-tc" title="See them at ' + esc(F.tcLabel) + '">🎪 TwitchCon</span>';
         }
         a.innerHTML = dot + esc(p.name) + tail;
         grid.appendChild(a);
