@@ -777,6 +777,65 @@
     </div>
 
 
+    <!-- ===== This week: Hype Train + TwitchCon Bound (lists live in /family.js, twitchcon) ===== -->
+    <div class="mbxev" id="mbxEvent" hidden>
+      <style>
+        .mbxev{grid-column:1/-1;width:min(900px,100%);justify-self:center;margin:18px auto 26px;display:grid;gap:14px;
+          grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr))}
+        .mbxev[hidden],.mbxev-card[hidden]{display:none}
+        .mbxev-card{background:var(--card);border:1px solid var(--card-edge);border-radius:18px;padding:16px 16px 18px;
+          box-shadow:0 14px 34px -22px rgba(30,111,255,.5)}
+        .mbxev-card.tc{border-color:rgba(77,184,255,.45)}
+        .mbxev-card.ht{border-color:rgba(255,190,60,.45)}
+        .mbxev-head{display:flex;align-items:baseline;justify-content:center;gap:10px;flex-wrap:wrap;text-align:center}
+        .mbxev-title{font-family:"Orbitron",sans-serif;font-weight:900;font-size:16px;letter-spacing:.14em;text-transform:uppercase;color:#fff}
+        .mbxev-card.tc .mbxev-title span{color:var(--sky)}
+        .mbxev-card.ht .mbxev-title span{color:#ffc44d}
+        .mbxev-sub{color:var(--text-dim);font-size:13px;font-family:"Rajdhani",sans-serif;font-weight:600;letter-spacing:.04em}
+        .mbxev .mbxfam-grid{margin-top:12px}
+      </style>
+      <div class="mbxev-card ht" id="mbxHT" hidden>
+        <div class="mbxev-head"><span class="mbxev-title">&#x1F682; The <span>Hype Train</span></span>
+          <span class="mbxev-sub" id="mbxHTSub"></span></div>
+        <div class="mbxfam-grid" id="mbxHTGrid"></div>
+      </div>
+      <div class="mbxev-card tc" id="mbxTC" hidden>
+        <div class="mbxev-head"><span class="mbxev-title">&#x1F3AA; TwitchCon <span>Bound</span></span>
+          <span class="mbxev-sub" id="mbxTCSub"></span></div>
+        <div class="mbxfam-grid" id="mbxTCGrid"></div>
+      </div>
+    </div>
+    <script>
+    (function(){
+      var F = window.MUSHBOX_FAMILY; if (!F || !F.event) return;
+      var E = F.event;
+      function esc(t){ return String(t).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+      function fill(gridId, list){
+        var grid = document.getElementById(gridId);
+        list.slice().sort(function(a,b){ return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1; })
+          .forEach(function(p){
+            var a = document.createElement("a");
+            a.className = "mbxfam-chip"; a.setAttribute("data-login", p.login);
+            a.href = p.url; a.target = "_blank"; a.rel = "noopener";
+            a.innerHTML = '<span class="mbxfam-dot"></span>' + esc(p.name);
+            grid.appendChild(a);
+          });
+      }
+      var ht = E.list("hypeTrain"), tc = E.list("going"), any = false;
+      if (ht.length && E.showing("hypeTrain")) {
+        fill("mbxHTGrid", ht); any = true;
+        document.getElementById("mbxHTSub").textContent = E.hypeTrainSub + " \u00B7 " + ht.length + " aboard";
+        document.getElementById("mbxHT").hidden = false;
+      }
+      if (tc.length && E.showing("going")) {
+        fill("mbxTCGrid", tc); any = true;
+        document.getElementById("mbxTCSub").textContent = E.twitchconSub + " \u00B7 " + tc.length + " Mushboxers";
+        document.getElementById("mbxTC").hidden = false;
+      }
+      if (any) document.getElementById("mbxEvent").hidden = false;
+    })();
+    </script>
+
     <span class="section-label centered" id="mbxfamLabel">The Mushbox Family</span>
 
     <style>
@@ -829,10 +888,6 @@
       /* Shipped: has the Mushbox, hasn't streamed on it yet. */
       .mbxfam-dot.mbxfam-ship{background:var(--sky);box-shadow:0 0 8px rgba(77,184,255,.85)}
       .mbxfam-box{font-size:12px;line-height:1;margin-left:-1px}
-      /* TwitchCon attendee — driven by twitchcon.going in /family.js */
-      .mbxfam-tc{display:inline-block;margin-left:4px;padding:1px 6px;border-radius:999px;
-        background:rgba(145,70,255,.18);border:1px solid rgba(145,70,255,.55);color:#cdb4ff;
-        font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;line-height:1.5;white-space:nowrap}
       .mbxfam-foot{margin-top:14px;color:var(--text-dim);font-size:13px;text-align:center}
       .mbxfam-foot a{color:var(--sky);text-decoration:none;font-weight:700}
       @media (prefers-reduced-motion: reduce){
@@ -907,9 +962,6 @@
           a.title = "Mushbox just landed \u2014 first stream coming up";
           dot = '<span class="mbxfam-dot mbxfam-ship"></span>';
           tail = '<span class="mbxfam-box" aria-label="just landed">\uD83D\uDCE6</span>';
-        }
-        if (F.atTwitchCon && F.atTwitchCon(p.login)) {
-          tail += '<span class="mbxfam-tc" title="See them at ' + esc(F.tcLabel) + '">🎪 TwitchCon</span>';
         }
         a.innerHTML = dot + esc(p.name) + tail;
         grid.appendChild(a);
@@ -1662,6 +1714,14 @@
         chip.appendChild(b);
         grid.prepend(chip);
       }
+
+      // also light them up in the Hype Train / TwitchCon Bound lists
+      document.querySelectorAll('#mbxEvent [data-login="' + primary + '"]').forEach(function(c){
+        if (c.querySelector(".mbxlive-badge")) return;
+        c.href = (isKick ? "https://kick.com/" : "https://twitch.tv/") + s.login;
+        var lb = document.createElement("span"); lb.className = "mbxlive-badge"; lb.textContent = "LIVE";
+        c.appendChild(lb); c.parentNode.prepend(c);
+      });
 
       // embed players for the top streams (already sorted by viewers)
       if (embeds < MAX_EMBEDS && isIRL(s) && !embedded[primary]) {

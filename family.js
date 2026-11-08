@@ -99,18 +99,23 @@ window.MUSHBOX_FAMILY = {
   // the family wall.
   extraReferrers: ["potentialbliss", "tikitacotony"],
 
-  // TwitchCon badge (🎪) on the family wall and the map. Names as they're
-  // written above. Badges switch off by themselves after badgeUntil.
-  // secret: hidden until that moment — no badge, and their stream title
-  // won't move their map pin (they stay at their home base).
+  // THIS WEEK — the "Hype Train" and "TwitchCon Bound" lists on the homepage
+  // (above the family wall) and the 🎪 tag on the map. Use names as written
+  // above; anyone NOT in the family can go in too (shown as typed, linked to
+  // twitch.tv/name). Both lists hide themselves after showUntil.
+  // secret: hidden from the lists and the map until that moment, and their
+  // stream title won't move their map pin (they stay at their home base).
   twitchcon: {
-    label:      "TwitchCon 2026",
-    badgeUntil: "2026-11-16",
+    label:        "TwitchCon 2026",
+    twitchconSub: "San Diego \u00B7 Nov 13\u201315",
+    hypeTrainSub: "Chicago \u2192 San Diego \u00B7 Nov 9\u201311",
+    showUntil:    "2026-11-16",
     going: ["Aprylanonymous", "Barktok", "EdventuresLive", "ElGatoPub", "FalconElite",
             "Fi1es", "FriskyAlien", "Hamandlizgaming", "JayneRio", "JDCharisma",
             "JTEngland", "Kozybean", "Lyndainfj", "Morjanga", "OptimusKale",
             "PoisonHearrt", "Redivivus", "RefurberSteve", "UluMaika", "UncleJPop",
             "Xanthe"],
+    hypeTrain: [],
     secret: {
       "Redivivus": "2026-11-12T02:00:00Z"   // Wed Nov 11, 6:00 PM Pacific
     }
@@ -136,21 +141,31 @@ window.MUSHBOX_FAMILY = {
   F.alt2main = {};
   F.members.forEach(function(p){ p.alts.forEach(function(a){ F.alt2main[a] = p.login; }); });
 
-  // TwitchCon helpers
-  var TC = F.twitchcon || { going: [] }, going = {}, secret = {};
-  var byName = {};
-  F.members.forEach(function(p){ byName[p.name.toLowerCase()] = p.login; byName[p.login] = p.login; });
-  (TC.going || []).forEach(function(n){ var l = byName[String(n).toLowerCase()]; if (l) going[l] = 1; });
-  Object.keys(TC.secret || {}).forEach(function(n){
-    var l = byName[n.toLowerCase()]; if (l) secret[l] = Date.parse(TC.secret[n]);
-  });
+  // TwitchCon / Hype Train helpers
+  var TC = F.twitchcon || {}, secret = {}, byName = {};
+  F.members.forEach(function(p){ byName[p.name.toLowerCase()] = p; byName[p.login] = p; });
   function main(login){ login = String(login || "").toLowerCase(); return F.alt2main[login] || login; }
+  Object.keys(TC.secret || {}).forEach(function(n){
+    var p = byName[n.toLowerCase()]; secret[p ? p.login : n.toLowerCase()] = Date.parse(TC.secret[n]);
+  });
+  function over(){ return TC.showUntil && new Date().toISOString().slice(0,10) > TC.showUntil; }
   F.tcHidden = function(login){ var l = main(login); return !!secret[l] && Date.now() < secret[l]; };
-  F.atTwitchCon = function(login){
-    var l = main(login);
-    if (!going[l]) return false;
-    if (TC.badgeUntil && new Date().toISOString().slice(0,10) > TC.badgeUntil) return false;
-    return !F.tcHidden(l);
-  };
+  function people(key){
+    return (TC[key] || []).map(function(n){
+      var p = byName[String(n).toLowerCase()];
+      if (p) return p;
+      var l = String(n).toLowerCase().replace(/^@/, "");
+      return { name: String(n).replace(/^@/, ""), login: l, url: "https://twitch.tv/" + l, guest: true };
+    }).filter(function(p){ return !F.tcHidden(p.login); });
+  }
+  var goingSet = {};
+  people("going").forEach(function(p){ goingSet[p.login] = 1; });
+  F.atTwitchCon = function(login){ return !over() && !!goingSet[main(login)] && !F.tcHidden(login); };
   F.tcLabel = TC.label || "TwitchCon";
+  F.event = {
+    list: people,
+    showing: function(){ return !over(); },
+    twitchconSub: TC.twitchconSub || "",
+    hypeTrainSub: TC.hypeTrainSub || ""
+  };
 })(window.MUSHBOX_FAMILY);
