@@ -152,10 +152,10 @@ async function api(path, method, body) {
     cache: "no-store"
   });
   if (r.status === 401) { clearToken(); showLogin("Token rejected — check it and try again."); throw new Error("401"); }
-  let body = {};
-  try { body = await r.json(); } catch (e) {}
-  if (!r.ok) throw new Error(body.error || ("HTTP " + r.status));
-  return body;
+  let data = {};
+  try { data = await r.json(); } catch (e) {}
+  if (!r.ok) throw new Error(data.error || ("HTTP " + r.status));
+  return data;
 }
 
 function banner(msg) {
