@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Cloud OBS Control · Mushbox</title>
+<style>
+  :root {
+    --bg: #0e0e13; --panel: #17171f; --panel2: #1f1f2a; --line: #2b2b38;
+    --text: #ececf3; --muted: #9a9ab0; --accent: #9b5cff;
+    --green: #2ecc71; --amber: #f5b041; --red: #ff4d5e; --gray: #5d5d70;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 18px 20px; border-bottom: 1px solid var(--line);
+           display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 20px; }
+  header .sub { color: var(--muted); font-size: 13px; }
+  header .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px; }
+  .banner { padding: 10px 14px; border-radius: 10px; margin-bottom: 16px; display: none; }
+  .banner.err { background: #3a1820; border: 1px solid var(--red); display: block; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 22px; }
+  .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+  .tile .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+  .tile .val { font-size: 26px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .tile .hint { color: var(--muted); font-size: 12px; }
+  .bar { height: 6px; background: var(--panel2); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; width: 0; background: var(--green); transition: width .4s; }
+  .slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px;
+          display: flex; flex-direction: column; gap: 10px; }
+  .card.live { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .card .top { display: flex; align-items: center; gap: 8px; }
+  .card h2 { margin: 0; font-size: 17px; }
+  .card .owner { color: var(--muted); font-size: 13px; }
+  .pill { margin-left: auto; font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+  .pill.live { background: var(--accent); color: #fff; }
+  .pill.run { background: #173b27; color: var(--green); }
+  .pill.off { background: #26262f; color: var(--muted); }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; font-size: 13px; }
+  .stats span { color: var(--muted); }
+  .stats b { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .warn { background: #3b2c10; border: 1px solid var(--amber); color: var(--amber);
+          font-size: 12px; padding: 6px 9px; border-radius: 8px; }
+  .btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: auto; }
+  button, .btn { appearance: none; border: 1px solid var(--line); background: var(--panel2); color: var(--text);
+                 padding: 8px 12px; border-radius: 9px; font: inherit; font-size: 13px; cursor: pointer;
+                 text-decoration: none; display: inline-flex; align-items: center; }
+  button:hover, .btn:hover { border-color: var(--accent); }
+  button:disabled { opacity: .45; cursor: wait; }
+  button.go { background: #173b27; border-color: #23633f; }
+  button.stop { background: #3a1820; border-color: #6d2532; }
+  .muted { color: var(--muted); font-size: 13px; }
+  #login { max-width: 420px; margin: 60px auto; background: var(--panel); border: 1px solid var(--line);
+           border-radius: 14px; padding: 22px; display: none; }
+  #login input { width: 100%; padding: 10px; border-radius: 9px; border: 1px solid var(--line);
+                 background: var(--bg); color: var(--text); font: inherit; margin: 10px 0; }
+  #login .err { color: var(--red); font-size: 13px; min-height: 18px; }
+  #app { display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🍄 Cloud OBS Control</h1>
+  <span class="sub">OptiPlex · obs-slot containers</span>
+  <div class="right">
+    <span class="muted" id="updated">—</span>
+    <button id="logout" title="Remove the saved token from this browser">Forget token</button>
+  </div>
+</header>
+
+<div id="login">
+  <h2 style="margin-top:0">Enter control token</h2>
+  <div class="muted">Paste the token the installer printed on the OptiPlex. It's saved in this browser only.</div>
+  <input id="tokenInput" type="password" autocomplete="off" placeholder="token">
+  <div class="err" id="loginErr"></div>
+  <button class="go" id="loginBtn">Unlock</button>
+</div>
+
+<main id="app">
+  <div class="banner" id="banner"></div>
+
+  <div class="tiles">
+    <div class="tile"><div class="label">CPU</div><div class="val" id="hCpu">—</div>
+      <div class="bar"><i id="hCpuBar"></i></div></div>
+    <div class="tile"><div class="label">Load (1 min)</div><div class="val" id="hLoad">—</div>
+      <div class="hint" id="hLoadHint">of 4 cores</div></div>
+    <div class="tile"><div class="label">CPU temp</div><div class="val" id="hTemp">—</div>
+      <div class="hint">warn 74 °C · crit 80 °C</div></div>
+    <div class="tile"><div class="label">RAM</div><div class="val" id="hMem">—</div>
+      <div class="bar"><i id="hMemBar"></i></div></div>
+    <div class="tile"><div class="label">Uptime</div><div class="val" id="hUp">—</div>
+      <div class="hint" id="hLive">—</div></div>
+  </div>
+
+  <div class="slots" id="slots"></div>
+
+  <p class="muted" style="margin-top:22px">
+    <b>Start</b> also turns on auto-start after reboots. <b>Stop</b> turns it off, so an unused slot stays off.
+    A slot shows <b>LIVE</b> when it's uploading more than 1.5 Mbps.
+  </p>
+</main>
+
+<script>
+/* ===== Settings ===== */
+const API = "https://obsctl.themushbox.com";
+const OWNERS = {
+  "obs-slot1": "Unassigned",
+  "obs-slot2": "Unassigned",
+  "obs-slot3": "UncleJPop",
+  "obs-slot4": "Hammer (test)"
+};
+const SLOT_URL = name => "https://obs" + name.replace(/\D/g, "") + ".themushbox.com";
+const LIVE_MBPS = 1.5;      // upload above this = live
+const IDLE_CPU_WARN = 50;   // not live but CPU above this = warning
+const POLL_MS = 5000;
+const TOKEN_KEY = "obsctl_token";
+
+/* ===== Token storage (safe if storage is blocked) ===== */
+let memToken = "";
+function getToken() { try { return localStorage.getItem(TOKEN_KEY) || memToken; } catch (e) { return memToken; } }
+function setToken(t) { memToken = t; try { localStorage.setItem(TOKEN_KEY, t); } catch (e) {} }
+function clearToken() { memToken = ""; try { localStorage.removeItem(TOKEN_KEY); } catch (e) {} }
+
+const $ = id => document.getElementById(id);
+let timer = null, busy = {};
+
+function showLogin(msg) {
+  clearInterval(timer); timer = null;
+  $("app").style.display = "none";
+  $("login").style.display = "block";
+  $("loginErr").textContent = msg || "";
+  $("tokenInput").value = "";
+  $("tokenInput").focus();
+}
+function showApp() {
+  $("login").style.display = "none";
+  $("app").style.display = "block";
+  refresh();
+  clearInterval(timer);
+  timer = setInterval(() => { if (!document.hidden) refresh(); }, POLL_MS);
+}
+
+async function api(path, method) {
+  const r = await fetch(API + path, {
+    method: method || "GET",
+    headers: { "Authorization": "Bearer " + getToken() },
+    cache: "no-store"
+  });
+  if (r.status === 401) { clearToken(); showLogin("Token rejected — check it and try again."); throw new Error("401"); }
+  let body = {};
+  try { body = await r.json(); } catch (e) {}
+  if (!r.ok) throw new Error(body.error || ("HTTP " + r.status));
+  return body;
+}
+
+function banner(msg) {
+  const b = $("banner");
+  if (msg) { b.textContent = msg; b.className = "banner err"; }
+  else { b.textContent = ""; b.className = "banner"; }
+}
+
+function fmtUptime(s) {
+  const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  return d ? d + "d " + h + "h" : h ? h + "h " + m + "m" : m + "m";
+}
+function color(el, v, warn, crit) {
+  el.style.color = v == null ? "" : v >= crit ? "var(--red)" : v >= warn ? "var(--amber)" : "var(--green)";
+}
+function bar(el, pct) {
+  el.style.width = Math.max(0, Math.min(100, pct)) + "%";
+  el.style.background = pct >= 90 ? "var(--red)" : pct >= 70 ? "var(--amber)" : "var(--green)";
+}
+
+async function refresh() {
+  let data;
+  try { data = await api("/api/status"); }
+  catch (e) {
+    if (e.message !== "401") banner("Can't reach the OptiPlex (" + e.message + "). It may be off, or the tunnel is down.");
+    return;
+  }
+  banner(data.error ? "OptiPlex reported a problem: " + data.error : "");
+  renderHost(data.host || {}, data.slots || []);
+  renderSlots(data.slots || []);
+  $("updated").textContent = data.updated ? "Updated " + new Date(data.updated * 1000).toLocaleTimeString() : "—";
+}
+
+function renderHost(h, slots) {
+  const cores = h.cores || 4;
+  if (h.cpu != null) { $("hCpu").textContent = Math.round(h.cpu) + "%"; bar($("hCpuBar"), h.cpu); }
+  if (h.load) {
+    $("hLoad").textContent = h.load[0].toFixed(2);
+    color($("hLoad"), h.load[0], cores * 0.75, cores);
+    $("hLoadHint").textContent = "of " + cores + " cores · 15 min: " + h.load[2].toFixed(2);
+  }
+  if (h.temp != null) { $("hTemp").textContent = Math.round(h.temp) + " °C"; color($("hTemp"), h.temp, 70, 74); }
+  if (h.mem_total) {
+    const used = h.mem_used / 1073741824, tot = h.mem_total / 1073741824;
+    $("hMem").textContent = used.toFixed(1) + " / " + tot.toFixed(0) + " GB";
+    bar($("hMemBar"), 100 * h.mem_used / h.mem_total);
+  }
+  if (h.uptime != null) $("hUp").textContent = fmtUptime(h.uptime);
+  const live = slots.filter(s => (s.tx_mbps || 0) > LIVE_MBPS).length;
+  const running = slots.filter(s => s.state === "running").length;
+  $("hLive").textContent = live + " live · " + running + " running · " + slots.length + " slots";
+}
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+function renderSlots(slots) {
+  const wrap = $("slots");
+  wrap.innerHTML = "";
+  if (!slots.length) { wrap.appendChild(el("div", "muted", "No obs-slot containers found.")); return; }
+  for (const s of slots) {
+    const running = s.state === "running";
+    const live = running && (s.tx_mbps || 0) > LIVE_MBPS;
+    const card = el("div", "card" + (live ? " live" : ""));
+
+    const top = el("div", "top");
+    const titles = el("div");
+    titles.appendChild(el("h2", null, "Slot " + s.name.replace(/\D/g, "")));
+    titles.appendChild(el("div", "owner", OWNERS[s.name] || "Unassigned"));
+    top.appendChild(titles);
+    top.appendChild(el("span", "pill " + (live ? "live" : running ? "run" : "off"),
+                       live ? "● LIVE" : running ? "Running" : "Stopped"));
+    card.appendChild(top);
+
+    const st = el("div", "stats");
+    const add = (k, v) => { const a = el("div"); a.appendChild(el("span", null, k + " ")); a.appendChild(el("b", null, v)); st.appendChild(a); };
+    add("CPU", running && s.cpu != null ? Math.round(s.cpu) + "%" : "—");
+    add("RAM", running && s.mem ? s.mem : "—");
+    add("Upload", running && s.tx_mbps != null ? s.tx_mbps.toFixed(1) + " Mbps" : "—");
+    add("Download", running && s.rx_mbps != null ? s.rx_mbps.toFixed(1) + " Mbps" : "—");
+    add("Auto-start", s.restart && s.restart !== "no" ? "On" : "Off");
+    add("Status", s.status || s.state || "—");
+    card.appendChild(st);
+
+    if (running && !live && s.cpu != null && s.cpu > IDLE_CPU_WARN) {
+      card.appendChild(el("div", "warn", "⚠ Idle but using " + Math.round(s.cpu) +
+        "% CPU. Check for an open preview or browser source, or stop it if no one's using it."));
+    }
+
+    const btns = el("div", "btns");
+    const mk = (label, cls, action) => {
+      const b = el("button", cls, busy[s.name] ? "Working…" : label);
+      b.disabled = !!busy[s.name];
+      b.onclick = () => act(s, action, live);
+      btns.appendChild(b);
+    };
+    if (running) { mk("Stop", "stop", "stop"); mk("Restart", "", "restart"); }
+    else mk("Start", "go", "start");
+    const open = el("a", "btn", "Open ↗");
+    open.href = SLOT_URL(s.name); open.target = "_blank"; open.rel = "noopener";
+    btns.appendChild(open);
+    card.appendChild(btns);
+
+    wrap.appendChild(card);
+  }
+}
+
+async function act(s, action, live) {
+  const n = s.name.replace(/\D/g, "");
+  if (action !== "start") {
+    const msg = (live ? "⚠ Slot " + n + " looks LIVE right now.\n\n" : "") +
+      (action === "stop" ? "Stop" : "Restart") + " slot " + n + " (" + (OWNERS[s.name] || "Unassigned") + ")?";
+    if (!confirm(msg)) return;
+  }
+  busy[s.name] = true; refresh();
+  try { await api("/api/slot/" + s.name + "/" + action, "POST"); banner(""); }
+  catch (e) { if (e.message !== "401") banner("Couldn't " + action + " slot " + n + ": " + e.message); }
+  busy[s.name] = false;
+  refresh();
+}
+
+$("loginBtn").onclick = async () => {
+  const t = $("tokenInput").value.trim();
+  if (!t) return;
+  setToken(t);
+  try { await api("/api/status"); showApp(); }
+  catch (e) { if (e.message !== "401") $("loginErr").textContent = "Can't reach the OptiPlex: " + e.message; }
+};
+$("tokenInput").addEventListener("keydown", e => { if (e.key === "Enter") $("loginBtn").click(); });
+$("logout").onclick = () => { clearToken(); showLogin(); };
+document.addEventListener("visibilitychange", () => { if (!document.hidden && getToken() && timer) refresh(); });
+
+if (getToken()) showApp(); else showLogin();
+</script>
+</body>
+</html>

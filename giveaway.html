@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#120d1c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Mushbox Giveaway Wheel</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@500;600;700&display=swap">
+<style>
+/* Layout: one-screen stage. Wheel fills the screen; controls tuck into a bottom bar and a slide-up entries sheet. Single dark look on purpose (it's lit for camera). */
+:root{
+  --bg:#120d1c; --bg2:#1d1530; --fg:#f6efe4; --dim:#a99cbf; --line:#3a2d52;
+  --cap:#e0413a; --cream:#f3e6cf; --gold:#f5b83d; --teal:#2fb7a5;
+  --display:"Bungee","Arial Black",Impact,sans-serif;
+  --body:"Barlow","Helvetica Neue",Arial,sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;overflow:hidden;
+  background-image:radial-gradient(ellipse at 50% 40%,#2a1d45 0%,var(--bg) 70%);}
+.app{height:100%;display:flex;flex-direction:column;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));box-sizing:border-box;gap:8px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(18px,5vw,30px);margin:0;letter-spacing:.02em;text-wrap:balance;line-height:1.05}
+h1 span{color:var(--cap)}
+.sub{color:var(--dim);font-size:13px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+.stage{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center}
+#wheelWrap{position:relative;width:300px;height:300px;max-width:100%}
+#wheel{width:100%;height:100%;display:block;cursor:pointer;touch-action:manipulation}
+#pointer{position:absolute;left:50%;top:-4px;width:36px;height:48px;transform:translateX(-50%);transform-origin:50% 8px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.6));z-index:2;pointer-events:none}
+#hub{position:absolute;left:50%;top:50%;width:22%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:var(--bg2);border:4px solid var(--gold);display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:var(--display);font-size:clamp(11px,3.4vw,22px);color:var(--gold);pointer-events:none;text-align:center;line-height:1}
+#hub small{font-family:var(--body);font-weight:700;font-size:.5em;color:var(--dim);letter-spacing:.15em;margin-top:4px}
+#count{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:min(40vw,40vh);color:var(--gold);text-shadow:0 0 40px rgba(245,184,61,.6);pointer-events:none;z-index:3}
+.bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)}
+button{font-family:var(--body);font-weight:700;font-size:15px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);color:var(--fg);padding:12px 16px;min-height:46px;cursor:pointer}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button.go{background:var(--cap);border-color:var(--cap);font-family:var(--display);font-weight:400;font-size:20px;letter-spacing:.04em;padding:12px 28px;color:#fff}
+button:disabled{opacity:.45;cursor:default}
+.places{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;font-size:14px}
+.chip{background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-weight:600}
+.chip b{color:var(--gold);margin-right:6px;font-family:var(--display);font-weight:400}
+.livestat{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--dim);margin-top:4px;font-variant-numeric:tabular-nums}
+.livestat i{width:9px;height:9px;border-radius:50%;background:var(--dim);display:inline-block}
+.livestat.on i{background:var(--teal);box-shadow:0 0 8px var(--teal)}
+.livestat.lock i{background:var(--gold)}
+.livestat.off i{background:var(--cap)}
+#names[readonly]{opacity:.75}
+.badge{display:inline-block;font-family:var(--display);font-size:13px;letter-spacing:.08em;color:#120d1c;background:var(--teal);border-radius:6px;padding:3px 8px;margin-top:4px}
+.stagemode header .tools,.stagemode .bar .aux{display:none}
+/* entries sheet */
+#sheet{position:fixed;inset:auto 0 0 0;max-height:86%;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg2);border-top:2px solid var(--gold);border-radius:18px 18px 0 0;z-index:20;display:flex;flex-direction:column;gap:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px calc(16px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.6)}
+#sheet h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0}
+#sheet p{margin:0;color:var(--dim);font-size:14px;line-height:1.45;max-width:65ch}
+#names{width:100%;box-sizing:border-box;min-height:180px;flex:1;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:12px;font:600 16px/1.5 var(--body);resize:none}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row label{display:flex;gap:8px;align-items:center;font-weight:600;font-size:15px}
+.row input[type=text]{flex:1;min-width:0;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:10px;font:600 16px var(--body)}
+input[type=checkbox]{width:22px;height:22px;accent-color:var(--cap)}
+.stat{font-variant-numeric:tabular-nums;color:var(--gold);font-weight:700}
+/* reveal */
+#reveal{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(10,6,18,.86);text-align:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#reveal .place{font-family:var(--display);color:var(--gold);font-size:clamp(20px,6vw,40px);letter-spacing:.06em}
+#reveal .who{font-family:var(--display);font-size:clamp(34px,11vw,96px);line-height:1;color:var(--fg);word-break:break-word;text-shadow:0 0 30px rgba(224,65,58,.8);animation:pop .7s cubic-bezier(.2,1.6,.4,1) both}
+#reveal .odds{color:var(--dim);font-weight:600;font-size:15px}
+@keyframes pop{0%{transform:scale(.2);opacity:0}100%{transform:scale(1);opacity:1}}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:31}
+@media (orientation:landscape) and (max-height:520px){header .sub{display:none}}
+@media (prefers-reduced-motion:reduce){#reveal .who{animation:none}}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <header>
+    <div>
+      <h1 id="titleEl"><span>Mushbox</span> Giveaway</h1>
+      <div class="sub" id="subEl">Hype Train · Southwest Chief</div>
+      <div class="livestat" id="liveStat"><i></i><span id="liveTxt">Loading entries…</span></div>
+      <span class="badge" id="pBadge" hidden>PRACTICE · NOT COUNTING</span>
+    </div>
+    <div class="tools"><button id="openSheet" type="button">Entries</button></div>
+  </header>
+  <div class="stage">
+    <div id="wheelWrap">
+      <svg id="pointer" viewBox="0 0 36 48"><path d="M18 46 L3 10 A15 15 0 1 1 33 10 Z" fill="#f5b83d" stroke="#120d1c" stroke-width="3"/><circle cx="18" cy="14" r="5" fill="#120d1c"/></svg>
+      <canvas id="wheel" aria-label="Giveaway wheel. Tap to spin."></canvas>
+      <div id="hub"><span id="hubTop">1ST</span><small id="hubSub">PLACE</small></div>
+      <div id="count" hidden></div>
+    </div>
+  </div>
+  <div class="places" id="places"></div>
+  <div class="bar">
+    <button class="aux" id="stageBtn" type="button">Stage mode</button>
+    <button class="go" id="spinBtn" type="button">Spin</button>
+    <button class="aux" id="soundBtn" type="button">Sound on</button>
+  </div>
+</div>
+
+<div id="sheet" hidden>
+  <div class="row" style="justify-content:space-between"><h2>Entries</h2><button id="closeSheet" type="button">Done</button></div>
+  <div class="row"><label><input type="checkbox" id="liveOn" checked> Load entries live from Streamer.bot</label></div>
+  <div class="row"><button id="refreshBtn" type="button">Refresh now</button><span class="sub" id="liveMsg"></span></div>
+  <p>With live entries on, this list fills itself from Streamer.bot and refreshes every 30 seconds. It locks after the first real draw so the pool can't change mid-drawing, and unlocks when you reset draws. Turn live off to type names by hand: one per line, with a number after a name for extra entries, like <b>aprylanonymous 5</b>.</p>
+  <textarea id="names" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
+  <div class="row"><span><span class="stat" id="nPeople">0</span> people · <span class="stat" id="nEntries">0</span> entries</span></div>
+  <div class="row"><label><input type="checkbox" id="practice"> Practice mode (spins don't count)</label></div>
+  <div class="row"><label><input type="checkbox" id="removeWin" checked> Take winners off the wheel after each draw</label></div>
+  <div class="row"><label><input type="checkbox" id="countdown" checked> 3‑2‑1 countdown before spin</label></div>
+  <div class="row"><label for="titleIn">Title</label><input type="text" id="titleIn" value="Mushbox Giveaway"></div>
+  <div class="row"><label for="subIn">Tagline</label><input type="text" id="subIn" value="Hype Train · Southwest Chief"></div>
+  <div class="row"><button id="resetBtn" type="button">Reset draws</button><span id="resetMsg" class="sub"></span></div>
+</div>
+
+<div id="reveal" hidden>
+  <span class="badge" id="rvBadge" hidden>PRACTICE SPIN</span>
+  <div class="place" id="rvPlace">1ST PLACE</div>
+  <div class="who" id="rvWho"></div>
+  <div class="odds" id="rvOdds"></div>
+  <div class="row" style="justify-content:center;margin-top:12px">
+    <button class="go" id="nextBtn" type="button">Draw 2nd</button>
+    <button id="closeReveal" type="button">Back to wheel</button>
+  </div>
+</div>
+<canvas id="confetti" hidden></canvas>
+
+<script>
+(function(){
+const SAMPLE=`aprylanonymous 5
+edventureslive 3
+barktok 4
+bigbonelife 2
+dianathedoggroomer 3
+alldaynyc 2
+unclejpop 4
+ira_aba 2
+lyndainfj 3
+xanthe 1
+viewer_one 1
+viewer_two 2`;
+const COLORS=["#e0413a","#f3e6cf","#2fb7a5","#f5b83d","#7b4fd1","#ef7f45"];
+const INK={"#f3e6cf":"#120d1c","#f5b83d":"#120d1c"};
+const PLACE=["1ST","2ND","3RD","4TH","5TH","6TH","7TH","8TH","9TH","10TH"];
+const $=id=>document.getElementById(id);
+const store={get(k,d){try{const v=localStorage.getItem("mbw_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("mbw_"+k,JSON.stringify(v))}catch(e){}}};
+
+const ENTRIES_URL="https://mushbox-giveaway.wkennedy74.workers.dev/entries";
+let live=store.get("live",true), listUpdated=store.get("listUpdated",null), fetchedAt=store.get("fetchedAt",null), online=null;
+let names=store.get("names",live?"":SAMPLE), winners=store.get("winners",[]);
+let practice=store.get("practice",false), trial=[];
+const cur=()=>practice?trial:winners;
+let sound=store.get("sound",true), rot=0, spinning=false, entries=[];
+$("names").value=names; $("removeWin").checked=store.get("remove",true); $("countdown").checked=store.get("cd",true);
+$("titleIn").value=store.get("title","Mushbox Giveaway"); $("subIn").value=store.get("sub","Hype Train · Southwest Chief");
+
+function parse(txt){
+  const map=new Map();
+  txt.split(/\n/).forEach(l=>{l=l.trim(); if(!l) return;
+    let n=l, c=1; const m=l.match(/^(.*?)[\s,]+x?(\d{1,4})$/i);
+    if(m&&m[1].trim()){n=m[1].trim(); c=Math.max(1,parseInt(m[2],10));}
+    const key=n.toLowerCase(); const prev=map.get(key);
+    map.set(key,{name:prev?prev.name:n,count:(prev?prev.count:0)+c});
+  });
+  return [...map.values()];
+}
+function build(){
+  const all=parse($("names").value);
+  $("nPeople").textContent=all.length; $("nEntries").textContent=all.reduce((a,b)=>a+b.count,0);
+  const out=new Set(cur().map(w=>w.name.toLowerCase()));
+  entries=$("removeWin").checked?all.filter(e=>!out.has(e.name.toLowerCase())):all;
+  draw(); renderPlaces(); if(typeof setLive==="function") setLive();
+}
+function setHeader(){
+  const t=$("titleIn").value.trim()||"Giveaway", parts=t.split(" ");
+  $("titleEl").innerHTML=""; const s=document.createElement("span"); s.textContent=parts[0]; $("titleEl").append(s, parts.length>1?" "+parts.slice(1).join(" "):"");
+  $("subEl").textContent=$("subIn").value;
+}
+function renderPlaces(){
+  const el=$("places"); el.innerHTML="";
+  const W=cur(); $("pBadge").hidden=!practice; $("practice").checked=practice;
+  W.forEach((w,i)=>{const c=document.createElement("span");c.className="chip";const b=document.createElement("b");b.textContent=PLACE[i]||(i+1)+"TH";c.append(b,w.name);el.append(c);});
+  const p=PLACE[W.length]||(W.length+1)+"TH"; $("hubTop").textContent=p; $("hubSub").textContent="PLACE";
+  $("spinBtn").textContent=entries.length?(practice?"Test spin ":"Spin for ")+p.toLowerCase():"No entries left"; $("spinBtn").disabled=!entries.length||spinning;
+}
+
+/* wheel drawing */
+const cv=$("wheel"), ctx=cv.getContext("2d");
+function size(){const st=document.querySelector(".stage").getBoundingClientRect(),side=Math.max(120,Math.floor(Math.min(st.width,st.height)));const w=$("wheelWrap");w.style.width=side+"px";w.style.height=side+"px";const r={width:side,height:side},d=window.devicePixelRatio||1;cv.width=Math.round(r.width*d);cv.height=Math.round(r.height*d);draw();}
+function draw(){
+  const W=cv.width; if(!W) return; const R=W/2, cx=R, cy=R, rr=R*0.94;
+  ctx.clearRect(0,0,W,W);
+  ctx.beginPath();ctx.arc(cx,cy,R*0.995,0,Math.PI*2);ctx.fillStyle="#f5b83d";ctx.fill();
+  ctx.beginPath();ctx.arc(cx,cy,R*0.965,0,Math.PI*2);ctx.fillStyle="#120d1c";ctx.fill();
+  // bulbs
+  for(let i=0;i<36;i++){const a=i/36*Math.PI*2;ctx.beginPath();ctx.arc(cx+Math.cos(a)*R*0.98,cy+Math.sin(a)*R*0.98,R*0.012,0,7);ctx.fillStyle=(i%2)?"#fff6d8":"#f5b83d";ctx.fill();}
+  const total=entries.reduce((a,b)=>a+b.count,0);
+  if(!total){ctx.fillStyle="#a99cbf";ctx.font=`700 ${W*0.04}px Barlow, sans-serif`;ctx.textAlign="center";ctx.fillText(live?"Waiting for entries":"Add entries to start",cx,cy+R*0.45);return;}
+  let a0=rot-Math.PI/2;
+  entries.forEach((e,i)=>{
+    const sw=e.count/total*Math.PI*2, col=COLORS[i%COLORS.length===0&&i===entries.length-1&&i>0?(i+1)%COLORS.length:i%COLORS.length];
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,rr,a0,a0+sw);ctx.closePath();ctx.fillStyle=col;ctx.fill();
+    ctx.strokeStyle="#120d1c";ctx.lineWidth=Math.max(1,W*0.003);ctx.stroke();
+    const arcLen=sw*rr*0.7; let fs=Math.min(W*0.045,arcLen*0.8);
+    if(fs>=W*0.012){
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(a0+sw/2);ctx.fillStyle=INK[col]||"#fff";
+      ctx.font=`700 ${fs}px Barlow, sans-serif`;ctx.textAlign="right";ctx.textBaseline="middle";
+      let label=e.name, maxW=rr*0.66; while(ctx.measureText(label).width>maxW&&label.length>3) label=label.slice(0,-2);
+      if(label!==e.name) label=label.slice(0,-1)+"…";
+      ctx.fillText(label,rr*0.93,0);ctx.restore();
+    }
+    e._a=a0;e._sw=sw;a0+=sw;
+  });
+}
+
+/* audio */
+let AC=null; function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==="suspended")AC.resume();return AC;}
+function beep(f,d,type,vol){if(!sound)return;const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=type||"square";o.frequency.value=f;g.gain.setValueAtTime(vol||0.12,a.currentTime);g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+d);o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+d);}
+function fanfare(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,i==3?0.6:0.18,"triangle",0.18),i*140));}
+
+/* fair pick: crypto random, weighted by entries */
+function rand(){const u=new Uint32Array(1);crypto.getRandomValues(u);return u[0]/4294967296;}
+function pick(){const total=entries.reduce((a,b)=>a+b.count,0);let r=rand()*total;for(const e of entries){if(r<e.count)return e;r-=e.count;}return entries[entries.length-1];}
+
+let wakeLock=null; async function wake(){try{wakeLock=await navigator.wakeLock.request("screen")}catch(e){}}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&wakeLock)wake();});
+
+async function countdown(){
+  if(!$("countdown").checked) return;
+  const c=$("count"); c.hidden=false;
+  for(const n of ["3","2","1"]){c.textContent=n;beep(440,0.15,"sine",0.2);await new Promise(r=>setTimeout(r,800));}
+  c.hidden=true;
+}
+async function spin(){
+  if(spinning||!entries.length) return; spinning=true; renderPlaces(); ac(); wake();
+  await countdown();
+  const total=entries.reduce((a,b)=>a+b.count,0), win=pick();
+  // where the winning slice sits relative to rotation 0
+  let start=0; for(const e of entries){if(e===win)break;start+=e.count/total*Math.PI*2;}
+  const sw=win.count/total*Math.PI*2, inside=start+sw*(0.15+0.7*rand());
+  // pointer is at top (-90deg); slice drawn at rot-90+inside, so we need rot ≡ -inside
+  const target=-inside, base=rot-(rot%(Math.PI*2));
+  let end=base+target; while(end<rot) end+=Math.PI*2;
+  end+=Math.PI*2*(7+Math.floor(rand()*3));
+  const from=rot, dist=end-from, dur=9500+rand()*1500, t0=performance.now();
+  let lastIdx=-1; const ptr=$("pointer");
+  const ease=t=>1-Math.pow(1-t,4.2);
+  await new Promise(res=>{
+    function frame(now){
+      const t=Math.min(1,(now-t0)/dur); rot=from+dist*ease(t); draw();
+      // which slice under pointer
+      let a=((-rot)%(Math.PI*2)+Math.PI*2)%(Math.PI*2), acc=0, idx=0;
+      for(let i=0;i<entries.length;i++){acc+=entries[i]._sw;if(a<acc){idx=i;break;}}
+      if(idx!==lastIdx){lastIdx=idx;beep(1400,0.03,"square",0.07);ptr.animate([{transform:"translateX(-50%) rotate(-18deg)"},{transform:"translateX(-50%) rotate(0)"}],{duration:120});}
+      if(t<1) requestAnimationFrame(frame); else res();
+    }
+    requestAnimationFrame(frame);
+  });
+  rot=rot%(Math.PI*2);
+  await new Promise(r=>setTimeout(r,700));
+  const W=cur(), place=PLACE[W.length]||(W.length+1)+"TH";
+  W.push({name:win.name,count:win.count}); if(!practice) store.set("winners",winners);
+  showReveal(win,place,total);
+  spinning=false;
+}
+function showReveal(win,place,total){
+  $("rvPlace").textContent=place+" PLACE";$("rvWho").textContent=win.name;
+  $("rvOdds").textContent=`${win.count} of ${total} entries · ${(win.count/total*100).toFixed(1)}% chance`;
+  $("rvBadge").hidden=!practice; $("reveal").hidden=false; fanfare(); confetti();
+  build();
+  const np=PLACE[cur().length]||(cur().length+1)+"TH";
+  $("nextBtn").textContent="Draw "+np.toLowerCase(); $("nextBtn").disabled=!entries.length;
+}
+
+/* confetti */
+function confetti(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const c=$("confetti"),x=c.getContext("2d"),d=devicePixelRatio||1; c.hidden=false;
+  c.width=innerWidth*d;c.height=innerHeight*d;
+  const P=Array.from({length:220},()=>({x:c.width/2,y:c.height*0.45,vx:(rand()-.5)*28*d,vy:(-rand()*26-6)*d,s:(5+rand()*8)*d,r:rand()*6,vr:(rand()-.5)*.4,c:COLORS[Math.floor(rand()*COLORS.length)]}));
+  const t0=performance.now();
+  (function f(now){x.clearRect(0,0,c.width,c.height);
+    P.forEach(p=>{p.vy+=0.6*d;p.vx*=0.99;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);x.restore();});
+    if(now-t0<4500) requestAnimationFrame(f); else {x.clearRect(0,0,c.width,c.height);c.hidden=true;}
+  })(t0);
+}
+
+/* live entries from Streamer.bot via the giveaway Worker */
+const locked=()=>live&&!practice&&winners.length>0;
+const hm=t=>t?new Date(t).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}):"";
+function setLive(){
+  const st=$("liveStat"), total=entries.reduce((a,b)=>a+b.count,0);
+  let cls="", txt;
+  if(!live){txt="Manual entries · "+total+" entries";}
+  else if(locked()){cls="lock";txt="Entries locked for this drawing · "+total+" entries";}
+  else if(online===false){cls="off";txt=fetchedAt?"No signal · using list from "+hm(fetchedAt):"No signal · no saved list yet";}
+  else if(online){cls="on";txt="Live · "+total+" entries"+(listUpdated?" · updated "+hm(listUpdated):"");}
+  else txt="Loading entries…";
+  st.className="livestat"+(cls?" "+cls:""); $("liveTxt").textContent=txt;
+  $("liveMsg").textContent=live?(locked()?"Locked until you reset draws":(fetchedAt?"Last checked "+hm(fetchedAt):"")):"";
+  $("names").readOnly=live; $("refreshBtn").disabled=!live||locked();
+}
+let busy=false;
+async function refresh(manual){
+  if(!live||busy) return;
+  if(locked()||spinning||(!manual&&!$("reveal").hidden)){setLive();return;}
+  busy=true;
+  try{
+    const r=await fetch(ENTRIES_URL+"?t="+Date.now(),{cache:"no-store"});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const d=await r.json();
+    if(locked()||spinning) return; // a draw started while we were fetching
+    const txt=(d.entries||[]).map(e=>e.name+" "+e.count).join("\n");
+    if(txt!==$("names").value){$("names").value=txt;store.set("names",txt);build();}
+    listUpdated=d.updated||null; fetchedAt=Date.now(); online=true;
+    store.set("listUpdated",listUpdated); store.set("fetchedAt",fetchedAt);
+  }catch(e){online=false;}
+  finally{busy=false;setLive();}
+}
+setInterval(()=>refresh(false),30000);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")refresh(false);});
+$("refreshBtn").onclick=()=>refresh(true);
+$("liveOn").checked=live;
+$("liveOn").onchange=()=>{live=$("liveOn").checked;store.set("live",live);online=null;setLive();build();if(live)refresh(true);};
+
+/* wiring */
+$("spinBtn").onclick=spin; cv.onclick=spin;
+$("nextBtn").onclick=()=>{$("reveal").hidden=true;spin();};
+$("closeReveal").onclick=()=>{$("reveal").hidden=true;};
+$("openSheet").onclick=()=>{$("sheet").hidden=false;};
+$("closeSheet").onclick=()=>{$("sheet").hidden=true;build();};
+$("names").oninput=()=>{store.set("names",$("names").value);build();};
+$("removeWin").onchange=()=>{store.set("remove",$("removeWin").checked);build();};
+$("practice").onchange=()=>{practice=$("practice").checked;trial=[];store.set("practice",practice);build();refresh(true);};
+$("countdown").onchange=()=>store.set("cd",$("countdown").checked);
+$("titleIn").oninput=()=>{store.set("title",$("titleIn").value);setHeader();};
+$("subIn").oninput=()=>{store.set("sub",$("subIn").value);setHeader();};
+let armed=false;
+$("resetBtn").onclick=()=>{if(!armed){armed=true;$("resetBtn").textContent="Tap again to clear winners";setTimeout(()=>{armed=false;$("resetBtn").textContent="Reset draws";},3000);return;}
+  armed=false;if(practice)trial=[];else{winners=[];store.set("winners",winners);}$("resetBtn").textContent="Reset draws";$("resetMsg").textContent="Winners cleared";build();refresh(true);};
+$("stageBtn").onclick=()=>{$("app").classList.add("stagemode");};
+// leave stage mode with a long-press on the title
+let lp; $("titleEl").addEventListener("pointerdown",()=>{lp=setTimeout(()=>$("app").classList.remove("stagemode"),700)});
+["pointerup","pointerleave"].forEach(ev=>$("titleEl").addEventListener(ev,()=>clearTimeout(lp)));
+$("soundBtn").textContent=sound?"Sound on":"Sound off";
+$("soundBtn").onclick=()=>{sound=!sound;store.set("sound",sound);$("soundBtn").textContent=sound?"Sound on":"Sound off";if(sound){ac();beep(880,.1,"sine",.15);}};
+new ResizeObserver(size).observe(document.querySelector(".stage"));
+setHeader(); build(); size(); setLive(); refresh(true);
+document.fonts&&document.fonts.ready.then(draw);
+})();
+</script>
+</body>
+</html>
