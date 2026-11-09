@@ -150,6 +150,10 @@
   .hypetrain .ht-tag{margin-top:-2px;font-family:var(--mono);font-size:8.5px;font-weight:800;letter-spacing:.08em;
     text-transform:uppercase;color:#1a1205;background:#ffc44d;border:1.5px solid #1a1205;border-radius:999px;
     padding:0 6px;white-space:nowrap}
+  .hypetrain .ht-spd{margin-top:2px;font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:.04em;
+    color:#ffc44d;background:rgba(10,21,53,.92);border:1px solid rgba(255,196,77,.6);border-radius:999px;
+    padding:0 6px;white-space:nowrap}
+  .hypetrain .ht-spd:empty{display:none}
   .hypetrain .ht-smoke{position:absolute;top:-6px;left:10px;width:20px;height:16px}
   .hypetrain .ht-smoke i{position:absolute;bottom:0;left:0;width:7px;height:7px;border-radius:50%;
     background:rgba(255,255,255,.75);animation:htPuff 1.8s ease-out infinite}
@@ -2002,8 +2006,12 @@
           var st = String(s.status || "").toLowerCase();
           if(st === "departed" || st === "station" || st === "arrived") reached[String(s.code || "").toUpperCase()] = 1;
         });
+        var mph = +t.velocity;
         return { lat:lat, lng:lng, next:next, live:true, leg:leg.name, reached:reached, chief: leg.id.indexOf("3-") === 0,
-                 timely: t.trainTimely || "", state: t.trainState || "" };
+                 timely: t.trainTimely || "", state: t.trainState || "",
+                 mph: isFinite(mph) ? Math.max(0, Math.round(mph)) : null,
+                 heading: String(t.heading || "").toUpperCase(),
+                 posAt: Date.parse(t.lastValTS || t.updatedAt || "") || null };
       })
       .catch(function(){ return null; });
   }
@@ -2012,7 +2020,19 @@
   function hypeIcon(){
     return L.divIcon({ className:"", iconSize:[56,44], iconAnchor:[28,30],
       html:'<div class="hypetrain"><span class="ht-smoke"><i></i><i></i><i></i></span>'
-         + '<span class="ht-loco">🚂</span><span class="ht-tag">Hype Train</span></div>' });
+         + '<span class="ht-loco">🚂</span><span class="ht-tag">Hype Train</span><span class="ht-spd"></span></div>' });
+  }
+  // Live speed from Amtraker ("velocity", mph). Only shown with live data —
+  // the timetable fallback has no real speed, so the pill hides itself then.
+  function hypeSpeedText(p){
+    if(!p || !p.live || p.mph == null || p.arrived) return "";
+    if(p.mph < 2) return "Stopped";
+    return p.mph + " mph" + (p.heading ? " " + p.heading : "");
+  }
+  function hypeSetSpeedPill(){
+    var el = hypeMarker && hypeMarker.getElement && hypeMarker.getElement();
+    var pill = el && el.querySelector(".ht-spd");
+    if(pill) pill.textContent = hypeSpeedText(hypeLast);
   }
   function hypePopup(){
     var p = hypeLast || {};
@@ -2032,6 +2052,8 @@
       + '<div class="pcity">Champaign → Chicago → LA → San Diego</div>'
       + '<p class="psrc">' + esc(p.leg || "") + (where ? " · " + where : "") + '</p>'
       + (p.timely ? '<p class="pcat">' + esc(p.timely) + '</p>' : '')
+      + (hypeSpeedText(p) ? '<p class="pcat">💨 ' + esc(hypeSpeedText(p) === "Stopped" ? "Stopped" : "Moving " + hypeSpeedText(p))
+          + (p.posAt ? ' · as of ' + esc(new Date(p.posAt).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})) : '') + '</p>' : '')
       + '<p class="psrc">' + (p.live ? '📡 Live position' : '🕒 Estimated from the Amtrak schedule') + '</p>'
       + (riders ? '<p class="pcat">Aboard: ' + riders + '</p>' : '')
       + (waitTxt.length ? '<p class="psrc">Waiting down the line: ' + waitTxt.join(", ") + '</p>' : '')
@@ -2104,6 +2126,7 @@
         hypeMarker.setLatLng([p.lat, p.lng]);
         if(hypeMarker.isPopupOpen()) hypeMarker.setPopupContent(hypePopup());
       }
+      hypeSetSpeedPill();
       if(HYPE_FOCUS && !hypeFocused && !EMBED){
         hypeFocused = true;
         map.setView([p.lat, p.lng], 6);
