@@ -1005,7 +1005,8 @@
 
   function liveIcon(source, off, irl, platform, warming, confirmed, partnerHot){
     off = off || [0,0];
-    var pin = source==='title' ? '<span class="pin">📍</span>' : '';
+    var pin = source==='rtirl' ? '<span class="pin" title="Live GPS via RealtimeIRL">🛰️</span>'
+            : source==='title' ? '<span class="pin">📍</span>' : '';
     var cls = 'beacon' + (warming?' warming':(irl?' irl':'')) + ((!warming && irl && platform==='kick')?' kick':'') + (partnerHot?' partnerhot':'');   // amber=warming; IRL: purple=Twitch, green=Kick; blue = just-live; +partnerhot = 75+ viewers on Twitch
     var badge = confirmed ? '<span class="badge" title="Mushbox confirmed online"></span>' : '';
     var pw = partnerHot
@@ -1063,7 +1064,9 @@
   function popupHTML(e){
     var srcLine = e.warming
       ? '🔌 Mushbox Online · not yet live on platform'
-      : (e.source==='title'
+      : (e.source==='rtirl'
+        ? '🛰️ Live GPS via RealtimeIRL · ' + rtAgo(e.gpsAt)
+        : e.source==='title'
         ? '📍 Live from stream title'
         : '🏠 Home base · location not in title');
     var altLine = (e.person && e.login && e.login !== e.person)
@@ -1397,6 +1400,7 @@
     var list = document.getElementById('liveList');
     list.innerHTML = '';
     var people = collapseLive(liveArr);
+    rtSync(people);
     checkForNewlyLive(people);
     setCount(people.length);
 
@@ -1425,8 +1429,12 @@
     // resolve each live person's location (title overrides home)
     var items = [];
     people.forEach(function(e){
-      var det = (FAM.tcHidden && FAM.tcHidden(e.person || e.login)) ? null : detectFromTitle(e.title), loc;
-      if(det){ loc = {lat:det.lat,lng:det.lng,label:det.label,source:'title'}; }
+      // Priority: RealtimeIRL GPS (fresh) → city in title → home base.
+      var hidden = !!(FAM.tcHidden && FAM.tcHidden(e.person || e.login));
+      var det = hidden ? null : detectFromTitle(e.title), loc;
+      var gps = hidden ? null : rtFresh(e.person);
+      if(gps){ loc = {lat:gps.lat,lng:gps.lng,label:(det ? det.label : 'Live GPS'),source:'rtirl'}; e.gpsAt = gps.at; }
+      else if(det){ loc = {lat:det.lat,lng:det.lng,label:det.label,source:'title'}; }
       else if(HOMES[e.person]){ var h=HOMES[e.person]; loc = {lat:h[0],lng:h[1],label:h[2],source:'home'}; }
       else { unmapped.push(e); return; }
       e.label = loc.label; e.source = loc.source;
@@ -1496,6 +1504,7 @@
           catch(err){ /* older browsers: not critical, just skip */ }
         };
       })(e.login));
+      mk._mbxSource = loc.source;
       mk.addTo(map);
       liveMarkers[e.person] = mk;
       bounds.push([loc.lat,loc.lng]);
@@ -1527,7 +1536,8 @@
       var row = document.createElement('a');
       row.className = 'row' + (e.irl?' irl':'') + (e.warming?' warming':'') + (e.confirmed?' confirmed':'');
       row.href = watchURL(e.login, e.platform); row.target='_blank'; row.rel='noopener';
-      var pin = e.source==='title' ? '<span class="pin">📍</span> ' : '';
+      var pin = e.source==='rtirl' ? '<span class="pin">🛰️</span> '
+              : e.source==='title' ? '<span class="pin">📍</span> ' : '';
       var telStr = telemetryText(e);
       var telLine = telStr ? '<span class="tel">📡 '+telStr+'</span>' : '';
       // Twitch-only, and only once the current sample is at/above the
@@ -1578,6 +1588,119 @@
 
     if(!EMBED && !HYPE_FOCUS && bounds.length) map.flyToBounds(bounds, { padding:[70,70], maxZoom:6, duration:.6 });
     stamp();
+  }
+
+  /* ---- RealtimeIRL (rtirl.com) live GPS ---------------------------
+     Family members who use RealtimeIRL with Public Location turned on
+     get their live pin driven by their phone's GPS — no city in the
+     title needed, and the pin moves as they travel. Nothing to set up
+     per person: if someone doesn't use RTIRL (or their public location
+     is off), they fall back to title → home base exactly as before.
+     Twitch only — RTIRL's public API is keyed by Twitch user ID.
+     The library (~250 KB) only loads once somebody is actually live. */
+  var RTIRL = {
+    lib:      'https://cdn.jsdelivr.net/npm/@rtirl/api@1.2.5/lib/index.min.js',
+    maxAgeMs: 15 * 60 * 1000,  // ignore a GPS fix older than this (phone asleep / no signal)
+    decimals: 3,               // round shown coords: 3 ≈ 110 m, 2 ≈ 1 km — public page, don't pin a doorstep
+    idLookup: 'https://decapi.me/twitch/id/'  // Twitch login → user ID (cached forever in the browser)
+  };
+  var RT_LOC = {}, RT_SUBS = {}, TW_IDS = {}, rtLibPromise = null, rtTimer = null;
+  try { TW_IDS = JSON.parse(localStorage.getItem('mushbox_twids') || '{}') || {}; } catch(err){ TW_IDS = {}; }
+  function rtSaveIds(){ try { localStorage.setItem('mushbox_twids', JSON.stringify(TW_IDS)); } catch(err){} }
+
+  function rtLoadLib(){
+    if(window.RealtimeIRL) return Promise.resolve(window.RealtimeIRL);
+    if(rtLibPromise) return rtLibPromise;
+    rtLibPromise = new Promise(function(res, rej){
+      var s = document.createElement('script');
+      s.src = RTIRL.lib; s.async = true;
+      s.onload  = function(){ window.RealtimeIRL ? res(window.RealtimeIRL) : rej(new Error('RealtimeIRL global missing')); };
+      s.onerror = function(){ rtLibPromise = null; rej(new Error('RealtimeIRL library failed to load')); };
+      document.head.appendChild(s);
+    });
+    return rtLibPromise;
+  }
+
+  function rtTwitchId(login){
+    if(TW_IDS[login]) return Promise.resolve(TW_IDS[login]);
+    return fetch(RTIRL.idLookup + encodeURIComponent(login), { cache:'default' })
+      .then(function(r){ return r.ok ? r.text() : ''; })
+      .then(function(t){
+        t = (t || '').trim();
+        if(!/^\d+$/.test(t)) throw new Error('no Twitch ID for ' + login);
+        TW_IDS[login] = t; rtSaveIds(); return t;
+      });
+  }
+
+  function rtFresh(person){
+    var g = RT_LOC[person];
+    return (g && (Date.now() - g.at) < RTIRL.maxAgeMs) ? g : null;
+  }
+
+  function rtAgo(ts){
+    var s = Math.max(0, Math.round((Date.now() - (ts || Date.now())) / 1000));
+    return s < 60 ? 'updated just now' : 'updated ' + Math.round(s / 60) + 'm ago';
+  }
+
+  // A pin switching INTO or OUT OF GPS needs a full redraw (icon, sidebar,
+  // label). Debounced so a burst of first fixes = one redraw.
+  function rtScheduleRender(){
+    if(rtTimer) return;
+    rtTimer = setTimeout(function(){ rtTimer = null; if(lastLiveArr) render(lastLiveArr); }, 1500);
+  }
+
+  function rtOnLocation(person, loc){
+    if(!loc || loc.latitude == null || loc.longitude == null){
+      // Public location hidden (they went offline or turned it off).
+      if(RT_LOC[person]){ delete RT_LOC[person]; rtScheduleRender(); }
+      return;
+    }
+    var f = Math.pow(10, RTIRL.decimals);
+    var had = !!rtFresh(person);
+    RT_LOC[person] = {
+      lat: Math.round(loc.latitude  * f) / f,
+      lng: Math.round(loc.longitude * f) / f,
+      at:  loc.reportedAt || Date.now()
+    };
+    var mk = liveMarkers[person];
+    if(had && mk && mk._mbxSource === 'rtirl'){
+      // Already a GPS pin: just slide it — no redraw, no map fly-to.
+      mk.setLatLng([RT_LOC[person].lat, RT_LOC[person].lng]);
+    } else {
+      rtScheduleRender();
+    }
+  }
+
+  // Called every render with the collapsed live list: subscribe anyone
+  // newly live on Twitch, drop anyone who's gone offline.
+  function rtSync(people){
+    var want = {};
+    people.forEach(function(e){
+      if(e.platform === 'kick' || KICK_LOGINS[e.person]) return;
+      if(FAM.tcHidden && FAM.tcHidden(e.person)) return;
+      want[e.person] = true;
+    });
+    Object.keys(RT_SUBS).forEach(function(person){
+      if(want[person]) return;
+      if(typeof RT_SUBS[person] === 'function'){ try { RT_SUBS[person](); } catch(err){} }
+      delete RT_SUBS[person]; delete RT_LOC[person];
+    });
+    Object.keys(want).forEach(function(person){
+      if(RT_SUBS[person]) return;
+      RT_SUBS[person] = 'pending';
+      rtTwitchId(person)
+        .then(function(id){
+          return rtLoadLib().then(function(R){
+            if(RT_SUBS[person] !== 'pending') return; // went offline meanwhile
+            RT_SUBS[person] = R.forStreamer('twitch', id)
+              .addLocationListener(function(loc){ rtOnLocation(person, loc); });
+          });
+        })
+        .catch(function(err){
+          console.warn('[mushbox-map] RealtimeIRL skipped for ' + person + ':', err.message);
+          // leave the 'pending' marker so we don't retry every 60s; cleared when they go offline
+        });
+    });
   }
 
   function stamp(){
@@ -1649,7 +1772,13 @@
   function loadAvatars(){
     fetch(AVATARS_URL, { cache:'default' })
       .then(function(r){ return r.ok ? r.json() : null; })
-      .then(function(d){ if(d){ AVATARS = d.avatars || {}; NAMES = d.names || {}; } })
+      .then(function(d){
+        if(!d) return;
+        AVATARS = d.avatars || {}; NAMES = d.names || {};
+        // Optional: if the Worker ever adds { ids: {login: twitchUserId} }
+        // here, RealtimeIRL skips the third-party ID lookup entirely.
+        if(d.ids){ Object.keys(d.ids).forEach(function(k){ TW_IDS[k.toLowerCase()] = String(d.ids[k]); }); rtSaveIds(); }
+      })
       .catch(function(){ /* offline cards just fall back to name-only */ });
   }
 
