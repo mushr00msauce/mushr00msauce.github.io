@@ -120,12 +120,13 @@ window.MUSHBOX_FAMILY = {
     secret: {
       "Redivivus": "2026-11-12T02:00:00Z"   // Wed Nov 11, 6:00 PM Pacific
     },
-    // offMap: no dot at all on the live map (live or offline) until that
-    // moment. For Hype Train riders not on RealtimeIRL, whose pin would
-    // otherwise sit at home while they're really on the train.
+    // offMap: no home dot on the live map until that moment, and no live
+    // dot either UNLESS RealtimeIRL is sending their GPS. For Hype Train
+    // riders, whose pin would otherwise sit at home while they're on the train.
     offMap: {
-      "Kozybean":  "2026-11-11T21:30:00Z",  // Wed Nov 11, 1:30 PM Pacific (San Diego arrival)
-      "UncleJPop": "2026-11-11T21:30:00Z"
+      "mushr00msauce": "2026-11-11T21:30:00Z",  // Wed Nov 11, 1:30 PM Pacific (San Diego arrival)
+      "Kozybean":      "2026-11-11T21:30:00Z",
+      "UncleJPop":     "2026-11-11T21:30:00Z"
     }
   }
 };

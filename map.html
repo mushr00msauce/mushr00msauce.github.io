@@ -611,7 +611,7 @@
 
 <div class="partnerwatch" id="partnerWatch"></div>
 
-<script src="/family.js?v=20261110a"></script>
+<script src="/family.js?v=20261110b"></script>
 <script>
 (function(){
   "use strict";
@@ -1325,7 +1325,6 @@
     var by = {};
     liveArr.forEach(function(e){
       var person = ALT2MAIN[e.login] || e.login;
-      if(FAM.offMap && FAM.offMap(person)) return; // riding the Hype Train — no live dot at home
       var cur = by[person];
       if(!cur || (+e.viewers||0) > (+cur.viewers||0)){
         by[person] = { person:person, login:e.login, name:e.name, cat:e.cat, title:e.title, viewers:e.viewers, platform:e.platform, encoderConfirmed:e.encoderConfirmed, telemetry:e.telemetry };
@@ -1408,6 +1407,9 @@
     list.innerHTML = '';
     var people = collapseLive(liveArr);
     rtSync(people);
+    // Hype Train riders (family.js offMap): no live dot unless RealtimeIRL
+    // has a fresh GPS fix — otherwise their pin would sit at home.
+    people = people.filter(function(e){ return !(FAM.offMap && FAM.offMap(e.person) && !rtFresh(e.person)); });
     checkForNewlyLive(people);
     setCount(people.length);
 
