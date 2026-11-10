@@ -1145,6 +1145,7 @@
     offMarkers = {};
     Object.keys(HOMES).forEach(function(login){
       if(liveMarkers[login]) return; // don't double-draw someone who's live
+      if(FAM.offMap && FAM.offMap(login)) return; // riding the Hype Train — no home dot
       var soon = !!COMING_SOON[login], ship = !!SHIPPED[login];
       if(!show && !soon && !ship) return;  // coming-soon / just-landed pins stay up even with offline hidden
       var loc = HOMES[login];
@@ -1324,6 +1325,7 @@
     var by = {};
     liveArr.forEach(function(e){
       var person = ALT2MAIN[e.login] || e.login;
+      if(FAM.offMap && FAM.offMap(person)) return; // riding the Hype Train — no live dot at home
       var cur = by[person];
       if(!cur || (+e.viewers||0) > (+cur.viewers||0)){
         by[person] = { person:person, login:e.login, name:e.name, cat:e.cat, title:e.title, viewers:e.viewers, platform:e.platform, encoderConfirmed:e.encoderConfirmed, telemetry:e.telemetry };

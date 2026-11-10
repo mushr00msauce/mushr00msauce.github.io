@@ -119,6 +119,13 @@ window.MUSHBOX_FAMILY = {
                 "Gman5o5", "RefurberSteve", "UncleJPop", "DeeDotDolla"],
     secret: {
       "Redivivus": "2026-11-12T02:00:00Z"   // Wed Nov 11, 6:00 PM Pacific
+    },
+    // offMap: no dot at all on the live map (live or offline) until that
+    // moment. For Hype Train riders not on RealtimeIRL, whose pin would
+    // otherwise sit at home while they're really on the train.
+    offMap: {
+      "Kozybean":  "2026-11-11T21:30:00Z",  // Wed Nov 11, 1:30 PM Pacific (San Diego arrival)
+      "UncleJPop": "2026-11-11T21:30:00Z"
     }
   }
 };
@@ -151,6 +158,11 @@ window.MUSHBOX_FAMILY = {
   });
   function over(){ return TC.showUntil && new Date().toISOString().slice(0,10) > TC.showUntil; }
   F.tcHidden = function(login){ var l = main(login); return !!secret[l] && Date.now() < secret[l]; };
+  var offMap = {};
+  Object.keys(TC.offMap || {}).forEach(function(n){
+    var p = byName[n.toLowerCase()]; offMap[p ? p.login : n.toLowerCase()] = Date.parse(TC.offMap[n]);
+  });
+  F.offMap = function(login){ var l = main(login); return !!offMap[l] && Date.now() < offMap[l]; };
   function people(key){
     return (TC[key] || []).map(function(n){
       var p = byName[String(n).toLowerCase()];
