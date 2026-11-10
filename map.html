@@ -150,9 +150,10 @@
   .hypetrain .ht-tag{margin-top:-2px;font-family:var(--mono);font-size:8.5px;font-weight:800;letter-spacing:.08em;
     text-transform:uppercase;color:#1a1205;background:#ffc44d;border:1.5px solid #1a1205;border-radius:999px;
     padding:0 6px;white-space:nowrap}
-  .hypetrain .ht-spd{margin-top:2px;font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:.04em;
-    color:#ffc44d;background:rgba(10,21,53,.92);border:1px solid rgba(255,196,77,.6);border-radius:999px;
-    padding:0 6px;white-space:nowrap}
+  .hypetrain .ht-spd{position:absolute;left:50px;top:4px;font-family:var(--mono);font-size:12px;font-weight:800;
+    letter-spacing:.02em;color:#1a1205;background:#ffc44d;border:2px solid #1a1205;border-radius:8px;
+    padding:1px 7px;white-space:nowrap;box-shadow:0 0 10px rgba(255,196,77,.6)}
+  .hypetrain .ht-spd.est{color:#ffc44d;background:rgba(10,21,53,.92);border-color:rgba(255,196,77,.7)}
   .hypetrain .ht-spd:empty{display:none}
   .hypetrain .ht-smoke{position:absolute;top:-6px;left:10px;width:20px;height:16px}
   .hypetrain .ht-smoke i{position:absolute;bottom:0;left:0;width:7px;height:7px;border-radius:50%;
@@ -1971,11 +1972,18 @@
     for(var i=1;i<S.length;i++){
       if(now <= S[i][3]){
         var a=S[i-1], b=S[i], f=(now-a[3])/Math.max(1,(b[3]-a[3]));
+        var hrs = (b[3]-a[3]) / 3600000;
         return { lat:a[1]+(b[1]-a[1])*f, lng:a[2]+(b[2]-a[2])*f,
-                 next: b[0], at: (a[0]===b[0] ? a[0] : null) };
+                 next: b[0], at: (a[0]===b[0] ? a[0] : null),
+                 mphEst: (a[0]===b[0] || hrs <= 0) ? 0 : Math.round(hypeMiles(a[1],a[2],b[1],b[2]) / hrs) };
       }
     }
     var z=S[S.length-1]; return { lat:z[1], lng:z[2], next:null, at:z[0], arrived:true };
+  }
+  function hypeMiles(lat1, lng1, lat2, lng2){
+    var r = Math.PI/180, dLat = (lat2-lat1)*r, dLng = (lng2-lng1)*r;
+    var x = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*r)*Math.cos(lat2*r)*Math.sin(dLng/2)*Math.sin(dLng/2);
+    return 3958.8 * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
   }
   function hypeFirstTrain(j){
     if(!j || typeof j !== "object") return null;
@@ -2024,15 +2032,30 @@
   }
   // Live speed from Amtraker ("velocity", mph). Only shown with live data —
   // the timetable fallback has no real speed, so the pill hides itself then.
+  // Speed, best source first: Amtrak's reported velocity → worked out from
+  // the last two live positions → the timetable's average pace (shown "~").
+  var hypePrevFix = null;
+  function hypeSpeed(p){
+    if(!p || p.arrived) return null;
+    if(p.live && p.mph != null) return { mph:p.mph, est:false };
+    if(p.live && p.mphCalc != null) return { mph:p.mphCalc, est:false };
+    if(p.mphEst != null) return { mph:p.mphEst, est:true };
+    return null;
+  }
   function hypeSpeedText(p){
-    if(!p || !p.live || p.mph == null || p.arrived) return "";
-    if(p.mph < 2) return "Stopped";
-    return p.mph + " mph" + (p.heading ? " " + p.heading : "");
+    var s = hypeSpeed(p);
+    if(!s) return "";
+    if(s.mph < 2) return p.at ? "At station" : "Stopped";
+    return (s.est ? "~" : "") + s.mph + " mph" + (!s.est && p.heading ? " " + p.heading : "");
   }
   function hypeSetSpeedPill(){
     var el = hypeMarker && hypeMarker.getElement && hypeMarker.getElement();
     var pill = el && el.querySelector(".ht-spd");
-    if(pill) pill.textContent = hypeSpeedText(hypeLast);
+    if(!pill) return;
+    var s = hypeSpeed(hypeLast);
+    pill.textContent = hypeSpeedText(hypeLast);
+    pill.className = "ht-spd" + (s && s.est ? " est" : "");
+    pill.title = s ? (s.est ? "Estimated from the Amtrak timetable" : "Live speed from Amtrak") : "";
   }
   function hypePopup(){
     var p = hypeLast || {};
@@ -2052,8 +2075,9 @@
       + '<div class="pcity">Champaign → Chicago → LA → San Diego</div>'
       + '<p class="psrc">' + esc(p.leg || "") + (where ? " · " + where : "") + '</p>'
       + (p.timely ? '<p class="pcat">' + esc(p.timely) + '</p>' : '')
-      + (hypeSpeedText(p) ? '<p class="pcat">💨 ' + esc(hypeSpeedText(p) === "Stopped" ? "Stopped" : "Moving " + hypeSpeedText(p))
-          + (p.posAt ? ' · as of ' + esc(new Date(p.posAt).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})) : '') + '</p>' : '')
+      + (hypeSpeedText(p) ? '<p class="pcat">💨 ' + esc(hypeSpeedText(p))
+          + (hypeSpeed(p).est ? ' (timetable estimate)'
+             : (p.posAt ? ' · as of ' + esc(new Date(p.posAt).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})) : '')) + '</p>' : '')
       + '<p class="psrc">' + (p.live ? '📡 Live position' : '🕒 Estimated from the Amtrak schedule') + '</p>'
       + (riders ? '<p class="pcat">Aboard: ' + riders + '</p>' : '')
       + (waitTxt.length ? '<p class="psrc">Waiting down the line: ' + waitTxt.join(", ") + '</p>' : '')
@@ -2115,6 +2139,15 @@
       var p = live || sch;
       p.leg = (live && live.leg) || hypeLegName(now);
       if(!live){ p.live = false; }
+      else {
+        p.mphEst = sch.mphEst;
+        // No velocity in the feed? Work it out from the last live fix.
+        var t = p.posAt || now;
+        if(p.mph == null && hypePrevFix && t - hypePrevFix.t >= 45000){
+          p.mphCalc = Math.round(hypeMiles(hypePrevFix.lat, hypePrevFix.lng, p.lat, p.lng) / ((t - hypePrevFix.t) / 3600000));
+        }
+        if(!hypePrevFix || t !== hypePrevFix.t) hypePrevFix = { lat:p.lat, lng:p.lng, t:t };
+      }
       hypeLast = p;
       hypeLiveOK = !!(live && live.chief);
       if(live && live.reached) Object.keys(live.reached).forEach(function(c){ hypeReached[c] = true; });
