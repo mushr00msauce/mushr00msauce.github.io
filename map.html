@@ -797,7 +797,8 @@
   /* TwitchCon week: a title that mentions TwitchCon pins them at the San Diego
      Convention Center. Only active during the event window so a "TwitchCon
      recap" stream from home later doesn't move anyone. Update the dates each year. */
-  var TWITCHCON = { start: "2026-11-11", end: "2026-11-15",
+  // end is a UTC date: the 16th keeps Sunday evening Pacific covered.
+  var TWITCHCON = { start: "2026-11-11", end: "2026-11-16",
                     lat: 32.7065, lng: -117.1617, label: "TwitchCon · San Diego" };
   (function(){
     var today = new Date().toISOString().slice(0,10);
@@ -806,6 +807,8 @@
      "twitchcon sd", "twitchcon2026", "twitchcon 2026", "twitchconsd", "tcsd", "tcsd26", "tcsd2026"]
       .forEach(function(k){ PLACES.push([k, TWITCHCON.lat, TWITCHCON.lng, TWITCHCON.label]); });
   })();
+
+  function tcNow(){ var t = new Date().toISOString().slice(0,10); return t >= TWITCHCON.start && t <= TWITCHCON.end; }
 
   PLACES.sort(function(a,b){ return b[0].length - a[0].length; });
   var CITY_INDEX = {};
@@ -1444,6 +1447,9 @@
       var gps = hidden ? null : rtFresh(e.person);
       if(gps){ loc = {lat:gps.lat,lng:gps.lng,label:(det ? det.label : 'Live GPS'),source:'rtirl'}; e.gpsAt = gps.at; }
       else if(det){ loc = {lat:det.lat,lng:det.lng,label:det.label,source:'title'}; }
+      // On the TwitchCon list during the event: pin them at TwitchCon, not home.
+      else if(!hidden && tcNow() && FAM.atTwitchCon && FAM.atTwitchCon(e.person || e.login)){
+        loc = {lat:TWITCHCON.lat,lng:TWITCHCON.lng,label:TWITCHCON.label,source:'title'}; }
       else if(HOMES[e.person]){ var h=HOMES[e.person]; loc = {lat:h[0],lng:h[1],label:h[2],source:'home'}; }
       else { unmapped.push(e); return; }
       e.label = loc.label; e.source = loc.source;
