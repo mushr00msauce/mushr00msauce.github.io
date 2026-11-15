@@ -138,6 +138,9 @@
     .belabox:hover,.belabox:focus-visible,.noalbs:hover,.noalbs:focus-visible{transform:none}
   }
 
+  .mbxtop-live{margin:18px auto 0 !important}
+  .mbxtop-live[hidden]{display:none !important}
+
   /* ---------- links ---------- */
   .links{width:100%;margin-top:34px;display:flex;flex-direction:column;gap:12px}
   .section-label{
@@ -373,7 +376,7 @@
   }
 </style>
 <link rel="stylesheet" href="/assets/css/site-background.css">
-<script src="/family.js?v=20261114b"></script>
+<script src="/family.js?v=20261115a"></script>
 </head>
 <body>
 <div class="card-col">
@@ -460,6 +463,15 @@
     var html = row(F.byStage("bench"), "\uD83C\uDF44 On the bench \u00B7 coming soon", "bench") +
                row(F.byStage("shipped"), "\uD83D\uDCE6 Just landed", "ship");
     if (html) { box.innerHTML = html; box.hidden = false; }
+  })();
+  </script>
+
+  <!-- ===== TwitchCon Live button (top of page, shows while the TwitchCon lists are up) ===== -->
+  <a class="mbxev-live mbxtop-live" id="mbxTopLive" href="twitchcon-live.html" hidden><span class="mbxev-livedot"></span>TwitchCon Live &rarr;</a>
+  <script>
+  (function(){
+    var F = window.MUSHBOX_FAMILY, a = document.getElementById("mbxTopLive");
+    if (a && F && F.event && F.event.showing("going")) a.hidden = false;
   })();
   </script>
 
@@ -838,7 +850,7 @@
         @keyframes mbxevPulse{50%{opacity:.35}}
       </style>
       <div class="mbxev-card ht" id="mbxHT" hidden>
-        <div class="mbxev-head"><span class="mbxev-title">&#x1F682; The <span>Hype Train</span></span>
+        <div class="mbxev-head"><span class="mbxev-title">&#x1F682; <span>Hype Train</span> Home from TwitchCon</span>
           <span class="mbxev-sub" id="mbxHTSub"></span></div>
         <div class="mbxfam-grid" id="mbxHTGrid"></div>
       </div>
@@ -846,7 +858,6 @@
         <div class="mbxev-head"><span class="mbxev-title">&#x1F3AA; TwitchCon <span>Bound</span></span>
           <span class="mbxev-sub" id="mbxTCSub"></span></div>
         <div class="mbxfam-grid" id="mbxTCGrid"></div>
-        <a class="mbxev-live" href="twitchcon-live.html"><span class="mbxev-livedot"></span>TwitchCon Live &rarr;</a>
       </div>
     </div>
     <script>

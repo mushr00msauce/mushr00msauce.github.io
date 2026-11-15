@@ -110,15 +110,16 @@ window.MUSHBOX_FAMILY = {
   twitchcon: {
     label:        "TwitchCon 2026",
     twitchconSub: "San Diego \u00B7 Nov 13\u201315",
-    hypeTrainSub: "Chicago \u2192 San Diego \u00B7 Nov 9\u201311",
+    hypeTrainSub: "San Diego \u2192 Chicago \u00B7 Nov 16\u201318",
     showUntil:    "2026-11-16",
+    hypeTrainUntil: "2026-11-18",   // the Hype Train card stays up through the ride home
     going: ["Aprylanonymous", "Awkventurer", "Barktok", "EdventuresLive", "ElGatoPub", "FalconElite",
             "Fi1es", "FriskyAlien", "Hamandlizgaming", "JayneRio", "JDCharisma",
             "JTEngland", "Kozybean", "Lyndainfj", "Morjanga", "OptimusKale",
             "PoisonHearrt", "PotentialBliss", "Redivivus", "RefurberSteve", "UluMaika", "UncleJPop",
             "Xanthe"],
-    hypeTrain: ["mushr00msauce", "FriskyAlien", "Kozybean",
-                "Gman5o5", "RefurberSteve", "UncleJPop", "DeeDotDolla"],
+    // Hype Train HOME from TwitchCon (San Diego -> Chicago)
+    hypeTrain: ["mushr00msauce", "FriskyAlien", "Gman5o5"],
     secret: {
       "Redivivus": "2026-11-12T02:00:00Z"   // Wed Nov 11, 6:00 PM Pacific
     },
@@ -159,7 +160,8 @@ window.MUSHBOX_FAMILY = {
   Object.keys(TC.secret || {}).forEach(function(n){
     var p = byName[n.toLowerCase()]; secret[p ? p.login : n.toLowerCase()] = Date.parse(TC.secret[n]);
   });
-  function over(){ return TC.showUntil && new Date().toISOString().slice(0,10) > TC.showUntil; }
+  function past(d){ return d && new Date().toISOString().slice(0,10) > d; }
+  function over(){ return past(TC.showUntil); }
   F.tcHidden = function(login){ var l = main(login); return !!secret[l] && Date.now() < secret[l]; };
   var offMap = {};
   Object.keys(TC.offMap || {}).forEach(function(n){
@@ -180,7 +182,7 @@ window.MUSHBOX_FAMILY = {
   F.tcLabel = TC.label || "TwitchCon";
   F.event = {
     list: people,
-    showing: function(){ return !over(); },
+    showing: function(key){ return key === "hypeTrain" ? !past(TC.hypeTrainUntil || TC.showUntil) : !over(); },
     twitchconSub: TC.twitchconSub || "",
     hypeTrainSub: TC.hypeTrainSub || ""
   };
