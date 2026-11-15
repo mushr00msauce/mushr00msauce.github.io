@@ -41,7 +41,7 @@ window.MUSHBOX_FAMILY = {
     { name:"AfrazExplores", stage:"active", home:[40.7870, -73.9754, "New York, NY"] },
     { name:"AllDayNYC", stage:"active", home:[40.7549, -73.9840, "New York, NY"] },
     { name:"Aprylanonymous", stage:"active", home:[40.8116, -73.9465, "New York, NY"], alts:["aprylactuallyanonymous"] },
-    { name:"Awkventurer", stage:"shipped" },   // Mushbox handed over at TwitchCon 2026 — add home: when known
+    { name:"Awkventurer", stage:"shipped", home:[51.1784, -115.5708, "Banff, Canada"] },
     { name:"Barktok", stage:"active", home:"Los Angeles, CA", alts:["marcafterbark"] },
     { name:"Bigbonelife", stage:"active", home:"Florida" },
     { name:"Chefmaki", stage:"active", home:[40.7265, -73.9815, "New York, NY"] },
@@ -81,7 +81,7 @@ window.MUSHBOX_FAMILY = {
     { name:"OptimusKale", stage:"active", home:"Florida" },
     { name:"PapaSmaxe", stage:"active", home:"Colorado" },
     { name:"PoisonHearrt", stage:"active", home:"California" },
-    { name:"PotentialBliss", stage:"shipped" },   // Mushbox handed over at TwitchCon 2026 — add home: when known
+    { name:"PotentialBliss", stage:"shipped", home:"San Diego, CA" },
     { name:"Redivivus", stage:"active", home:"UK" },
     { name:"RefurberSteve", stage:"active", home:"Illinois" },
     { name:"Renz", stage:"active", home:"Minnesota" },
