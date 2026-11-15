@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TwitchCon Live · Mushbox Family</title>
+<meta name="description" content="Every Mushbox family streamer live at TwitchCon San Diego, all on one screen.">
+<!--
+  TwitchCon Live — every Mushbox family member live at TwitchCon, one screen.
+  ============================================================================
+  Who counts as "at TwitchCon":
+    • everyone in family.js → twitchcon.going
+    • everyone in family.js → twitchcon.hypeTrain
+    • the builder (mushr00msauce)
+    • anyone in the family whose live stream TITLE mentions TwitchCon
+      (twitchcon / twitch con / tcsd …) — catches surprise attendees
+  Secret people (twitchcon.secret) stay hidden until their reveal time.
+
+  Data: the same mushbox-live Worker as map.html / wall.html (GET / and
+  GET /avatars). Polls every 60s; tiles already playing are never reloaded.
+  Grid auto-sizes so everyone fits on one screen at 16:9.
+  Click a tile's 🔊 to hear that stream (only one has sound at a time).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#04081A; --navy:#060810; --deep:#0A1535; --card:#0E1B42; --edge:#1B2C5E;
+    --royal:#1E6FFF; --sky:#4DB8FF; --text:#D7E3FF; --dim:#8FA3CC; --twitch:#9146FF; --kick:#53FC18;
+    --live:#ff3b5c;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:radial-gradient(ellipse at top,#0A1535 0%,var(--bg) 60%);color:var(--text);font-family:Inter,system-ui,sans-serif}
+  body{display:flex;flex-direction:column;min-height:100vh}
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--edge);background:rgba(6,8,16,.7);backdrop-filter:blur(6px)}
+  header a.home{color:var(--dim);text-decoration:none;font-family:Rajdhani,sans-serif;font-weight:700;font-size:15px}
+  header a.home:hover{color:#fff}
+  h1{margin:0;font-family:Orbitron,sans-serif;font-weight:900;font-size:clamp(15px,2.2vw,22px);letter-spacing:.12em;text-transform:uppercase;color:#fff}
+  h1 span{color:var(--sky)}
+  .pill{display:inline-flex;align-items:center;gap:7px;padding:4px 11px;border-radius:999px;background:var(--card);border:1px solid var(--edge);font-family:Rajdhani,sans-serif;font-weight:700;font-size:14px}
+  .pill .dot{width:8px;height:8px;border-radius:50%;background:var(--live);box-shadow:0 0 10px var(--live);animation:pulse 1.6s infinite}
+  @keyframes pulse{50%{opacity:.35}}
+  .spacer{flex:1}
+  header button{background:var(--card);color:var(--text);border:1px solid var(--edge);border-radius:10px;padding:6px 12px;font-family:Rajdhani,sans-serif;font-weight:700;font-size:14px;cursor:pointer}
+  header button:hover{border-color:var(--royal);color:#fff}
+
+  #stage{flex:1;position:relative;padding:8px;min-height:0}
+  #grid{display:grid;gap:8px;width:100%;height:100%;align-content:center;justify-content:center}
+  .tile{position:relative;background:#000;border:1px solid var(--edge);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+  .tile.focus{border-color:var(--sky);box-shadow:0 0 0 2px rgba(77,184,255,.5),0 0 24px rgba(77,184,255,.35)}
+  .tile .vid{position:relative;flex:1;min-height:0}
+  .tile iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .tile .bar{display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--deep);min-height:34px}
+  .tile .av{width:24px;height:24px;border-radius:50%;flex:none;background:var(--card);object-fit:cover}
+  .tile .av:not([src]){visibility:hidden}
+  .tile .who{min-width:0;flex:1;line-height:1.15}
+  .tile .name{font-family:Rajdhani,sans-serif;font-weight:700;font-size:15px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tile .ttl{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tile .vw{font-family:Rajdhani,sans-serif;font-weight:700;font-size:13px;color:var(--live);white-space:nowrap}
+  .tile .btn{background:transparent;border:1px solid var(--edge);color:var(--text);border-radius:8px;padding:2px 7px;cursor:pointer;font-size:13px;text-decoration:none;flex:none}
+  .tile .btn:hover{border-color:var(--sky)}
+  .tile.focus .snd{background:var(--sky);color:#04081A;border-color:var(--sky)}
+  .tile .plat{position:absolute;top:6px;left:6px;z-index:2;font-family:Rajdhani,sans-serif;font-weight:700;font-size:11px;text-transform:uppercase;padding:1px 7px;border-radius:6px;background:var(--twitch);color:#fff;pointer-events:none}
+  .tile .plat.kick{background:var(--kick);color:#000}
+
+  #empty{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;gap:10px}
+  #empty .big{font-family:Orbitron,sans-serif;font-weight:900;font-size:clamp(18px,3vw,28px);letter-spacing:.08em;color:#fff}
+  #empty p{color:var(--dim);max-width:520px;margin:0}
+
+  footer{border-top:1px solid var(--edge);padding:8px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(6,8,16,.7)}
+  footer .lbl{font-family:Rajdhani,sans-serif;font-weight:700;color:var(--dim);font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+  footer .chips{display:flex;flex-wrap:wrap;gap:6px}
+  footer a.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:var(--card);border:1px solid var(--edge);color:var(--dim);text-decoration:none;font-size:12px;font-weight:600}
+  footer a.chip:hover{color:#fff;border-color:var(--royal)}
+  footer a.chip i{width:6px;height:6px;border-radius:50%;background:#55688f}
+  #stamp{margin-left:auto;color:#55688f;font-size:11px}
+  @media (max-width:640px){ #grid{height:auto} #stage{overflow:auto} }
+</style>
+</head>
+<body>
+<header>
+  <a class="home" href="/">&larr; themushbox.com</a>
+  <h1>&#x1F3AA; TwitchCon <span>Live</span></h1>
+  <span class="pill"><span class="dot"></span><span id="count">Loading…</span></span>
+  <span class="spacer"></span>
+  <button id="muteAll" title="Mute every stream">🔇 Mute all</button>
+  <button id="fs" title="Full screen">⛶ Full screen</button>
+</header>
+
+<main id="stage">
+  <div id="grid"></div>
+  <div id="empty">
+    <div class="big">Nobody's live right now</div>
+    <p>The second a Mushboxer goes live at TwitchCon, they'll pop up here. This page refreshes itself every minute.</p>
+  </div>
+</main>
+
+<footer>
+  <span class="lbl">At TwitchCon, not live:</span>
+  <span class="chips" id="offline"></span>
+  <span id="stamp"></span>
+</footer>
+
+<script src="/family.js?v=20261114a"></script>
+<script>
+(function(){
+  "use strict";
+  var WORKER = "https://mushbox-live.wkennedy74.workers.dev";
+  var PARENTS = ["themushbox.com","www.themushbox.com","mushboxes.com","www.mushboxes.com","mushr00msauce.github.io"];
+  var POLL_MS = 60000;
+  var TITLE_RX = /twitch\s?con|tcsd|#tc20\d\d/i;
+
+  var F = window.MUSHBOX_FAMILY || { members:[], alt2main:{} };
+  var E = F.event;
+  function main(l){ l = String(l||"").toLowerCase(); return (F.alt2main && F.alt2main[l]) || l; }
+
+  // ---- who's at TwitchCon ------------------------------------------------
+  var attendees = {};   // main login -> {name, url}
+  function add(p){ if (p && p.login && !(F.tcHidden && F.tcHidden(p.login))) attendees[p.login] = { name:p.name, url:p.url || ("https://twitch.tv/"+p.login) }; }
+  if (E){ E.list("going").forEach(add); E.list("hypeTrain").forEach(add); }
+  if (F.builder) add({ name:F.builder.name, login:F.builder.name.toLowerCase(), url:"https://twitch.tv/"+F.builder.name.toLowerCase() });
+  var familyNames = {};
+  (F.members||[]).forEach(function(p){ familyNames[p.login] = p.name; });
+  if (F.builder) familyNames[F.builder.name.toLowerCase()] = F.builder.name;
+
+  function counts(e){
+    var who = main(e.person || e.login);
+    if (F.tcHidden && F.tcHidden(who)) return false;
+    if (attendees[who]) return true;
+    return !!familyNames[who] && TITLE_RX.test(e.title || "");
+  }
+
+  // ---- state -------------------------------------------------------------
+  var grid = document.getElementById("grid");
+  var tiles = {};          // channel login -> {el, entry}
+  var avatars = {}, names = {};
+  var focus = null;        // channel login with sound
+
+  function src(login, platform, muted){
+    if (platform === "kick") return "https://player.kick.com/"+encodeURIComponent(login)+"?muted="+(muted?"true":"false")+"&autoplay=true";
+    var q = "channel="+encodeURIComponent(login)+"&muted="+(muted?"true":"false")+"&autoplay=true";
+    PARENTS.forEach(function(p){ q += "&parent="+encodeURIComponent(p); });
+    return "https://player.twitch.tv/?"+q;
+  }
+  function url(login, platform){ return (platform==="kick"?"https://kick.com/":"https://twitch.tv/")+login; }
+  function fmt(n){ n=+n||0; return n>=1000?(n/1000).toFixed(n>=10000?0:1)+"K":String(n); }
+  function displayName(e){ var who=main(e.person||e.login); return names[e.login] || (attendees[who]&&attendees[who].name) || familyNames[who] || e.login; }
+
+  function makeTile(e){
+    var t = document.createElement("div"); t.className = "tile";
+    var vid = document.createElement("div"); vid.className = "vid";
+    var plat = document.createElement("div"); plat.className = "plat "+(e.platform||"twitch"); plat.textContent = e.platform||"twitch";
+    var fr = document.createElement("iframe");
+    fr.allow = "autoplay; fullscreen"; fr.allowFullscreen = true;
+    fr.src = src(e.login, e.platform, true);
+    vid.appendChild(plat); vid.appendChild(fr);
+    var bar = document.createElement("div"); bar.className = "bar";
+    bar.innerHTML = '<img class="av" alt=""><div class="who"><div class="name"></div><div class="ttl"></div></div>'
+      + '<span class="vw"></span><button class="btn snd" title="Hear this stream">🔊</button>'
+      + '<a class="btn" target="_blank" rel="noopener" title="Open channel">↗</a>';
+    bar.querySelector("a").href = url(e.login, e.platform);
+    bar.querySelector(".snd").addEventListener("click", function(){ setFocus(focus === e.login ? null : e.login); });
+    t.appendChild(vid); t.appendChild(bar);
+    return { el:t, frame:fr, entry:e };
+  }
+  function updateTile(T, e){
+    T.entry = e;
+    var b = T.el;
+    b.querySelector(".name").textContent = displayName(e);
+    b.querySelector(".ttl").textContent = e.title || "";
+    b.querySelector(".ttl").title = e.title || "";
+    b.querySelector(".vw").textContent = e.viewers != null ? "● "+fmt(e.viewers) : "";
+    var av = b.querySelector(".av"); var a = avatars[e.login] || avatars[main(e.person||e.login)] || "";
+    if (a && av.getAttribute("src") !== a) av.src = a;
+  }
+  function setFocus(login){
+    var prev = focus; focus = login;
+    [prev, login].forEach(function(l){
+      if (!l || !tiles[l]) return;
+      var T = tiles[l]; T.frame.src = src(l, T.entry.platform, l !== focus);
+      T.el.classList.toggle("focus", l === focus);
+    });
+  }
+
+  // Fit N 16:9 tiles (+34px bar) into the stage as large as possible.
+  function layout(){
+    var n = Object.keys(tiles).length;
+    var stage = document.getElementById("stage");
+    var W = stage.clientWidth - 16, H = stage.clientHeight - 16, gap = 8, BAR = 34;
+    if (!n){ grid.style.gridTemplateColumns = ""; return; }
+    if (window.innerWidth <= 640){ grid.style.gridTemplateColumns = "1fr"; grid.style.gridAutoRows = ""; Object.keys(tiles).forEach(function(k){ tiles[k].el.style.aspectRatio = "16/10.5"; }); return; }
+    var best = { w:0, c:1 };
+    for (var c = 1; c <= n; c++){
+      var r = Math.ceil(n / c);
+      var w = Math.min((W - gap*(c-1)) / c, ((H - gap*(r-1)) / r - BAR) * 16/9);
+      if (w > best.w) best = { w:w, c:c };
+    }
+    var tw = Math.floor(best.w), th = Math.floor(tw * 9/16 + BAR);
+    grid.style.gridTemplateColumns = "repeat("+best.c+","+tw+"px)";
+    grid.style.gridAutoRows = th+"px";
+    Object.keys(tiles).forEach(function(k){ tiles[k].el.style.aspectRatio = ""; });
+  }
+  window.addEventListener("resize", layout);
+  document.addEventListener("fullscreenchange", function(){ setTimeout(layout, 50); });
+
+  function render(live){
+    var mine = live.filter(function(e){ return e && e.login && e.platform !== "encoder" && counts(e); });
+    // one tile per person (if someone's live on two channels, keep the bigger one)
+    var byPerson = {};
+    mine.forEach(function(e){ var k = main(e.person||e.login); if (!byPerson[k] || (+e.viewers||0) > (+byPerson[k].viewers||0)) byPerson[k] = e; });
+    mine = Object.keys(byPerson).map(function(k){ return byPerson[k]; })
+      .sort(function(a,b){ return (+b.viewers||0) - (+a.viewers||0); });
+
+    var keep = {};
+    mine.forEach(function(e){
+      keep[e.login] = 1;
+      if (!tiles[e.login]){ tiles[e.login] = makeTile(e); }
+      updateTile(tiles[e.login], e);
+    });
+    Object.keys(tiles).forEach(function(l){
+      if (!keep[l]){ tiles[l].el.remove(); delete tiles[l]; if (focus === l) focus = null; }
+    });
+    // order by viewers without reloading iframes that are already in place
+    mine.forEach(function(e, i){
+      var el = tiles[e.login].el;
+      if (grid.children[i] !== el) grid.insertBefore(el, grid.children[i] || null);
+    });
+
+    var n = mine.length;
+    document.getElementById("count").textContent = n === 1 ? "1 Mushboxer live" : n + " Mushboxers live";
+    document.getElementById("empty").style.display = n ? "none" : "flex";
+
+    // footer: attendees not live
+    var liveWho = {}; mine.forEach(function(e){ liveWho[main(e.person||e.login)] = 1; });
+    var off = document.getElementById("offline"); off.innerHTML = "";
+    Object.keys(attendees).filter(function(k){ return !liveWho[k]; })
+      .sort(function(a,b){ return attendees[a].name.toLowerCase() < attendees[b].name.toLowerCase() ? -1 : 1; })
+      .forEach(function(k){
+        var a = document.createElement("a"); a.className = "chip"; a.href = attendees[k].url; a.target = "_blank"; a.rel = "noopener";
+        a.innerHTML = "<i></i>"; a.appendChild(document.createTextNode(attendees[k].name)); off.appendChild(a);
+      });
+    document.getElementById("stamp").textContent = "Updated " + new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
+    layout();
+  }
+
+  function poll(){
+    fetch(WORKER + "/", { cache:"no-store" }).then(function(r){ return r.json(); })
+      .then(function(j){ render(j.live || []); })
+      .catch(function(){ document.getElementById("stamp").textContent = "Couldn't reach live status — retrying…"; });
+  }
+  function loadAvatars(){
+    fetch(WORKER + "/avatars", { cache:"no-store" }).then(function(r){ return r.json(); })
+      .then(function(j){ avatars = j.avatars || {}; names = j.names || {}; Object.keys(tiles).forEach(function(l){ updateTile(tiles[l], tiles[l].entry); }); })
+      .catch(function(){});
+  }
+
+  document.getElementById("muteAll").addEventListener("click", function(){ setFocus(null); });
+  document.getElementById("fs").addEventListener("click", function(){
+    if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+  });
+
+  loadAvatars(); poll();
+  setInterval(poll, POLL_MS);
+  setInterval(loadAvatars, 10 * 60000);
+})();
+</script>
+</body>
+</html>

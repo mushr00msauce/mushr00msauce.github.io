@@ -373,7 +373,7 @@
   }
 </style>
 <link rel="stylesheet" href="/assets/css/site-background.css">
-<script src="/family.js?v=20261110b"></script>
+<script src="/family.js?v=20261114a"></script>
 </head>
 <body>
 <div class="card-col">
@@ -829,6 +829,13 @@
         .mbxev-card.ht .mbxev-title span{color:#ffc44d}
         .mbxev-sub{color:var(--text-dim);font-size:13px;font-family:"Rajdhani",sans-serif;font-weight:600;letter-spacing:.04em}
         .mbxev .mbxfam-grid{margin-top:12px}
+        .mbxev-live{display:flex;align-items:center;justify-content:center;gap:10px;width:fit-content;margin:16px auto 0;
+          padding:12px 26px;border-radius:999px;background:linear-gradient(135deg,#1E6FFF,#4DB8FF);color:#fff;text-decoration:none;
+          font-family:"Orbitron",sans-serif;font-weight:900;font-size:15px;letter-spacing:.12em;text-transform:uppercase;
+          box-shadow:0 10px 28px -10px rgba(77,184,255,.8);transition:transform .12s ease,box-shadow .12s ease}
+        .mbxev-live:hover{transform:translateY(-2px);box-shadow:0 14px 34px -10px rgba(77,184,255,1);color:#fff}
+        .mbxev-livedot{width:10px;height:10px;border-radius:50%;background:#ff3b5c;box-shadow:0 0 10px #ff3b5c;animation:mbxevPulse 1.6s infinite}
+        @keyframes mbxevPulse{50%{opacity:.35}}
       </style>
       <div class="mbxev-card ht" id="mbxHT" hidden>
         <div class="mbxev-head"><span class="mbxev-title">&#x1F682; The <span>Hype Train</span></span>
@@ -839,6 +846,7 @@
         <div class="mbxev-head"><span class="mbxev-title">&#x1F3AA; TwitchCon <span>Bound</span></span>
           <span class="mbxev-sub" id="mbxTCSub"></span></div>
         <div class="mbxfam-grid" id="mbxTCGrid"></div>
+        <a class="mbxev-live" href="twitchcon-live.html"><span class="mbxev-livedot"></span>TwitchCon Live &rarr;</a>
       </div>
     </div>
     <script>
