@@ -611,7 +611,7 @@
 
 <div class="partnerwatch" id="partnerWatch"></div>
 
-<script src="/family.js?v=20261115a"></script>
+<script src="/family.js?v=20261116a"></script>
 <script>
 (function(){
   "use strict";
@@ -1896,84 +1896,75 @@
   renderManualPins();
 
   /* =====================================================================
-     🚂 THE HYPE TRAIN — Champaign → Chicago → Los Angeles → San Diego
-     Live position from Amtraker (a public mirror of Amtrak's Track-a-Train
-     feed). If that's unreachable, the train is placed by the timetable below
-     so it always keeps moving. Shows only during the trip window.
-     map.html?train=1 opens the map zoomed in on it.
+     🚂 THE HYPE TRAIN — HOME FROM TWITCHCON: Los Angeles → Chicago
+     Southwest Chief #4. Live position from Amtraker (a public mirror of
+     Amtrak's Track-a-Train feed). If that's unreachable, the train is placed
+     by the timetable below so it always keeps moving. Shows only during the
+     trip window.  map.html?train=1 opens the map zoomed in on it.
      ===================================================================== */
   var HYPE = {
-    start: Date.parse("2026-11-08T00:00:00Z"),   // parked in Champaign until it leaves
-    end:   Date.parse("2026-11-12T07:59:00Z"),   // gone after Nov 11, 11:59 PM PT
+    start: Date.parse("2026-11-16T20:00:00Z"),   // Mon Nov 16, noon PT
+    end:   Date.parse("2026-11-19T07:59:00Z"),   // gone after Wed Nov 18, 11:59 PM PT
+    route: "Los Angeles → Chicago",
+    from:  "Los Angeles", to: "Chicago",
     api:   "https://api-v3.amtraker.com/v3/trains/",
     legs: [
-      { id:"58-8", name:"City of New Orleans #58", from:"2026-11-09T11:30:00Z", to:"2026-11-09T19:00:00Z" },
-      { id:"3-9",  name:"Southwest Chief #3",      from:"2026-11-09T19:00:00Z", to:"2026-11-11T18:00:00Z" }
+      { id:"4-16", name:"Southwest Chief #4", from:"2026-11-16T20:00:00Z", to:"2026-11-19T07:59:00Z" }
     ],
-    // [name, lat, lng, UTC time]  (timetable; the Surfliner leg is an estimate)
+    // [name, lat, lng, UTC time]  (Amtrak timetable printed Nov 16, 2026)
     stops: [
-      ["Champaign, IL",      40.1164, -88.2434, "2026-11-09T12:30:00Z"],
-      ["Kankakee, IL",       41.1197, -87.8612, "2026-11-09T13:18:00Z"],
-      ["Homewood, IL",       41.5572, -87.6687, "2026-11-09T13:49:00Z"],
-      ["Chicago, IL",        41.8789, -87.6396, "2026-11-09T15:15:00Z"],
-      ["Chicago, IL",        41.8789, -87.6396, "2026-11-09T19:30:00Z"],
-      ["Naperville, IL",     41.7795, -88.1455, "2026-11-09T20:03:00Z"],
-      ["Mendota, IL",        41.5475, -89.1176, "2026-11-09T20:54:00Z"],
-      ["Princeton, IL",      41.3681, -89.4648, "2026-11-09T21:16:00Z"],
-      ["Galesburg, IL",      40.9447, -90.3640, "2026-11-09T22:09:00Z"],
-      ["Fort Madison, IA",   40.6250, -91.3150, "2026-11-09T23:10:00Z"],
-      ["La Plata, MO",       40.0275, -92.4919, "2026-11-10T00:24:00Z"],
-      ["Kansas City, MO",    39.0848, -94.5880, "2026-11-10T02:53:00Z"],
-      ["Kansas City, MO",    39.0848, -94.5880, "2026-11-10T03:37:00Z"],
-      ["Lawrence, KS",       38.9717, -95.2353, "2026-11-10T04:47:00Z"],
-      ["Topeka, KS",         39.0558, -95.6710, "2026-11-10T05:24:00Z"],
-      ["Newton, KS",         38.0467, -97.3450, "2026-11-10T07:40:00Z"],
-      ["Hutchinson, KS",     38.0561, -97.9311, "2026-11-10T08:15:00Z"],
-      ["Dodge City, KS",     37.7528, -100.0171,"2026-11-10T10:14:00Z"],
-      ["Garden City, KS",    37.9653, -100.8731,"2026-11-10T11:05:00Z"],
-      ["Lamar, CO",          38.0900, -102.6188,"2026-11-10T12:33:00Z"],
-      ["La Junta, CO",       37.9850, -103.5440,"2026-11-10T13:50:00Z"],
-      ["Trinidad, CO",       37.1700, -104.5085,"2026-11-10T15:10:00Z"],
-      ["Raton, NM",          36.9003, -104.4383,"2026-11-10T16:12:00Z"],
-      ["Las Vegas, NM",      35.5933, -105.2139,"2026-11-10T17:57:00Z"],
-      ["Lamy, NM",           35.4811, -105.8800,"2026-11-10T19:53:00Z"],
-      ["Albuquerque, NM",    35.0820, -106.6480,"2026-11-10T21:24:00Z"],
-      ["Albuquerque, NM",    35.0820, -106.6480,"2026-11-10T22:14:00Z"],
-      ["Gallup, NM",         35.5292, -108.7406,"2026-11-11T00:54:00Z"],
-      ["Winslow, AZ",        35.0222, -110.6970,"2026-11-11T01:43:00Z"],
-      ["Flagstaff, AZ",      35.1981, -111.6510,"2026-11-11T02:55:00Z"],
-      ["Kingman, AZ",        35.1889, -114.0530,"2026-11-11T05:49:00Z"],
-      ["Needles, CA",        34.8406, -114.6062,"2026-11-11T07:54:00Z"],
-      ["Barstow, CA",        34.9048, -117.0247,"2026-11-11T11:23:00Z"],
-      ["Victorville, CA",    34.5361, -117.2912,"2026-11-11T12:02:00Z"],
-      ["San Bernardino, CA", 34.1043, -117.3086,"2026-11-11T13:26:00Z"],
-      ["Riverside, CA",      33.9757, -117.3700,"2026-11-11T13:50:00Z"],
-      ["Fullerton, CA",      33.8697, -117.9248,"2026-11-11T15:24:00Z"],
-      ["Los Angeles, CA",    34.0562, -118.2365,"2026-11-11T16:12:00Z"],
-      ["Los Angeles, CA",    34.0562, -118.2365,"2026-11-11T18:00:00Z"],
-      ["Irvine, CA",         33.6567, -117.7334,"2026-11-11T18:55:00Z"],
-      ["Oceanside, CA",      33.1957, -117.3797,"2026-11-11T19:55:00Z"],
-      ["San Diego, CA",      32.7163, -117.1696,"2026-11-11T20:50:00Z"]
+      ["Los Angeles, CA",    34.0562, -118.2365,"2026-11-17T00:55:00Z"],
+      ["Fullerton, CA",      33.8697, -117.9248,"2026-11-17T01:33:00Z"],
+      ["Riverside, CA",      33.9757, -117.3700,"2026-11-17T02:18:00Z"],
+      ["San Bernardino, CA", 34.1043, -117.3086,"2026-11-17T02:43:00Z"],
+      ["Victorville, CA",    34.5361, -117.2912,"2026-11-17T03:54:00Z"],
+      ["Barstow, CA",        34.9048, -117.0247,"2026-11-17T04:47:00Z"],
+      ["Needles, CA",        34.8406, -114.6062,"2026-11-17T07:22:00Z"],
+      ["Kingman, AZ",        35.1889, -114.0530,"2026-11-17T08:37:00Z"],
+      ["Flagstaff, AZ",      35.1981, -111.6510,"2026-11-17T11:39:00Z"],
+      ["Winslow, AZ",        35.0222, -110.6970,"2026-11-17T12:43:00Z"],
+      ["Gallup, NM",         35.5292, -108.7406,"2026-11-17T14:36:00Z"],
+      ["Albuquerque, NM",    35.0820, -106.6480,"2026-11-17T17:45:00Z"],
+      ["Albuquerque, NM",    35.0820, -106.6480,"2026-11-17T18:31:00Z"],
+      ["Lamy, NM",           35.4811, -105.8800,"2026-11-17T19:38:00Z"],
+      ["Las Vegas, NM",      35.5933, -105.2139,"2026-11-17T21:27:00Z"],
+      ["Raton, NM",          36.9003, -104.4383,"2026-11-17T23:18:00Z"],
+      ["Trinidad, CO",       37.1700, -104.5085,"2026-11-18T00:17:00Z"],
+      ["La Junta, CO",       37.9850, -103.5440,"2026-11-18T01:55:00Z"],
+      ["Lamar, CO",          38.0900, -102.6188,"2026-11-18T02:49:00Z"],
+      ["Garden City, KS",    37.9653, -100.8731,"2026-11-18T04:20:00Z"],
+      ["Dodge City, KS",     37.7528, -100.0171,"2026-11-18T05:15:00Z"],
+      ["Hutchinson, KS",     38.0561, -97.9311, "2026-11-18T07:10:00Z"],
+      ["Newton, KS",         38.0467, -97.3450, "2026-11-18T07:51:00Z"],
+      ["Topeka, KS",         39.0558, -95.6710, "2026-11-18T10:17:00Z"],
+      ["Lawrence, KS",       38.9717, -95.2353, "2026-11-18T10:46:00Z"],
+      ["Kansas City, MO",    39.0848, -94.5880, "2026-11-18T12:20:00Z"],
+      ["Kansas City, MO",    39.0848, -94.5880, "2026-11-18T13:03:00Z"],
+      ["La Plata, MO",       40.0275, -92.4919, "2026-11-18T15:15:00Z"],
+      ["Fort Madison, IA",   40.6250, -91.3150, "2026-11-18T16:31:00Z"],
+      ["Galesburg, IL",      40.9447, -90.3640, "2026-11-18T17:37:00Z"],
+      ["Princeton, IL",      41.3681, -89.4648, "2026-11-18T18:30:00Z"],
+      ["Mendota, IL",        41.5475, -89.1176, "2026-11-18T18:51:00Z"],
+      ["Naperville, IL",     41.7795, -88.1455, "2026-11-18T19:55:00Z"],
+      ["Chicago, IL",        41.8789, -87.6396, "2026-11-18T20:44:00Z"]
     ]
   };
-  // Riders waiting on a platform down the line. Their pic sits at the station
-  // until the train gets there (live station status, or the timetable if the
-  // live feed is down), then they're "aboard".  stop = index into HYPE.stops.
-  HYPE.waiting = [
-    { login:"friskyalien", name:"FriskyAlien", code:"LAJ", stop:20, tz:"America/Denver" },
-    { login:"gman5o5",     name:"Gman5o5",     code:"ABQ", stop:25, tz:"America/Denver" },
-    { login:"deedotdolla", name:"DeeDotDolla", code:"LAX", stop:37, tz:"America/Los_Angeles" }
+  // Riders hopping OFF down the line. They count as aboard until the train
+  // reaches their station (live station status, or the timetable if the live
+  // feed is down). Then a 👋 pin with their pic sits at that station for a
+  // while.  stop = index into HYPE.stops.
+  HYPE.leaving = [
+    { login:"gman5o5",     name:"Gman5o5",     code:"ABQ", stop:11, tz:"America/Denver" },
+    { login:"friskyalien", name:"FriskyAlien", code:"LAJ", stop:17, tz:"America/Denver" }
   ];
+  var HYPE_BYE_MS = 12 * 3600000;   // how long the 👋 pin stays at their station
   var HYPE_FOCUS = /[?&]train=1\b/.test(location.search);
   HYPE.stops.forEach(function(s){ s[3] = Date.parse(s[3]); });
 
   function hypeLegName(now){
     var S = HYPE.stops;
-    if(now < S[3][3])  return "City of New Orleans #58";
-    if(now < S[4][3])  return "Layover in Chicago";
-    if(now < S[37][3]) return "Southwest Chief #3";
-    if(now < S[38][3]) return "Layover in Los Angeles";
-    return "Pacific Surfliner";
+    if(now < S[0][3]) return "Boarding in Los Angeles";
+    return "Southwest Chief #4";
   }
   // Where the timetable says the train should be right now.
   function hypeScheduled(now){
@@ -2013,7 +2004,7 @@
         var t = hypeFirstTrain(j);
         var lat = t && +t.lat, lng = t && +(t.lon != null ? t.lon : t.lng);
         if(!t || !isFinite(lat) || !isFinite(lng) || (!lat && !lng)) return null;
-        var next = null;
+        var next = null, arrived = false;
         (t.stations || []).some(function(s){
           var st = String(s.status || "").toLowerCase();
           if(st === "enroute" || st === "station"){ next = s.name || s.code; return true; }
@@ -2024,8 +2015,9 @@
           var st = String(s.status || "").toLowerCase();
           if(st === "departed" || st === "station" || st === "arrived") reached[String(s.code || "").toUpperCase()] = 1;
         });
+        if(reached.CHI && !next) arrived = true;
         var mph = +t.velocity;
-        return { lat:lat, lng:lng, next:next, live:true, leg:leg.name, reached:reached, chief: leg.id.indexOf("3-") === 0,
+        return { lat:lat, lng:lng, next:next, live:true, leg:leg.name, reached:reached, chief:true, arrived:arrived,
                  timely: t.trainTimely || "", state: t.trainState || "",
                  mph: isFinite(mph) ? Math.max(0, Math.round(mph)) : null,
                  heading: String(t.heading || "").toUpperCase(),
@@ -2069,20 +2061,22 @@
   }
   function hypePopup(){
     var p = hypeLast || {};
-    var waitingNow = {}, waitTxt = [];
-    HYPE.waiting.forEach(function(w){
-      if(!hypeBoarded(w)){ waitingNow[w.login] = 1; waitTxt.push(esc(w.name) + " (" + esc(HYPE.stops[w.stop][0].split(",")[0]) + ")"); }
+    var offNow = {}, offTxt = [], downTxt = [];
+    HYPE.leaving.forEach(function(w){
+      var st = esc(HYPE.stops[w.stop][0].split(",")[0]);
+      if(hypeGotOff(w)){ offNow[w.login] = 1; offTxt.push(esc(w.name) + " (" + st + ")"); }
+      else downTxt.push(esc(w.name) + " (" + st + ")");
     });
     var riders = (window.MUSHBOX_FAMILY && window.MUSHBOX_FAMILY.event)
-      ? window.MUSHBOX_FAMILY.event.list("hypeTrain").filter(function(r){ return !waitingNow[r.login]; })
+      ? window.MUSHBOX_FAMILY.event.list("hypeTrain").filter(function(r){ return !offNow[r.login]; })
           .map(function(r){ return esc(r.name); }).join(", ") : "";
-    var where = p.arrived ? "Arrived in San Diego! 🎉"
-      : (Date.now() < HYPE.stops[0][3]) ? "Boarding in Champaign Mon 6:30 AM CT"
+    var where = p.arrived ? "Made it to " + HYPE.to + "! 🎉"
+      : (Date.now() < HYPE.stops[0][3]) ? "Leaves Los Angeles Mon 4:55 PM PT"
       : p.at ? "Stopped at " + esc(p.at)
       : p.next ? "Next stop: " + esc(p.next) : "";
     return '<div class="pop hypepop">'
       + '<p class="pnm">🚂 The Hype Train</p>'
-      + '<div class="pcity">Champaign → Chicago → LA → San Diego</div>'
+      + '<div class="pcity">Home from TwitchCon · ' + esc(HYPE.route) + '</div>'
       + '<p class="psrc">' + esc(p.leg || "") + (where ? " · " + where : "") + '</p>'
       + (p.timely ? '<p class="pcat">' + esc(p.timely) + '</p>' : '')
       + (hypeSpeedText(p) ? '<p class="pcat">💨 ' + esc(hypeSpeedText(p))
@@ -2090,51 +2084,51 @@
              : (p.posAt ? ' · as of ' + esc(new Date(p.posAt).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})) : '')) + '</p>' : '')
       + '<p class="psrc">' + (p.live ? '📡 Live position' : '🕒 Estimated from the Amtrak schedule') + '</p>'
       + (riders ? '<p class="pcat">Aboard: ' + riders + '</p>' : '')
-      + (waitTxt.length ? '<p class="psrc">Waiting down the line: ' + waitTxt.join(", ") + '</p>' : '')
+      + (downTxt.length ? '<p class="psrc">Hopping off down the line: ' + downTxt.join(", ") + '</p>' : '')
+      + (offTxt.length ? '<p class="psrc">👋 Already home: ' + offTxt.join(", ") + '</p>' : '')
       + '<p class="psrc" style="opacity:.7">Live data: <a href="https://amtraker.com" target="_blank" rel="noopener">Amtraker</a></p>'
       + '</div>';
   }
   // Has the train reached this rider's station yet?
   var hypeReached = {};   // station code -> true, remembered from live data
-  function hypeBoarded(w){
+  function hypeGotOff(w){
     if(hypeReached[w.code]) return true;
     // no live word yet: trust the timetable, plus a little grace for late trains
     return Date.now() > HYPE.stops[w.stop][3] + 20*60000 && !hypeLiveOK;
   }
-  var hypeLiveOK = false, hypeWaitMarkers = {};
-  function hypeWaitIcon(w){
+  var hypeLiveOK = false, hypeOffMarkers = {}, hypeOffAt = {};
+  function hypeByeIcon(w){
     var src = AVATARS[w.login] || ("https://unavatar.io/twitch/" + encodeURIComponent(w.login));
     return L.divIcon({ className:"", iconSize:[44,58], iconAnchor:[22,22],
       html:'<div class="htwait"><img src="' + esc(src) + '" alt="" onerror="this.style.visibility=\'hidden\'">'
          + '<span class="htw-ini">' + esc(w.name.charAt(0).toUpperCase()) + '</span>'
-         + '<span class="htw-tag">⏳ ' + esc(w.name) + '</span></div>' });
+         + '<span class="htw-tag">👋 ' + esc(w.name) + '</span></div>' });
   }
-  function hypeWaitPopup(w){
-    var st = HYPE.stops[w.stop], when = "";
-    try{
-      when = new Date(st[3]).toLocaleString("en-US", { timeZone:w.tz, weekday:"short", hour:"numeric", minute:"2-digit", timeZoneName:"short" });
-    }catch(e){ when = new Date(st[3]).toLocaleString(); }
+  function hypeByePopup(w){
+    var st = HYPE.stops[w.stop];
     return '<div class="pop hypepop"><p class="pnm">' + esc(w.name) + '</p>'
-      + '<div class="pcity">Waiting at ' + esc(st[0]) + '</div>'
-      + '<p class="psrc">🚂 Hops on the Hype Train here</p>'
-      + '<p class="pcat">Train due ' + esc(when) + (hypeLast && hypeLast.timely ? ' · ' + esc(hypeLast.timely) : '') + '</p>'
+      + '<div class="pcity">Hopped off at ' + esc(st[0]) + '</div>'
+      + '<p class="psrc">🚂 Thanks for riding the Hype Train!</p>'
       + '<a class="watch" href="https://twitch.tv/' + encodeURIComponent(w.login) + '" target="_blank" rel="noopener">Twitch ▸</a></div>';
   }
-  function hypeUpdateWaiting(show){
-    HYPE.waiting.forEach(function(w){
-      var on = show && !hypeBoarded(w), mk = hypeWaitMarkers[w.login];
+  function hypeUpdateLeaving(show){
+    var now = Date.now();
+    HYPE.leaving.forEach(function(w){
+      var off = hypeGotOff(w);
+      if(off && !hypeOffAt[w.login]) hypeOffAt[w.login] = Math.max(HYPE.stops[w.stop][3], Math.min(now, HYPE.stops[w.stop][3] + 6*3600000));
+      var on = show && off && now - hypeOffAt[w.login] < HYPE_BYE_MS, mk = hypeOffMarkers[w.login];
       if(on && !mk){
         var st = HYPE.stops[w.stop];
-        mk = hypeWaitMarkers[w.login] = L.marker([st[1], st[2]], { icon:hypeWaitIcon(w), zIndexOffset:1900, riseOnHover:true })
-          .bindPopup(function(){ return hypeWaitPopup(w); }).addTo(map);
+        mk = hypeOffMarkers[w.login] = L.marker([st[1], st[2]], { icon:hypeByeIcon(w), zIndexOffset:1900, riseOnHover:true })
+          .bindPopup(function(){ return hypeByePopup(w); }).addTo(map);
       } else if(!on && mk){
-        map.removeLayer(mk); delete hypeWaitMarkers[w.login];
+        map.removeLayer(mk); delete hypeOffMarkers[w.login];
       }
     });
   }
   function hypeUpdate(){
     var now = Date.now();
-    hypeUpdateWaiting(now >= HYPE.start && now <= HYPE.end);
+    hypeUpdateLeaving(now >= HYPE.start && now <= HYPE.end);
     if(now < HYPE.start || now > HYPE.end){
       if(hypeMarker){ map.removeLayer(hypeMarker); hypeMarker = null; }
       if(hypeLine){ map.removeLayer(hypeLine); hypeLine = null; }
@@ -2160,8 +2154,9 @@
       }
       hypeLast = p;
       hypeLiveOK = !!(live && live.chief);
+      if(live && sch.arrived && !live.next) p.arrived = true;
       if(live && live.reached) Object.keys(live.reached).forEach(function(c){ hypeReached[c] = true; });
-      hypeUpdateWaiting(true);
+      hypeUpdateLeaving(true);
       if(!hypeMarker){
         hypeMarker = L.marker([p.lat, p.lng], { icon:hypeIcon(), zIndexOffset:2000, riseOnHover:true })
           .bindPopup(hypePopup).addTo(map);

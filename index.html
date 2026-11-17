@@ -376,7 +376,7 @@
   }
 </style>
 <link rel="stylesheet" href="/assets/css/site-background.css">
-<script src="/family.js?v=20261115a"></script>
+<script src="/family.js?v=20261116a"></script>
 </head>
 <body>
 <div class="card-col">
@@ -387,7 +387,7 @@
   </a>
   <p class="tagline">IRL streamer · builder of Mushbox bonded streaming rigs · Creators for Charity</p>
 
-  <!-- ===== 🚂 Hype Train banner (shows itself Nov 8 – 11, 2026) ===== -->
+  <!-- ===== 🚂 Hype Train banner (ride home: shows itself Nov 16 – 18, 2026) ===== -->
   <style>
     .mbxht{display:none;align-items:center;justify-content:center;gap:10px;width:100%;max-width:640px;margin:10px auto 2px;
       padding:11px 16px;border-radius:14px;text-decoration:none;color:#1a1205;font-weight:800;font-size:15px;
@@ -410,14 +410,14 @@
   (function(){
     var a = document.getElementById("mbxHypeBanner"); if (!a) return;
     var now = Date.now(),
-        show   = Date.parse("2026-11-08T00:00:00Z"),
-        depart = Date.parse("2026-11-09T12:30:00Z"),
-        arrive = Date.parse("2026-11-11T20:50:00Z"),
-        hide   = Date.parse("2026-11-12T07:59:00Z"), msg;
+        show   = Date.parse("2026-11-16T20:00:00Z"),
+        depart = Date.parse("2026-11-17T00:55:00Z"),
+        arrive = Date.parse("2026-11-18T20:44:00Z"),
+        hide   = Date.parse("2026-11-19T07:59:00Z"), msg;
     if (now < show || now > hide) return;
-    if (now < depart)      msg = "The Hype Train leaves for TwitchCon Monday morning!";
-    else if (now < arrive) msg = "The Hype Train is rolling to TwitchCon right now!";
-    else                   msg = "The Hype Train made it to San Diego!";
+    if (now < depart)      msg = "The Hype Train heads home from TwitchCon tonight!";
+    else if (now < arrive) msg = "The Hype Train is rolling home from TwitchCon right now!";
+    else                   msg = "The Hype Train made it home to Chicago!";
     a.querySelector(".txt").textContent = msg;
     a.classList.add("on");
   })();

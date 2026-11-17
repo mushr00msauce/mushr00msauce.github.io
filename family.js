@@ -123,13 +123,15 @@ window.MUSHBOX_FAMILY = {
     secret: {
       "Redivivus": "2026-11-12T02:00:00Z"   // Wed Nov 11, 6:00 PM Pacific
     },
-    // offMap: no home dot on the live map until that moment, and no live
-    // dot either UNLESS RealtimeIRL is sending their GPS. For Hype Train
-    // riders, whose pin would otherwise sit at home while they're on the train.
+    // offMap: no home dot on the live map until that moment (or between
+    // ["from", "until"]), and no live dot either UNLESS RealtimeIRL is sending
+    // their GPS. For Hype Train riders, whose pin would otherwise sit at home
+    // while they're on the train.
     offMap: {
-      "mushr00msauce": "2026-11-11T21:30:00Z",  // Wed Nov 11, 1:30 PM Pacific (San Diego arrival)
-      "Kozybean":      "2026-11-11T21:30:00Z",
-      "UncleJPop":     "2026-11-11T21:30:00Z"
+      // ride home: hidden from LA departure until they're off the train
+      "mushr00msauce": ["2026-11-16T20:00:00Z", "2026-11-19T07:59:00Z"],  // through Wed night
+      "Gman5o5":       ["2026-11-16T20:00:00Z", "2026-11-17T19:30:00Z"],  // off at Albuquerque
+      "FriskyAlien":   ["2026-11-16T20:00:00Z", "2026-11-18T03:00:00Z"]   // off at La Junta
     }
   }
 };
@@ -165,9 +167,10 @@ window.MUSHBOX_FAMILY = {
   F.tcHidden = function(login){ var l = main(login); return !!secret[l] && Date.now() < secret[l]; };
   var offMap = {};
   Object.keys(TC.offMap || {}).forEach(function(n){
-    var p = byName[n.toLowerCase()]; offMap[p ? p.login : n.toLowerCase()] = Date.parse(TC.offMap[n]);
+    var v = TC.offMap[n], p = byName[n.toLowerCase()];
+    offMap[p ? p.login : n.toLowerCase()] = Array.isArray(v) ? [Date.parse(v[0]), Date.parse(v[1])] : [0, Date.parse(v)];
   });
-  F.offMap = function(login){ var l = main(login); return !!offMap[l] && Date.now() < offMap[l]; };
+  F.offMap = function(login){ var r = offMap[main(login)], t = Date.now(); return !!r && t >= r[0] && t < r[1]; };
   function people(key){
     return (TC[key] || []).map(function(n){
       var p = byName[String(n).toLowerCase()];
