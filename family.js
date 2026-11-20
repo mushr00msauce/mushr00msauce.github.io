@@ -23,6 +23,10 @@
                island this way; the label is all anyone sees)
      platform: "kick" if their main channel is on Kick (default Twitch)
      alts:     other channel logins that count as the same person
+     away:     traveling for a while? a place (same format as home) that
+               stands in for their home base until you delete it — or
+               [place, "YYYY-MM-DD"] to switch back automatically after
+               that date (UTC). e.g. away:"Tampa, FL"
 
    COUNTS (all automatic):
      Family          = everyone listed (every stage)
@@ -82,7 +86,7 @@ window.MUSHBOX_FAMILY = {
     { name:"PapaSmaxe", stage:"active", home:"Colorado" },
     { name:"PoisonHearrt", stage:"active", home:"California" },
     { name:"PotentialBliss", stage:"shipped", home:"San Diego, CA" },
-    { name:"Redivivus", stage:"active", home:"UK" },
+    { name:"Redivivus", stage:"active", home:"UK", away:"Tampa, FL" },
     { name:"RefurberSteve", stage:"active", home:"Illinois" },
     { name:"Renz", stage:"active", home:"Minnesota" },
     { name:"RustyRhymez", stage:"active", home:"Rhode Island" },
@@ -143,6 +147,10 @@ window.MUSHBOX_FAMILY = {
     p.platform = p.platform || "twitch";
     p.stage = p.stage || "active";
     p.alts = (p.alts || []).map(function(a){ return a.toLowerCase(); });
+    if (p.away) {
+      var aw = Array.isArray(p.away) && typeof p.away[1] === "string" && /^\d{4}-/.test(p.away[1]) ? p.away : [p.away];
+      if (!aw[1] || new Date().toISOString().slice(0,10) <= aw[1]) { p.homeBase = p.home; p.home = aw[0]; }
+    }
     p.url = (p.platform === "kick" ? "https://kick.com/" : "https://twitch.tv/") + p.login;
   });
   F.byStage = function(s){ return F.members.filter(function(p){ return p.stage === s; }); };
