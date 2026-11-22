@@ -5,11 +5,12 @@
 <title>TwitchCon 2027 Mini Countdown</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@700&display=swap" rel="stylesheet">
 <style>
-  /* OBS Browser Source: https://themushbox.com/twitchcon-mini.html  —  Width 360, Height 130. Transparent background. */
+  /* Browser source: https://themushbox.com/twitchcon-mini.html at 1920x1080 (any size works; it scales to the canvas).
+     Optional ?size=1.3 to make it bigger, ?size=0.8 smaller. */
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{background:transparent;overflow:hidden}
   .box{
-    position:absolute; top:6px; left:6px; width:340px;
+    position:absolute; top:16px; left:16px; width:340px; transform-origin:top left;
     padding:10px 12px 12px; text-align:center;
     background:radial-gradient(ellipse at 50% 0%,rgba(15,27,61,.9) 0%,rgba(5,7,13,.85) 70%);
     border:1px solid rgba(94,200,255,.3); border-radius:14px;
@@ -56,6 +57,15 @@
     $('m').textContent = pad(Math.floor(t % 3600 / 60));
     $('s').textContent = pad(t % 60);
   }
+  // Keep the same proportion of the screen (340px on a 1920 canvas) whatever size it is rendered at
+  const SIZE = parseFloat(new URLSearchParams(location.search).get('size')) || 1;
+  const box = document.querySelector('.box');
+  function fit(){
+    const k = (window.innerWidth / 1920) * SIZE;
+    box.style.transform = `scale(${k})`;
+    box.style.top = box.style.left = (16 * window.innerWidth / 1920) + 'px';
+  }
+  fit(); addEventListener('resize', fit);
   tick(); setInterval(tick, 1000);
 </script>
 </body>
