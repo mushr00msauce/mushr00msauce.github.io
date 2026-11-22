@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Twitch OAuth Generator · Mushbox</title>
+<meta name="description" content="Generate a Twitch chat OAuth token for NOALBS — Mushbox.">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<link rel="canonical" href="https://themushbox.com/oauth/">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --black:#060810; --navy:#0A1535; --royal:#1E6FFF; --sky:#4DB8FF;
+    --ink:#EAF1FF; --mute:#9FB2D6; --faint:#6A7DA6;
+    --line:rgba(77,184,255,.14); --twitch:#9146FF; --ok:#3DDC97; --bad:#FF5C7A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1200px 600px at 50% -10%,#0F2160 0%,var(--black) 60%);color:var(--ink);
+       font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:48px 18px}
+  a{color:var(--sky)}
+  .wrap{width:100%;max-width:620px}
+  .brand{display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:28px;text-decoration:none}
+  .brand img{width:46px;height:46px;border-radius:50%}
+  .brand span{font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.3rem;letter-spacing:.08em;color:var(--ink)}
+  .card{background:linear-gradient(180deg,rgba(10,21,53,.9),rgba(6,8,16,.9));border:1px solid var(--line);border-radius:18px;padding:30px 28px}
+  h1{font-family:'Orbitron',sans-serif;font-weight:700;font-size:1.35rem;letter-spacing:.04em;margin-bottom:6px}
+  .sub{font-family:'Rajdhani',sans-serif;font-weight:600;font-size:1.1rem;color:var(--sky);margin-bottom:18px}
+  p{color:var(--mute);line-height:1.6;font-size:.95rem}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:22px;padding:15px 18px;border:0;border-radius:12px;
+       background:var(--twitch);color:#fff;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.15rem;letter-spacing:.04em;cursor:pointer;text-decoration:none}
+  .btn:hover{filter:brightness(1.1)}
+  .btn.alt{background:transparent;border:1px solid var(--line);color:var(--ink);margin-top:12px}
+  .btn svg{width:20px;height:20px;fill:#fff}
+  .tokenbox{margin-top:18px;display:flex;gap:8px}
+  .tokenbox input{flex:1;min-width:0;background:var(--black);border:1px solid rgba(77,184,255,.35);border-radius:10px;padding:13px 12px;
+       color:var(--sky);font-family:'JetBrains Mono',monospace;font-size:.85rem}
+  .tokenbox button{background:var(--royal);border:0;border-radius:10px;padding:0 18px;color:#fff;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;cursor:pointer}
+  .meta{margin-top:14px;font-size:.88rem;color:var(--mute)}
+  .meta b{color:var(--ink)}
+  .ok{color:var(--ok)} .bad{color:var(--bad)}
+  ol{margin:16px 0 0 20px;color:var(--mute);line-height:1.7;font-size:.93rem}
+  ol code,p code{font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--sky);background:rgba(77,184,255,.08);padding:2px 6px;border-radius:6px}
+  .warn{margin-top:18px;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,92,122,.35);background:rgba(255,92,122,.07);font-size:.88rem;color:#FFC2CE}
+  .hidden{display:none}
+  footer{margin-top:26px;color:var(--faint);font-size:.8rem;text-align:center;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="brand" href="/home.html"><img src="/logo.png" alt=""><span>MUSHBOX</span></a>
+
+  <!-- Step 1: connect -->
+  <div class="card" id="start">
+    <h1>Twitch OAuth Generator</h1>
+    <div class="sub">For NOALBS chat commands</div>
+    <p>Seeing <code>ERROR Twitch authentication failed</code> in NOALBS? Log in with the Twitch account NOALBS chats as (your bot account, or your own channel if you don't use a bot) and you'll get a fresh token to paste into your <code>.env</code> file.</p>
+    <button class="btn" id="connect">
+      <svg viewBox="0 0 24 24"><path d="M4.3 2 2.5 6.6V20h4.6v2.5h2.6L12.2 20h3.7l5-5V2H4.3Zm15 12.2-2.9 2.9h-4.6l-2.5 2.5v-2.5H5.4V3.7h13.9v10.5ZM16.4 7.1v4.9h-1.7V7.1h1.7Zm-4.6 0v4.9h-1.7V7.1h1.7Z"/></svg>
+      Log in with Twitch
+    </button>
+    <p class="meta">Twitch will always ask which account to use, so you can switch to the bot account if you need to.</p>
+    <div class="warn hidden" id="err"></div>
+  </div>
+
+  <!-- Step 2: result -->
+  <div class="card hidden" id="result">
+    <h1>Your token is ready</h1>
+    <div class="sub" id="who">Checking token…</div>
+    <div class="tokenbox">
+      <input id="token" type="password" readonly spellcheck="false" aria-label="OAuth token">
+      <button id="copy">Copy</button>
+    </div>
+    <p class="meta"><a href="#" id="reveal">Show token</a></p>
+    <ol>
+      <li>Open the <code>.env</code> file inside your NOALBS folder.</li>
+      <li>Replace the old OAuth value with the one above (keep the <code>oauth:</code> part).</li>
+      <li>Save the file, then close and relaunch NOALBS.</li>
+      <li>Make sure the authentication error is gone.</li>
+    </ol>
+    <div class="warn">Treat this like a password. Anyone with it can chat as this account. Don't paste it in Discord or on stream.</div>
+    <button class="btn alt" id="again">Generate another</button>
+  </div>
+
+  <footer>This page runs entirely in your browser. Your token comes straight from Twitch and is never sent to or stored by Mushbox.<br>
+  <a href="https://www.twitch.tv/settings/connections" target="_blank" rel="noopener">Revoke access anytime in Twitch → Settings → Connections</a></footer>
+</div>
+
+<script>
+(function(){
+  // Twitch application Client ID (public, safe to publish).
+  // Register https://themushbox.com/oauth/ as an OAuth Redirect URL at dev.twitch.tv/console.
+  const CLIENT_ID = 'PASTE_TWITCH_CLIENT_ID_HERE';
+  const REDIRECT  = 'https://themushbox.com/oauth/';
+  const SCOPES    = ['chat:read','chat:edit'];
+
+  const $ = id => document.getElementById(id);
+  const showErr = msg => { const e=$('err'); e.textContent=msg; e.classList.remove('hidden'); };
+  const store = {
+    get(k){ try{return sessionStorage.getItem(k);}catch(e){return null;} },
+    set(k,v){ try{sessionStorage.setItem(k,v);}catch(e){} },
+    del(k){ try{sessionStorage.removeItem(k);}catch(e){} }
+  };
+
+  function login(){
+    if(!/^[a-z0-9]{20,40}$/i.test(CLIENT_ID)){ showErr('This generator isn\'t set up yet. Please message mushroom.'); return; }
+    const state = Array.from(crypto.getRandomValues(new Uint8Array(16)), b=>b.toString(16).padStart(2,'0')).join('');
+    store.set('mb_oauth_state', state);
+    const q = new URLSearchParams({
+      client_id: CLIENT_ID, redirect_uri: REDIRECT, response_type: 'token',
+      scope: SCOPES.join(' '), state, force_verify: 'true'
+    });
+    location.href = 'https://id.twitch.tv/oauth2/authorize?' + q.toString();
+  }
+
+  async function handleReturn(){
+    const frag = new URLSearchParams(location.hash.slice(1));
+    const query = new URLSearchParams(location.search);
+    // Clear the token out of the address bar / history right away
+    if(location.hash || location.search) history.replaceState(null,'',location.pathname);
+
+    if(query.get('error')){
+      showErr(query.get('error') === 'access_denied'
+        ? 'You cancelled the Twitch login. Hit the button to try again.'
+        : 'Twitch said: ' + (query.get('error_description') || query.get('error')));
+      return;
+    }
+    const token = frag.get('access_token');
+    if(!token) return;
+
+    const expected = store.get('mb_oauth_state'); store.del('mb_oauth_state');
+    if(!expected || frag.get('state') !== expected){
+      showErr('That login link didn\'t start from this page, so the token was thrown away. Hit the button to start fresh.');
+      return;
+    }
+
+    $('start').classList.add('hidden');
+    $('result').classList.remove('hidden');
+    $('token').value = 'oauth:' + token;
+
+    try{
+      const r = await fetch('https://id.twitch.tv/oauth2/validate', { headers:{ Authorization:'OAuth ' + token } });
+      if(!r.ok) throw new Error();
+      const v = await r.json();
+      const scopes = v.scopes || [];
+      const missing = SCOPES.filter(s => !scopes.includes(s));
+      let html = 'Logged in as <b>' + String(v.login).replace(/[^\w]/g,'') + '</b>';
+      if(v.expires_in){
+        const days = Math.floor(v.expires_in/86400);
+        html += ' · good for about ' + (days >= 1 ? days + ' day' + (days===1?'':'s') : Math.ceil(v.expires_in/3600) + ' hours');
+      }
+      html += missing.length ? ' · <span class="bad">missing ' + missing.join(', ') + '</span>' : ' · <span class="ok">chat access OK</span>';
+      $('who').innerHTML = html;
+    }catch(e){
+      $('who').textContent = 'Token received (couldn\'t double-check it with Twitch, but it should work).';
+    }
+  }
+
+  $('connect').addEventListener('click', login);
+  $('again').addEventListener('click', () => { $('token').value=''; login(); });
+  $('reveal').addEventListener('click', e => {
+    e.preventDefault();
+    const t=$('token'); const show = t.type==='password';
+    t.type = show ? 'text' : 'password'; e.target.textContent = show ? 'Hide token' : 'Show token';
+  });
+  $('copy').addEventListener('click', async () => {
+    const v=$('token').value;
+    try{ await navigator.clipboard.writeText(v); }
+    catch(e){ const t=$('token'); t.type='text'; t.select(); document.execCommand('copy'); }
+    $('copy').textContent='Copied!'; setTimeout(()=>$('copy').textContent='Copy',1800);
+  });
+
+  handleReturn();
+})();
+</script>
+</body>
+</html>
