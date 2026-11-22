@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TwitchCon 2027 Countdown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  /* ===== EDIT HERE =====
+     Target: TwitchCon San Diego 2027 opens Fri Oct 8, 2027.
+     10:00 AM Pacific (PDT, UTC-7) = 17:00 UTC. */
+  :root{
+    --bg:#05070d; --royal:#2b5cff; --sky:#5ec8ff; --purple:#9146ff; --white:#f4f7ff; --dim:#8a96b8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:radial-gradient(ellipse at 50% 0%,#0f1b3d 0%,var(--bg) 60%);
+    color:var(--white); font-family:Rajdhani,system-ui,sans-serif;
+    display:flex; align-items:center; justify-content:center; text-align:center; overflow:hidden;
+  }
+  body.obs{background:transparent}
+  .wrap{padding:4vmin; width:100%; max-width:1100px}
+  .kicker{font-family:Orbitron,sans-serif; font-weight:600; letter-spacing:.35em; font-size:clamp(11px,1.8vw,18px); color:var(--sky); text-transform:uppercase}
+  h1{font-family:Orbitron,sans-serif; font-weight:800; font-size:clamp(26px,6vw,64px); line-height:1.05; margin:.25em 0 .1em;
+     background:linear-gradient(90deg,var(--sky),var(--royal) 55%,var(--purple)); -webkit-background-clip:text; background-clip:text; color:transparent}
+  .sub{font-size:clamp(14px,2.2vw,22px); color:var(--dim); font-weight:500; letter-spacing:.05em}
+  .clock{display:flex; justify-content:center; gap:clamp(8px,2vw,22px); margin:clamp(18px,4vh,40px) 0}
+  .unit{flex:1 1 0; max-width:220px; background:rgba(20,32,70,.55); border:1px solid rgba(94,200,255,.25);
+        border-radius:16px; padding:clamp(10px,2.4vw,24px) 4px; box-shadow:0 0 30px rgba(43,92,255,.18) inset}
+  body.obs .unit{background:rgba(5,7,13,.72)}
+  .num{font-family:Orbitron,sans-serif; font-weight:800; font-size:clamp(30px,8vw,92px); line-height:1; font-variant-numeric:tabular-nums}
+  .unit.days .num{color:var(--sky); text-shadow:0 0 22px rgba(94,200,255,.45)}
+  .lbl{margin-top:.5em; font-size:clamp(11px,1.6vw,16px); letter-spacing:.3em; color:var(--dim); text-transform:uppercase; font-weight:700}
+  .foot{display:flex; justify-content:center; gap:1.2em; flex-wrap:wrap; font-size:clamp(13px,1.9vw,19px); font-weight:700; letter-spacing:.08em}
+  .foot .handle{color:var(--purple)} .foot .site{color:var(--sky)}
+  .done{display:none; font-family:Orbitron,sans-serif; font-size:clamp(28px,7vw,72px); font-weight:800; color:var(--sky); margin:.6em 0}
+  body.compact .kicker, body.compact .sub, body.compact .foot{display:none}
+  body.compact h1{font-size:clamp(18px,4vw,36px)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">The Hype Train rolls again</div>
+  <h1>TwitchCon San Diego 2027</h1>
+  <div class="sub">October 8–10, 2027 · San Diego Convention Center</div>
+
+  <div class="clock" id="clock">
+    <div class="unit days"><div class="num" id="d">--</div><div class="lbl">Days</div></div>
+    <div class="unit"><div class="num" id="h">--</div><div class="lbl">Hours</div></div>
+    <div class="unit"><div class="num" id="m">--</div><div class="lbl">Min</div></div>
+    <div class="unit"><div class="num" id="s">--</div><div class="lbl">Sec</div></div>
+  </div>
+  <div class="done" id="done">WE'RE HERE! 🍄</div>
+
+  <div class="foot"><span class="handle">twitch.tv/mushr00msauce</span><span class="site">themushbox.com</span></div>
+</div>
+<script>
+  const TARGET = Date.UTC(2027, 9, 8, 17, 0, 0); // Oct 8 2027, 10:00 AM PT
+  const END    = Date.UTC(2027, 9, 11, 7, 0, 0); // after Oct 10 ends PT
+
+  // URL options: ?obs=1 (transparent background for OBS), ?compact=1 (just title + clock)
+  const q = new URLSearchParams(location.search);
+  if (q.get('obs')) document.body.classList.add('obs');
+  if (q.get('compact')) document.body.classList.add('compact');
+
+  const $ = id => document.getElementById(id);
+  const pad = n => String(n).padStart(2, '0');
+  function tick(){
+    const now = Date.now(), diff = TARGET - now;
+    if (diff <= 0){
+      $('clock').style.display = 'none';
+      $('done').style.display = 'block';
+      if (now > END) $('done').textContent = 'GG, San Diego. See you next year!';
+      return;
+    }
+    const t = Math.floor(diff / 1000);
+    $('d').textContent = Math.floor(t / 86400);
+    $('h').textContent = pad(Math.floor(t % 86400 / 3600));
+    $('m').textContent = pad(Math.floor(t % 3600 / 60));
+    $('s').textContent = pad(t % 60);
+  }
+  tick(); setInterval(tick, 1000);
+</script>
+</body>
+</html>
