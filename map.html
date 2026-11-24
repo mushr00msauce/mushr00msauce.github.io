@@ -817,6 +817,7 @@
   function normKey(s){ return s.toLowerCase().replace(/\./g,'').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim(); }
 
   // Returns {lat,lng,label} from a stream title, or null.
+  var COUNTRY_KEYS = {"uk":1,"united kingdom":1,"england":1,"scotland":1,"wales":1,"ireland":1};
   function detectFromTitle(title){
     if(!title) return null;
     var low = title.toLowerCase();
@@ -827,17 +828,21 @@
       var st = m[2].toUpperCase();
       if(STATES[st]){
         var ck = normKey(m[1]);
-        if(CITY_INDEX[ck]){ var c=CITY_INDEX[ck]; return {lat:c[1],lng:c[2],label:c[3]}; }
+        if(CITY_INDEX[ck]){ var c=CITY_INDEX[ck]; return {lat:c[1],lng:c[2],label:c[3],level:'city'}; }
         var city = m[1].trim().replace(/\b\w/g,function(x){return x.toUpperCase();});
-        return {lat:STATES[st][0],lng:STATES[st][1],label:city+", "+st};
+        return {lat:STATES[st][0],lng:STATES[st][1],label:city+", "+st,level:'city'};
       }
     }
 
     // 2) gazetteer whole-word scan (longest names first)
-    var padded = ' ' + normKey(title) + ' ';
+    //    Country-wide names ("UK", "England"...) are held back until after
+    //    the state checks, so "UK streamer in Florida" pins Florida, not the UK.
+    var padded = ' ' + normKey(title) + ' ', countryHit = null;
     for(var i=0;i<PLACES.length;i++){
       if(padded.indexOf(' '+PLACES[i][0]+' ') !== -1){
-        var p=PLACES[i]; return {lat:p[1],lng:p[2],label:p[3]};
+        var p=PLACES[i];
+        if(COUNTRY_KEYS[p[0]]){ if(!countryHit) countryHit = {lat:p[1],lng:p[2],label:p[3],level:'country'}; continue; }
+        return {lat:p[1],lng:p[2],label:p[3],level:'city'};
       }
     }
 
@@ -865,11 +870,11 @@
       for(var j=0;j<abbrMatches.length;j++){
         var code = abbrMatches[j];
         if(ABBR_OVERRIDE[code]){
-          var o=ABBR_OVERRIDE[code]; return {lat:o[0], lng:o[1], label:o[2]};
+          var o=ABBR_OVERRIDE[code]; return {lat:o[0], lng:o[1], label:o[2], level:'city'};
         }
         if(STATES[code] && !STATE_ABBR_SKIP[code]){
           var s2 = STATES[code];
-          return {lat:s2[0], lng:s2[1], label:s2[2]};
+          return {lat:s2[0], lng:s2[1], label:s2[2], level:'state'};
         }
       }
     }
@@ -877,14 +882,15 @@
     // 4) full state-name mention
     for(var code in STATES){
       var s=STATES[code];
-      if(padded.indexOf(' '+s[2].toLowerCase()+' ') !== -1) return {lat:s[0],lng:s[1],label:s[2]};
+      if(padded.indexOf(' '+s[2].toLowerCase()+' ') !== -1) return {lat:s[0],lng:s[1],label:s[2],level:'state'};
     }
-    return null;
+    return countryHit;
   }
 
   // Resolve each LOCATIONS entry into [lat, lng, label].
   // Accepts either a "City" / "City, ST" string (looked up) or [lat,lng,"Label"].
-  var HOMES = {};
+  var HOMES = {}, AWAY = {};
+  (FAM.members || []).forEach(function(p){ if(p.homeBase) AWAY[p.login] = true; });
   Object.keys(LOCATIONS).forEach(function(login){
     var v = LOCATIONS[login], r = null;
     if(Array.isArray(v)){
@@ -1446,7 +1452,9 @@
       var det = hidden ? null : detectFromTitle(e.title), loc;
       var gps = hidden ? null : rtFresh(e.person);
       if(gps){ loc = {lat:gps.lat,lng:gps.lng,label:(det ? det.label : 'Live GPS'),source:'rtirl'}; e.gpsAt = gps.at; }
-      else if(det){ loc = {lat:det.lat,lng:det.lng,label:det.label,source:'title'}; }
+      // Someone set "away" in family.js? That spot beats a vague title match
+      // (just a state or country) — only a specific city in the title moves them.
+      else if(det && !(det.level !== 'city' && AWAY[e.person] && HOMES[e.person])){ loc = {lat:det.lat,lng:det.lng,label:det.label,source:'title'}; }
       // On the TwitchCon list during the event: pin them at TwitchCon, not home.
       else if(!hidden && tcNow() && FAM.atTwitchCon && FAM.atTwitchCon(e.person || e.login)){
         loc = {lat:TWITCHCON.lat,lng:TWITCHCON.lng,label:TWITCHCON.label,source:'title'}; }
