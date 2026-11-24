@@ -48,6 +48,7 @@ window.MUSHBOX_FAMILY = {
     { name:"Awkventurer", stage:"shipped", home:[51.1784, -115.5708, "Banff, Canada"] },
     { name:"Barktok", stage:"active", home:"Los Angeles, CA", alts:["marcafterbark"] },
     { name:"Bigbonelife", stage:"active", home:"Florida" },
+    { name:"BigPileOfWesley", stage:"bench", home:"San Francisco" },
     { name:"Chefmaki", stage:"active", home:[40.7265, -73.9815, "New York, NY"] },
     { name:"DeepSeaHomer", stage:"active", home:"California" },
     { name:"DianaTheDogGroomer", stage:"active", home:"Virginia" },
