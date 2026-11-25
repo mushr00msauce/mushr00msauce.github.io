@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex">
+<title>Red GTA HUD</title>
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     RED'S GTA-STYLE HUD  -  OBS Browser Source (1920x1080)
+     Transparent background. Money + health, top right.
+     ============================================================ */
+  :root{
+    --money:#7ee36f;
+    --money-dark:#1f5a17;
+    --hp:#4fd36a;
+    --hp-low:#ff3b4a;
+    --armor:#4fb3ff;
+    --hud-bg:rgba(8,10,14,.55);
+    --scale:1;
+  }
+  html,body{margin:0;padding:0;background:transparent;overflow:hidden;width:1920px;height:1080px}
+
+  #hud{
+    position:absolute;top:44px;right:56px;
+    display:flex;flex-direction:column;align-items:flex-end;gap:10px;
+    transform:scale(var(--scale));transform-origin:top right;
+    font-family:'Teko',sans-serif;user-select:none;
+  }
+
+  /* ---------- MONEY ---------- */
+  #money{
+    font-size:84px;font-weight:600;line-height:.8;letter-spacing:1px;
+    color:var(--money);
+    -webkit-text-stroke:5px #000;paint-order:stroke fill;
+    text-shadow:0 4px 0 rgba(0,0,0,.55),0 0 18px rgba(126,227,111,.25);
+    transition:color .25s;
+  }
+  #money.gain{color:#c6ffb9}
+  #money.loss{color:#ff6b6b}
+  #money .sign{font-size:.82em;margin-right:4px;vertical-align:4%}
+
+  /* popups (+$5,000 — SUB name) */
+  #pops{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-height:0}
+  .pop{
+    font-size:40px;font-weight:600;line-height:.9;
+    -webkit-text-stroke:3px #000;paint-order:stroke fill;
+    color:var(--money);
+    animation:popIn .35s ease-out, popOut .6s ease-in forwards 3.4s;
+    display:flex;align-items:baseline;gap:10px;
+  }
+  .pop.neg{color:#ff6b6b}
+  .pop.heal{color:var(--hp)}
+  .pop .why{
+    font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;
+    -webkit-text-stroke:0;color:#fff;letter-spacing:1.5px;text-transform:uppercase;
+    background:var(--hud-bg);padding:2px 8px;border-radius:3px;
+  }
+  @keyframes popIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
+  @keyframes popOut{to{opacity:0;transform:translateY(-10px)}}
+
+  /* ---------- BARS ---------- */
+  .barrow{display:flex;align-items:center;gap:10px}
+  .icon{width:26px;height:26px;filter:drop-shadow(0 2px 0 #000)}
+  .bar{
+    position:relative;width:320px;height:16px;
+    background:var(--hud-bg);
+    border:2px solid rgba(0,0,0,.85);
+    transform:skewX(-18deg);overflow:hidden;
+    box-shadow:0 3px 0 rgba(0,0,0,.4);
+  }
+  .fill{
+    position:absolute;inset:0 auto 0 0;width:100%;
+    transition:width .6s cubic-bezier(.2,.9,.2,1), background .3s;
+  }
+  .ghost{ /* white "damage taken" trail */
+    position:absolute;inset:0 auto 0 0;width:100%;background:rgba(255,255,255,.75);
+    transition:width .9s ease .35s;
+  }
+  #hpFill{background:linear-gradient(180deg,#7dff95 0%,var(--hp) 45%,#279a3e 100%)}
+  #armorFill{background:linear-gradient(180deg,#a6d9ff 0%,var(--armor) 45%,#1f6fb3 100%)}
+  .ticks{position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 31px,rgba(0,0,0,.55) 31px 33px)}
+  #hpRow.low #hpFill{background:linear-gradient(180deg,#ff8a93 0%,var(--hp-low) 45%,#a3141f 100%)}
+  #hpRow.low .bar{animation:pulse .8s ease-in-out infinite}
+  @keyframes pulse{50%{box-shadow:0 0 14px 3px rgba(255,59,74,.75)}}
+  #hpRow.hit .bar{animation:shake .3s}
+  @keyframes shake{25%{transform:skewX(-18deg) translateX(-5px)}75%{transform:skewX(-18deg) translateX(5px)}}
+
+  .num{
+    font-size:30px;font-weight:600;color:#fff;min-width:46px;text-align:right;
+    -webkit-text-stroke:3px #000;paint-order:stroke fill;
+  }
+  #armorRow.hidden{display:none}
+
+  /* name tag */
+  #tag{
+    font-family:'Rajdhani',sans-serif;font-weight:700;font-size:18px;letter-spacing:4px;
+    color:#fff;background:linear-gradient(90deg,transparent,rgba(220,30,60,.85));
+    padding:2px 10px 2px 40px;text-transform:uppercase;margin-top:-2px;
+  }
+  #tag:empty{display:none}
+
+  /* ---------- AREA NAME (bottom right, like entering a new district) ---------- */
+  #area{
+    position:absolute;right:64px;bottom:70px;text-align:right;opacity:0;
+    font-family:'Teko',sans-serif;font-weight:700;font-size:96px;line-height:.85;
+    color:#fff;-webkit-text-stroke:5px #000;paint-order:stroke fill;
+    text-shadow:0 5px 0 rgba(0,0,0,.5);letter-spacing:2px;
+  }
+  #area small{
+    display:block;font-family:'Rajdhani',sans-serif;font-size:26px;letter-spacing:8px;
+    -webkit-text-stroke:0;color:#ff5fa2;text-shadow:0 2px 0 #000;
+  }
+  #area.show{animation:areaShow 7s ease forwards}
+  @keyframes areaShow{0%{opacity:0;transform:translateY(16px)}8%,80%{opacity:1;transform:none}100%{opacity:0}}
+
+  /* ---------- PANEL (only with ?panel=1) ---------- */
+  #panel{
+    display:none;position:absolute;left:40px;top:40px;width:340px;
+    font-family:'Rajdhani',sans-serif;color:#fff;background:#14161c;border:1px solid #333;
+    border-radius:8px;padding:16px;
+  }
+  #panel h3{margin:0 0 10px;font-size:20px;letter-spacing:2px}
+  #panel label{display:block;font-size:14px;margin:8px 0 4px;color:#aaa}
+  #panel input{width:100%;box-sizing:border-box;padding:6px;background:#0b0c10;color:#fff;border:1px solid #444;border-radius:4px;font-size:16px}
+  #panel .btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  #panel button{flex:1 1 30%;padding:8px;background:#2a2d36;color:#fff;border:1px solid #444;border-radius:4px;cursor:pointer;font-weight:700}
+  #panel button:hover{background:#3a3e4a}
+  #status{font-size:12px;color:#777;margin-top:10px}
+</style>
+</head>
+<body>
+
+<div id="hud">
+  <div id="money"><span class="sign">$</span><span id="moneyVal">0</span></div>
+  <div id="pops"></div>
+
+  <div class="barrow" id="hpRow">
+    <svg class="icon" viewBox="0 0 24 24"><path fill="#fff" stroke="#000" stroke-width="1.5" d="M9 2h6v7h7v6h-7v7H9v-7H2V9h7z"/></svg>
+    <div class="bar"><div class="ghost" id="hpGhost"></div><div class="fill" id="hpFill"></div><div class="ticks"></div></div>
+    <div class="num" id="hpNum">100</div>
+  </div>
+
+  <div class="barrow hidden" id="armorRow">
+    <svg class="icon" viewBox="0 0 24 24"><path fill="#fff" stroke="#000" stroke-width="1.5" d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5z"/></svg>
+    <div class="bar"><div class="ghost" id="armorGhost"></div><div class="fill" id="armorFill"></div><div class="ticks"></div></div>
+    <div class="num" id="armorNum">0</div>
+  </div>
+
+  <div id="tag"></div>
+</div>
+
+<div id="area"></div>
+
+<div id="panel">
+  <h3>RED HUD CONTROL</h3>
+  <label>Money</label>
+  <div class="btns">
+    <button data-a="money" data-v="1000">+1K</button>
+    <button data-a="money" data-v="10000">+10K</button>
+    <button data-a="money" data-v="-5000">-5K</button>
+  </div>
+  <label>Health</label>
+  <div class="btns">
+    <button data-a="hp" data-v="-25">Hit -25</button>
+    <button data-a="hp" data-v="-60">Hit -60</button>
+    <button data-a="heal">Heal</button>
+  </div>
+  <label>Set exact money</label>
+  <input id="setMoney" type="number" placeholder="e.g. 250000">
+  <div class="btns"><button id="applyMoney">Set</button><button id="reset">Reset all</button></div>
+  <div id="status">Chat: not connected</div>
+</div>
+
+<script>
+/* ============================================================
+   SETTINGS — all can be changed from the URL, e.g.
+   red-gta-hud.html?channel=redivivus&money=5000&sub=5000
+   ============================================================ */
+const P = new URLSearchParams(location.search);
+const num = (k, d) => (P.has(k) && !isNaN(+P.get(k))) ? +P.get(k) : d;
+
+const CFG = {
+  channel:   (P.get('channel') || 'redivivus').toLowerCase().replace(/^#/, ''),
+  startMoney: num('money', 0),
+  startHp:    num('health', 100),
+  armor:      P.has('armor') ? num('armor', 100) : null,   // armor bar hidden unless ?armor=
+  perSub:     num('sub', 5000),        // $ per sub / resub
+  perGift:    num('gift', 5000),       // $ per gifted sub
+  perBit:     num('bit', 10),          // $ per bit (100 bits = $1,000)
+  perRaider:  num('raider', 100),      // $ per raider
+  followCmd:  true,
+  tag:        P.get('tag') ?? '',      // optional name strip under the bars, e.g. ?tag=REDIVIVUS
+  scale:      num('scale', 1),
+  persist:    P.get('persist') !== '0',// remember money/health across refreshes
+  demo:       P.get('demo') === '1',
+  panel:      P.get('panel') === '1',
+  reset:      P.get('reset') === '1',
+};
+document.documentElement.style.setProperty('--scale', CFG.scale);
+document.getElementById('tag').textContent = CFG.tag;
+
+/* ---------- state ---------- */
+const KEY = 'redGtaHud:' + CFG.channel;
+let S = { money: CFG.startMoney, hp: CFG.startHp, armor: CFG.armor ?? 0 };
+if (CFG.persist && !CFG.reset) {
+  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s) S = { ...S, ...s }; } catch (e) {}
+}
+const save = () => { if (!CFG.persist) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+
+/* ---------- money (animated count) ---------- */
+const moneyEl = document.getElementById('money');
+const moneyVal = document.getElementById('moneyVal');
+let shown = S.money, raf = null;
+const fmt = n => Math.round(n).toLocaleString('en-US');
+moneyVal.textContent = fmt(shown);
+
+function renderMoney() {
+  cancelAnimationFrame(raf);
+  const from = shown, to = S.money, t0 = performance.now();
+  const dur = Math.min(1600, 400 + Math.abs(to - from) / 50);
+  moneyEl.classList.remove('gain', 'loss');
+  moneyEl.classList.add(to >= from ? 'gain' : 'loss');
+  const step = t => {
+    const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+    shown = from + (to - from) * e;
+    moneyVal.textContent = fmt(shown);
+    if (k < 1) raf = requestAnimationFrame(step);
+    else setTimeout(() => moneyEl.classList.remove('gain', 'loss'), 250);
+  };
+  raf = requestAnimationFrame(step);
+}
+
+function pop(text, why, cls = '') {
+  const box = document.getElementById('pops');
+  const d = document.createElement('div');
+  d.className = 'pop ' + cls;
+  d.innerHTML = `<span>${text}</span>${why ? `<span class="why"></span>` : ''}`;
+  if (why) d.querySelector('.why').textContent = why;
+  box.appendChild(d);
+  while (box.children.length > 4) box.firstChild.remove();
+  setTimeout(() => d.remove(), 4100);
+}
+
+function addMoney(amt, why) {
+  amt = Math.round(amt);
+  if (!amt) return;
+  S.money = Math.max(0, S.money + amt);
+  pop((amt > 0 ? '+$' : '-$') + fmt(Math.abs(amt)), why, amt < 0 ? 'neg' : '');
+  renderMoney(); save();
+}
+function setMoney(v) { S.money = Math.max(0, Math.round(v)); renderMoney(); save(); }
+
+/* ---------- health / armor ---------- */
+const hpRow = document.getElementById('hpRow');
+function renderBars(hit) {
+  S.hp = Math.max(0, Math.min(100, S.hp));
+  S.armor = Math.max(0, Math.min(100, S.armor));
+  document.getElementById('hpFill').style.width = S.hp + '%';
+  document.getElementById('hpGhost').style.width = S.hp + '%';
+  document.getElementById('hpNum').textContent = Math.round(S.hp);
+  hpRow.classList.toggle('low', S.hp <= 25);
+  if (hit) { hpRow.classList.remove('hit'); void hpRow.offsetWidth; hpRow.classList.add('hit'); }
+  if (CFG.armor !== null) {
+    document.getElementById('armorRow').classList.remove('hidden');
+    document.getElementById('armorFill').style.width = S.armor + '%';
+    document.getElementById('armorGhost').style.width = S.armor + '%';
+    document.getElementById('armorNum').textContent = Math.round(S.armor);
+  }
+  save();
+}
+function damage(n, why) {
+  n = Math.abs(n);
+  if (CFG.armor !== null && S.armor > 0) { const a = Math.min(S.armor, n); S.armor -= a; n -= a; }
+  S.hp -= n; renderBars(true);
+  if (why) pop('-' + Math.round(n) + ' HP', why, 'neg');
+}
+function heal(n = 100, why) {
+  S.hp = Math.min(100, S.hp + n); renderBars(false);
+  pop('+HEALTH', why, 'heal');
+}
+
+/* ---------- Twitch chat (anonymous, read-only — no login needed) ---------- */
+const statusEl = document.getElementById('status');
+function connectChat() {
+  if (!CFG.channel || CFG.channel === 'none') return;
+  const ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+  ws.onopen = () => {
+    ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
+    ws.send('PASS SCHMOOPIIE');
+    ws.send('NICK justinfan' + Math.floor(10000 + Math.random() * 80000));
+    ws.send('JOIN #' + CFG.channel);
+    statusEl.textContent = 'Chat: connected to #' + CFG.channel;
+  };
+  ws.onmessage = ev => ev.data.split('\r\n').forEach(line => line && handle(line, ws));
+  ws.onclose = () => { statusEl.textContent = 'Chat: reconnecting…'; setTimeout(connectChat, 4000); };
+}
+
+function parse(line) {
+  let tags = {}, rest = line;
+  if (rest[0] === '@') {
+    const i = rest.indexOf(' ');
+    rest.slice(1, i).split(';').forEach(kv => { const [k, v = ''] = kv.split('='); tags[k] = v.replace(/\\s/g, ' '); });
+    rest = rest.slice(i + 1);
+  }
+  const m = rest.match(/^(?::(\S+) )?(\S+)(?: (#\S+))?(?: :(.*))?/) || [];
+  return { tags, prefix: m[1] || '', cmd: m[2], chan: m[3], text: m[4] || '' };
+}
+
+function handle(line, ws) {
+  if (line.startsWith('PING')) return ws.send('PONG :tmi.twitch.tv');
+  const msg = parse(line), t = msg.tags;
+  const who = t['display-name'] || (msg.prefix.split('!')[0]) || 'someone';
+
+  if (msg.cmd === 'PRIVMSG') {
+    // Cheers
+    if (t.bits && +t.bits > 0) addMoney(+t.bits * CFG.perBit, `${t.bits} BITS — ${who}`);
+
+    // Commands from Red or her mods
+    const badges = t.badges || '';
+    const boss = /broadcaster\/|moderator\//.test(badges) || t.mod === '1';
+    if (!boss || !msg.text.startsWith('!')) return;
+    const [c, a] = msg.text.trim().split(/\s+/);
+    const n = parseFloat((a || '').replace(/[$,]/g, ''));
+    switch (c.toLowerCase()) {
+      case '!addmoney':  if (!isNaN(n)) addMoney(n, who); break;
+      case '!takemoney': if (!isNaN(n)) addMoney(-n, who); break;
+      case '!setmoney':  if (!isNaN(n)) setMoney(n); break;
+      case '!damage':    damage(isNaN(n) ? 25 : n, who); break;
+      case '!heal':      heal(isNaN(n) ? 100 : n, who); break;
+      case '!sethealth': if (!isNaN(n)) { S.hp = n; renderBars(false); } break;
+      case '!armor':     if (CFG.armor !== null) { S.armor = isNaN(n) ? 100 : n; renderBars(false); } break;
+      case '!wasted':    S.hp = 0; renderBars(true); pop('WASTED', '', 'neg'); break;
+      case '!resethud':  S = { money: CFG.startMoney, hp: CFG.startHp, armor: CFG.armor ?? 0 }; renderMoney(); renderBars(false); break;
+    }
+  }
+
+  if (msg.cmd === 'USERNOTICE') {
+    const id = t['msg-id'];
+    if (id === 'sub' || id === 'resub') addMoney(CFG.perSub, `SUB — ${who}`);
+    else if (id === 'subgift') addMoney(CFG.perGift, `GIFT — ${who}`);
+    else if (id === 'raid') {
+      const v = +t['msg-param-viewerCount'] || 0;
+      addMoney(v * CFG.perRaider, `RAID ${v} — ${t['msg-param-displayName'] || who}`);
+      heal(100, 'RAID HEAL');
+    }
+  }
+}
+
+/* ---------- control panel (?panel=1, use as an OBS custom dock or open in a browser) ---------- */
+if (CFG.panel) {
+  document.getElementById('panel').style.display = 'block';
+  document.querySelectorAll('#panel button[data-a]').forEach(b => b.onclick = () => {
+    const a = b.dataset.a, v = +b.dataset.v;
+    if (a === 'money') addMoney(v, 'MANUAL');
+    if (a === 'hp') damage(-v, 'MANUAL');
+    if (a === 'heal') heal(100, 'MANUAL');
+  });
+  document.getElementById('applyMoney').onclick = () => {
+    const v = +document.getElementById('setMoney').value; if (!isNaN(v)) setMoney(v);
+  };
+  document.getElementById('reset').onclick = () => {
+    S = { money: CFG.startMoney, hp: CFG.startHp, armor: CFG.armor ?? 0 }; renderMoney(); renderBars(false);
+  };
+}
+
+/* ---------- demo mode (?demo=1) for previewing the look ---------- */
+if (CFG.demo) {
+  const acts = [
+    () => addMoney(5000, 'SUB — SneakyBeagle'),
+    () => addMoney(2500, '250 BITS — UncleJPop'),
+    () => damage(35, 'OUCH'),
+    () => addMoney(25000, 'GIFT x5 — Mushr00msauce'),
+    () => damage(45, 'OUCH'),
+    () => heal(100, 'RAID HEAL'),
+  ];
+  let i = 0; setInterval(() => acts[i++ % acts.length](), 2600);
+}
+
+/* ---------- area name: ?area=Miami&sub=FLORIDA  (area=none to hide) ---------- */
+const AREA = P.get('area') ?? 'Miami';
+const AREA_SUB = P.get('areasub') ?? 'FLORIDA';
+function showArea(name, sub) {
+  if (!name || name === 'none') return;
+  const el = document.getElementById('area');
+  el.innerHTML = '';
+  el.append(document.createTextNode(name));
+  if (sub) { const s = document.createElement('small'); s.textContent = sub; el.append(s); }
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+}
+setTimeout(() => showArea(AREA, AREA_SUB), 1200);
+const areaEvery = num('areaevery', 10);           // re-show every N minutes (0 = only on load)
+if (areaEvery > 0) setInterval(() => showArea(AREA, AREA_SUB), areaEvery * 60000);
+window.showArea = showArea;
+
+renderBars(false);
+connectChat();
+</script>
+</body>
+</html>
